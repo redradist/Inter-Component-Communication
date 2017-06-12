@@ -3,7 +3,7 @@
  * @author Denis Kotov
  * @date 13 Jun 2017
  * @brief Contains abstract class for Event Loop Provider
- * @copyright MIT License. Open source: https://github.com/redradist/Transport_Buffers.git
+ * @copyright MIT License. Open source:
  */
 
 #ifndef ICC_EVENTLOOPPROVIDER_HPP

@@ -3,7 +3,7 @@
  * @author Denis Kotov
  * @date 10 Jun 2017
  * @brief Contains abstract class for Component
- * @copyright MIT License. Open source: https://github.com/redradist/Transport_Buffers.git
+ * @copyright MIT License. Open source:
  */
 
 #ifndef ICC_COMPONENT_HPP

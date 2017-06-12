@@ -3,7 +3,7 @@
  * @author Denis Kotov
  * @date 11 Jun 2017
  * @brief Timer lisener class
- * @copyright MIT License. Open source: https://github.com/redradist/Transport_Buffers.git
+ * @copyright MIT License. Open source:
  */
 
 #ifndef ICC_TIMERLISENER_HPP
