@@ -17,13 +17,12 @@ class Componet : public IComponent {
 int main() {
   std::cout << "Hello, World!" << std::endl;
   Componet com;
+  std::shared_ptr<Componet> com12 = std::shared_ptr<Componet>(new Componet());
   Componet com1(&com);
   Componet com2(&com1);
   com2.exec();
   com1.exec();
-  com1.event_.connect(&Componet::Callback, &com);
-  com.event_.connect(&Componet::Callback, &com2);
-  com2.event_.connect(&Componet::Callback, &com1);
+  com1.event_.connect(&Componet::Callback, com12);
   std::cout << "Before callback" << std::endl;
   com1.event_(1, 6);
   std::cout << "After callback" << std::endl;

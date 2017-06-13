@@ -27,7 +27,7 @@ class Timer {
   }
 
   void start() {
-
+    timer_.expires_at();
   }
 
   void addListener(ITimerLisener * _lisener) {

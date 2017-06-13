@@ -16,7 +16,8 @@
 #include "EventLoopProvider.hpp"
 
 class IComponent
-  : public IEventLoopProvider {
+  : public IEventLoopProvider,
+    public std::enable_shared_from_this<IComponent> {
  public:
   /**
    * Default constructor.
@@ -29,8 +30,9 @@ class IComponent
   }
 
   /**
-   *
-   * @param _eventLoop
+   * Constructor for initializing within event loop created outside.
+   * Owner of this pointer is not we
+   * @param _eventLoop Event loop that will be used
    */
   IComponent(boost::asio::io_service * _eventLoop)
       : service_(std::shared_ptr<boost::asio::io_service>(_eventLoop,
@@ -41,8 +43,8 @@ class IComponent
   }
 
   /**
-   *
-   * @param _eventLoop
+   * Constructor for initializing within event loop created outside
+   * @param _eventLoop Event loop that will be used
    */
   IComponent(std::shared_ptr<boost::asio::io_service> _eventLoop)
     : service_(_eventLoop),
@@ -51,7 +53,7 @@ class IComponent
 
   /**
    * Used to share event loop of parent object
-   * @param _parent
+   * @param _parent Parent compenent that will share event loop
    */
   IComponent(IComponent * _parent)
     : service_(_parent->getEventLoop()),
@@ -67,7 +69,7 @@ class IComponent
   IComponent & operator=(IComponent const &) = delete;
 
   /**
-   *
+   * Destructor used for removing children or waiting end of event loop
    */
   virtual ~IComponent() {
     if (parent_) {
@@ -78,10 +80,15 @@ class IComponent
   }
 
  public:
+  operator std::shared_ptr<IComponent>() {
+    return shared_from_this();
+  }
+
+ public:
   /**
-   *
+   * Used to start event loop
    */
-  void exec() {
+  virtual void exec() {
     if (owner_of_service_ && !worker_thread_) {
       worker_thread_ = new std::thread([=](){
         service_->run();
@@ -90,10 +97,22 @@ class IComponent
   }
 
   /**
+   * Called to exit from execution in main loop
+   */
+  virtual void exit() {
+    push([=]{
+      worker_.reset();
+      for (auto & child : childern_) {
+        child->exit();
+      }
+    });
+  }
+
+  /**
    * Method used to push task for execution
    * @param _task Task that will be executed
    */
-  void push(std::function<void(void)> _task) {
+  virtual void push(std::function<void(void)> _task) {
     service_->post(_task);
   }
 
@@ -107,18 +126,6 @@ class IComponent
   }
 
  protected:
-  /**
-   * Called to exit from execution in main loop
-   */
-  virtual void exit() {
-    push([=]{
-       worker_.reset();
-       for (auto & child : childern_) {
-         child->exit();
-       }
-    });
-  }
-
   /**
    * Method that allow to add _child component to the vector
    * @param _child Component that will be added
