@@ -72,11 +72,12 @@ class IComponent
    * Destructor used for removing children or waiting end of event loop
    */
   virtual ~IComponent() {
-    if (parent_) {
-      parent_->removeChild(this);
-    } else if (worker_thread_) {
+    if (worker_thread_) {
       worker_thread_->join();
     }
+    /*if (parent_) {
+      parent_->removeChild(this);
+    }*/
   }
 
  public:
@@ -101,9 +102,15 @@ class IComponent
    */
   virtual void exit() {
     push([=]{
-      worker_.reset();
-      for (auto & child : childern_) {
-        child->exit();
+      if (alive_) {
+        alive_ = false;
+        worker_.reset(nullptr);
+        for (auto & child : childern_) {
+          child->exit();
+        }
+        if (parent_) {
+          parent_->exit();
+        }
       }
     });
   }
@@ -156,6 +163,7 @@ class IComponent
   }
 
  protected:
+  bool alive_ = true;
   bool owner_of_service_ = false;
   std::shared_ptr<boost::asio::io_service> service_;
   std::unique_ptr<boost::asio::io_service::work> worker_;

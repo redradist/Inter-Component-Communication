@@ -42,7 +42,8 @@ class Event<_R(_Args...)> {
    * @param _listener
    */
   template <typename _Component>
-  void connect(void(_Component::*_callback)(_Args...), _Component * _listener) {
+  void connect(void(_Component::*_callback)(_Args...),
+               _Component * _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
@@ -67,10 +68,10 @@ class Event<_R(_Args...)> {
                   "_listener is not derived from IComponent");
     std::weak_ptr<_Component> _weak_listener = _listener;
     if (!_weak_listener.expired()) {
-      checked_listeners_->emplace_back(_weak_listener, [=](_Args... args){
+      checked_listeners_->emplace_back(_weak_listener, [=](_Args... args) {
         if (auto _observer = _weak_listener.lock()) {
-          _observer->push([=]() mutable {
-            ((_observer.get())->*_callback)(std::forward<_Args>(args)...);
+          _observer->push([=, pointer = _observer.get()]() mutable {
+            (pointer->*_callback)(std::forward<_Args>(args)...);
           });
         }
       });
@@ -83,7 +84,9 @@ class Event<_R(_Args...)> {
     }
     for (auto & listener : *checked_listeners_) {
       if (auto _observer = listener.first.lock()) {
-        _observer.second(_args...);
+        listener.second(_args...);
+      } else {
+        // Delete it
       }
     }
   }
@@ -94,7 +97,9 @@ class Event<_R(_Args...)> {
     }
     for (auto & listener : *checked_listeners_) {
       if (auto _observer = listener.first.lock()) {
-        _observer.second(_args...);
+        listener.second(_args...);
+      } else {
+        // Delete it
       }
     }
   }
