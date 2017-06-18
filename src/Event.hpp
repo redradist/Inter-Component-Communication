@@ -23,8 +23,8 @@ class Event<_R(_Args...)> {
  public:
   using tCallback = std::function<void(_Args...)>;
   using tListCallbacks = std::vector<tCallback>;
-  using tPairObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
-  using tCheckedListCallbacks = std::vector<tPairObjectAndCallbacks>;
+  using tObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
+  using tCheckedListCallbacks = std::vector<tObjectAndCallbacks>;
  public:
   Event()
       : listeners_(std::make_shared<tListCallbacks>()),
@@ -66,16 +66,11 @@ class Event<_R(_Args...)> {
                std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
-    std::weak_ptr<_Component> _weak_listener = _listener;
-    if (!_weak_listener.expired()) {
-      checked_listeners_->emplace_back(_weak_listener, [=](_Args... args) {
-        if (auto _observer = _weak_listener.lock()) {
-          _observer->push([=, pointer = _observer.get()]() mutable {
-            (pointer->*_callback)(std::forward<_Args>(args)...);
-          });
-        }
+    checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](_Args... args) {
+      pointer->push([=]() mutable {
+        (pointer->*_callback)(std::forward<_Args>(args)...);
       });
-    }
+    });
   }
 
   void operator()(_Args... _args) {
@@ -86,7 +81,7 @@ class Event<_R(_Args...)> {
       if (auto _observer = listener.first.lock()) {
         listener.second(_args...);
       } else {
-        // Delete it
+        // TODO(redra): Delete it
       }
     }
   }
@@ -99,9 +94,21 @@ class Event<_R(_Args...)> {
       if (auto _observer = listener.first.lock()) {
         listener.second(_args...);
       } else {
-        // Delete it
+        // TODO(redra): Delete it
       }
     }
+  }
+
+  operator std::function<_R(_Args...)>() {
+    return [event = Event<_R(_Args...)>(*this)](_Args... _args) mutable {
+      for (auto & listener : *event.checked_listeners_) {
+        if (auto _observer = listener.first.lock()) {
+          listener.second(_args...);
+        } else {
+          // TODO(redra): Delete it
+        }
+      }
+    };
   }
 
  private:
