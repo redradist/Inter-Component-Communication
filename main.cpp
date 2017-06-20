@@ -51,6 +51,8 @@ int main() {
   auto are = std::thread([=]() {
     com12->exec();
   });
+  std::function<void(const int &, double)> asdas =
+      com1.event_;
   com1.event_.connect(&Componet::Callback, &com2);
   com1.event_.disconnect(&Componet::Callback, &com2);
   com1.event_.connect(&Componet::Callback, com12);
