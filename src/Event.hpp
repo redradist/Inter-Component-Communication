@@ -22,7 +22,7 @@ class Event;
 template <typename _R, typename ... _Args>
 class Event<_R(_Args...)> {
  public:
-  using tCallback = void(IComponent::*)(_Args...);
+  using tCallback = _R(IComponent::*)(_Args...);
   using tUncheckedObjectAndCallbacks = std::pair<IComponent *, tCallback>;
   using tUncheckedListCallbacks = std::vector<tUncheckedObjectAndCallbacks>;
   using tCheckedObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
@@ -41,14 +41,14 @@ class Event<_R(_Args...)> {
    * @param _listener Object that listen Event
    */
   template <typename _Component>
-  void connect(void(_Component::*_callback)(_Args...),
+  void connect(_R(_Component::*_callback)(_Args...),
                _Component * _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
       unchecked_listeners_.emplace_back(
           static_cast<IComponent*>(_listener),
-          static_cast<void(IComponent::*)(_Args...)>(_callback));
+          static_cast<_R(IComponent::*)(_Args...)>(_callback));
     }
   }
 
@@ -60,14 +60,14 @@ class Event<_R(_Args...)> {
    * @param _listener Object that listen Event
    */
   template <typename _Component>
-  void connect(void(_Component::*_callback)(_Args...),
+  void connect(_R(_Component::*_callback)(_Args...),
                std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if(_listener) {
       checked_listeners_.emplace_back(
           static_cast<std::shared_ptr<IComponent>>(_listener),
-          static_cast<void(IComponent::*)(_Args...)>(_callback)
+          static_cast<_R(IComponent::*)(_Args...)>(_callback)
       );
     }
   }
@@ -80,14 +80,14 @@ class Event<_R(_Args...)> {
    * @param _listener Object that listen Event
    */
   template <typename _Component>
-  void disconnect(void(_Component::*_callback)(_Args...),
+  void disconnect(_R(_Component::*_callback)(_Args...),
                   _Component * _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
       std::pair<IComponent *, tCallback> removedCallback = {
           static_cast<IComponent*>(_listener),
-          static_cast<void(IComponent::*)(_Args...)>(_callback)
+          static_cast<_R(IComponent::*)(_Args...)>(_callback)
         };
 
       auto erase = std::remove(unchecked_listeners_.begin(),
@@ -105,14 +105,14 @@ class Event<_R(_Args...)> {
    * @param _listener Object that listen Event
    */
   template <typename _Component>
-  void disconnect(void(_Component::*_callback)(_Args...),
+  void disconnect(_R(_Component::*_callback)(_Args...),
                   std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if(_listener) {
       std::pair<std::weak_ptr<IComponent>, tCallback> removedCallback = {
           static_cast<std::shared_ptr<IComponent>>(_listener),
-          static_cast<void(IComponent::*)(_Args...)>(_callback)
+          static_cast<_R(IComponent::*)(_Args...)>(_callback)
       };
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
@@ -171,6 +171,10 @@ class Event<_R(_Args...)> {
     }
   }
 
+  /**
+   * Convertion function is used to convert Event to std::function
+   * @return std::function object
+   */
   operator std::function<_R(_Args...)>() {
     return [event = *this](_Args... _args) mutable {
       for (auto & listener : event.checked_listeners_) {
