@@ -13,6 +13,7 @@
 #include <map>
 #include <tuple>
 #include <utility>
+#include <algorithm>
 #include "IComponent.hpp"
 
 template <typename _T>
@@ -21,25 +22,23 @@ class Event;
 template <typename _R, typename ... _Args>
 class Event<_R(_Args...)> {
  public:
-  using tCallback = std::function<void(_Args...)>;
-  using tListCallbacks = std::vector<tCallback>;
-  using tObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
-  using tCheckedListCallbacks = std::vector<tObjectAndCallbacks>;
+  using tCallback = void(IComponent::*)(_Args...);
+  using tUncheckedObjectAndCallbacks = std::pair<IComponent *, tCallback>;
+  using tUncheckedListCallbacks = std::vector<tUncheckedObjectAndCallbacks>;
+  using tCheckedObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
+  using tCheckedListCallbacks = std::vector<tCheckedObjectAndCallbacks>;
  public:
-  Event()
-      : unchecked_listeners_(std::make_shared<tListCallbacks>()),
-        checked_listeners_(std::make_shared<tCheckedListCallbacks>()) {
-  }
+  Event() = default;
   Event(Event const&) = default;
   Event(Event &&) = default;
 
  public:
   /**
-   * Unsafe function.
-   * User should be confident that _listener lives at moment of calling callback
-   * @tparam _Component
-   * @param _callback
-   * @param _listener
+   * Unsafe function for connect Event to object _listener with _callback
+   * User should be confident that _listener is exist at moment of calling callback
+   * @tparam _Component Type of object that listen Event
+   * @param _callback method in object that listen Event
+   * @param _listener Object that listen Event
    */
   template <typename _Component>
   void connect(void(_Component::*_callback)(_Args...),
@@ -47,21 +46,18 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
-      std::pair<IComponent*, void(IComponent::*)(_Args...)>
-          dasda(static_cast<IComponent*>(_listener), static_cast<void(IComponent::*)(_Args...)>(_callback));
-      unchecked_listeners_->push_back([=](_Args... args){
-        _listener->push([=]() mutable {
-          (_listener->*_callback)(std::forward<_Args>(args)...);
-        });
-      });
+      unchecked_listeners_.emplace_back(
+          static_cast<IComponent*>(_listener),
+          static_cast<void(IComponent::*)(_Args...)>(_callback));
     }
   }
 
   /**
-   *
-   * @tparam _Component
-   * @param _callback
-   * @param _listener
+   * Safe function for connect Event to object _listener with _callback
+   * User can check if _listener is exist at moment of calling callback
+   * @tparam _Component Type of object that listen Event
+   * @param _callback method in object that listen Event
+   * @param _listener Object that listen Event
    */
   template <typename _Component>
   void connect(void(_Component::*_callback)(_Args...),
@@ -69,21 +65,81 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if(_listener) {
-      checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](_Args... args) {
-        pointer->push([=]() mutable {
-          (pointer->*_callback)(std::forward<_Args>(args)...);
-        });
+      checked_listeners_.emplace_back(
+          static_cast<std::shared_ptr<IComponent>>(_listener),
+          static_cast<void(IComponent::*)(_Args...)>(_callback)
+      );
+    }
+  }
+
+  /**
+   * Unsafe function for disconnect Event from object _listener with _callback
+   * User should be confident that _listener is exist at moment of calling callback
+   * @tparam _Component Type of object that listen Event
+   * @param _callback method in object that listen Event
+   * @param _listener Object that listen Event
+   */
+  template <typename _Component>
+  void disconnect(void(_Component::*_callback)(_Args...),
+                  _Component * _listener) {
+    static_assert(std::is_base_of<IComponent, _Component>::value,
+                  "_listener is not derived from IComponent");
+    if (_listener) {
+      std::pair<IComponent *, tCallback> removedCallback = {
+          static_cast<IComponent*>(_listener),
+          static_cast<void(IComponent::*)(_Args...)>(_callback)
+        };
+
+      auto erase = std::remove(unchecked_listeners_.begin(),
+                               unchecked_listeners_.end(),
+                               removedCallback);
+      unchecked_listeners_.erase(erase, unchecked_listeners_.end());
+    }
+  }
+
+  /**
+   * Safe function for disconnect Event from object _listener with _callback
+   * User can check if _listener is exist at moment of calling callback
+   * @tparam _Component Type of object that listen Event
+   * @param _callback method in object that listen Event
+   * @param _listener Object that listen Event
+   */
+  template <typename _Component>
+  void disconnect(void(_Component::*_callback)(_Args...),
+                  std::shared_ptr<_Component> _listener) {
+    static_assert(std::is_base_of<IComponent, _Component>::value,
+                  "_listener is not derived from IComponent");
+    if(_listener) {
+      std::pair<std::weak_ptr<IComponent>, tCallback> removedCallback = {
+          static_cast<std::shared_ptr<IComponent>>(_listener),
+          static_cast<void(IComponent::*)(_Args...)>(_callback)
+      };
+      auto erase = std::remove_if(checked_listeners_.begin(),
+                                  checked_listeners_.end(),
+      [=](const std::pair<std::weak_ptr<IComponent>, tCallback> & rad) {
+        bool result = false;
+        if (auto _observer = rad.first.lock()) {
+          result = (_callback == static_cast<void(_Component::*)(_Args...)>(rad.second));
+        } else {
+          result = true;
+        }
+        return result;
       });
+      checked_listeners_.erase(erase, checked_listeners_.end());
     }
   }
 
   void operator()(_Args... _args) {
-    for (auto & listener : *unchecked_listeners_) {
-      listener(_args...);
+    for (auto & listener : unchecked_listeners_) {
+      (listener.first)->push([=]() mutable {
+        ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
+      });
     }
-    for (auto & listener : *checked_listeners_) {
+    for (auto & listener : checked_listeners_) {
       if (auto _observer = listener.first.lock()) {
-        listener.second(_args...);
+        _observer->push([=]() mutable {
+          ((_observer.get())->*(listener.second))(std::forward<_Args>(_args)...);
+        });
       } else {
         // TODO(redra): Delete it
       }
@@ -91,12 +147,16 @@ class Event<_R(_Args...)> {
   }
 
   void operator()(_Args... _args) const {
-    for (auto & listener : *unchecked_listeners_) {
-      listener(_args...);
+    for (auto & listener : unchecked_listeners_) {
+      (listener.first)->push([=]() mutable {
+        ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
+      });
     }
-    for (auto & listener : *checked_listeners_) {
+    for (auto & listener : checked_listeners_) {
       if (auto _observer = listener.first.lock()) {
-        listener.second(_args...);
+        _observer->push([=]() mutable {
+          ((_observer.get())->*(listener.second))(std::forward<_Args>(_args)...);
+        });
       } else {
         // TODO(redra): Delete it
       }
@@ -105,7 +165,7 @@ class Event<_R(_Args...)> {
 
   operator std::function<_R(_Args...)>() {
     return [event = Event<_R(_Args...)>(*this)](_Args... _args) mutable {
-      for (auto & listener : *event.checked_listeners_) {
+      for (auto & listener : event.checked_listeners_) {
         if (auto _observer = listener.first.lock()) {
           listener.second(_args...);
         } else {
@@ -117,8 +177,8 @@ class Event<_R(_Args...)> {
   }
 
  private:
-  std::shared_ptr<tListCallbacks> unchecked_listeners_;
-  std::shared_ptr<tCheckedListCallbacks> checked_listeners_;
+  tUncheckedListCallbacks unchecked_listeners_;
+  tCheckedListCallbacks checked_listeners_;
 };
 
 #endif //ICC_EVENT_HPP

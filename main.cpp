@@ -48,11 +48,17 @@ int main() {
   //timer2_.addListener(&com);
   timer2_.addListener(com12);
   timer2_.start();
+  auto are = std::thread([=]() {
+    com12->exec();
+  });
   com1.event_.connect(&Componet::Callback, &com2);
+  //com1.event_.disconnect(&Componet::Callback, &com2);
   com1.event_.connect(&Componet::Callback, com12);
+  //com1.event_.disconnect(&Componet::Callback, com12);
   std::cout << "Before callback" << std::endl;
-  //com1.event_(1, 6);
+  com1.event_(1, 6);
   std::cout << "After callback" << std::endl;
   com.exec();
+  are.join();
   return 0;
 }
