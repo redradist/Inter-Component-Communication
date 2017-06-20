@@ -129,6 +129,10 @@ class Event<_R(_Args...)> {
     }
   }
 
+  /**
+   * Method for calling Event
+   * @param _args Parameters for calling Event
+   */
   void operator()(_Args... _args) {
     for (auto & listener : unchecked_listeners_) {
       (listener.first)->push([=]() mutable {
@@ -146,6 +150,10 @@ class Event<_R(_Args...)> {
     }
   }
 
+  /**
+   * Method for calling const Event
+   * @param _args Parameters for calling const Event
+   */
   void operator()(_Args... _args) const {
     for (auto & listener : unchecked_listeners_) {
       (listener.first)->push([=]() mutable {
@@ -164,7 +172,7 @@ class Event<_R(_Args...)> {
   }
 
   operator std::function<_R(_Args...)>() {
-    return [event = Event<_R(_Args...)>(*this)](_Args... _args) mutable {
+    return [event = *this](_Args... _args) mutable {
       for (auto & listener : event.checked_listeners_) {
         if (auto _observer = listener.first.lock()) {
           listener.second(_args...);

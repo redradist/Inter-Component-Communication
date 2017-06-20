@@ -44,17 +44,17 @@ int main() {
 
   Timer timer2_(&com);
   timer2_.setInterval(boost::posix_time::seconds(2));
-  //timer2_.connect(&Componet::processTimerEvent, &com2);
-  //timer2_.addListener(&com);
+  timer2_.connect(&Componet::processTimerEvent, &com2);
+  timer2_.addListener(&com);
   timer2_.addListener(com12);
   timer2_.start();
   auto are = std::thread([=]() {
     com12->exec();
   });
   com1.event_.connect(&Componet::Callback, &com2);
-  //com1.event_.disconnect(&Componet::Callback, &com2);
+  com1.event_.disconnect(&Componet::Callback, &com2);
   com1.event_.connect(&Componet::Callback, com12);
-  //com1.event_.disconnect(&Componet::Callback, com12);
+  com1.event_.disconnect(&Componet::Callback, com12);
   std::cout << "Before callback" << std::endl;
   com1.event_(1, 6);
   std::cout << "After callback" << std::endl;
