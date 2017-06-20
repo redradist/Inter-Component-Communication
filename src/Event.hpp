@@ -13,7 +13,7 @@
 #include <map>
 #include <tuple>
 #include <utility>
-#include "Component.hpp"
+#include "IComponent.hpp"
 
 template <typename _T>
 class Event;
@@ -27,7 +27,7 @@ class Event<_R(_Args...)> {
   using tCheckedListCallbacks = std::vector<tObjectAndCallbacks>;
  public:
   Event()
-      : listeners_(std::make_shared<tListCallbacks>()),
+      : unchecked_listeners_(std::make_shared<tListCallbacks>()),
         checked_listeners_(std::make_shared<tCheckedListCallbacks>()) {
   }
   Event(Event const&) = default;
@@ -47,7 +47,9 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
-      listeners_->push_back([=](_Args... args){
+      std::pair<IComponent*, void(IComponent::*)(_Args...)>
+          dasda(static_cast<IComponent*>(_listener), static_cast<void(IComponent::*)(_Args...)>(_callback));
+      unchecked_listeners_->push_back([=](_Args... args){
         _listener->push([=]() mutable {
           (_listener->*_callback)(std::forward<_Args>(args)...);
         });
@@ -66,15 +68,17 @@ class Event<_R(_Args...)> {
                std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
-    checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](_Args... args) {
-      pointer->push([=]() mutable {
-        (pointer->*_callback)(std::forward<_Args>(args)...);
+    if(_listener) {
+      checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](_Args... args) {
+        pointer->push([=]() mutable {
+          (pointer->*_callback)(std::forward<_Args>(args)...);
+        });
       });
-    });
+    }
   }
 
   void operator()(_Args... _args) {
-    for (auto & listener : *listeners_) {
+    for (auto & listener : *unchecked_listeners_) {
       listener(_args...);
     }
     for (auto & listener : *checked_listeners_) {
@@ -87,7 +91,7 @@ class Event<_R(_Args...)> {
   }
 
   void operator()(_Args... _args) const {
-    for (auto & listener : *listeners_) {
+    for (auto & listener : *unchecked_listeners_) {
       listener(_args...);
     }
     for (auto & listener : *checked_listeners_) {
@@ -108,11 +112,12 @@ class Event<_R(_Args...)> {
           // TODO(redra): Delete it
         }
       }
+      return _R();
     };
   }
 
  private:
-  std::shared_ptr<tListCallbacks> listeners_;
+  std::shared_ptr<tListCallbacks> unchecked_listeners_;
   std::shared_ptr<tCheckedListCallbacks> checked_listeners_;
 };
 

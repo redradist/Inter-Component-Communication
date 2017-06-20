@@ -9,7 +9,7 @@
 #ifndef ICC_TIMERLISENER_HPP
 #define ICC_TIMERLISENER_HPP
 
-#include "EventLoopProvider.hpp"
+#include "IComponent.hpp"
 
 enum class TimerEvents {
   STARTED,
@@ -17,8 +17,7 @@ enum class TimerEvents {
   STOPED,
 };
 
-class ITimerLisener
-  : public IEventLoopProvider {
+class ITimerLisener {
  public:
   virtual void processTimerEvent(const TimerEvents &) = 0;
 };

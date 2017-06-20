@@ -13,11 +13,9 @@
 #include <thread>
 #include <algorithm>
 #include <boost/asio/io_service.hpp>
-#include "EventLoopProvider.hpp"
 
 class IComponent
-  : public IEventLoopProvider,
-    public std::enable_shared_from_this<IComponent> {
+  : public std::enable_shared_from_this<IComponent> {
  public:
   /**
    * Default constructor.
@@ -63,6 +61,17 @@ class IComponent
   }
 
   /**
+   * Used to share event loop of parent object
+   * @param _parent Parent compenent that will share event loop
+   */
+  IComponent(std::shared_ptr<IComponent> _parent)
+      : service_(_parent->getEventLoop()),
+        worker_(new boost::asio::io_service::work(*service_)),
+        parent_(_parent.get()) {
+    _parent->setChild(this);
+  }
+
+  /**
    * Disable ability to copy Component class
    */
   IComponent(IComponent const &) = delete;
@@ -74,8 +83,6 @@ class IComponent
   virtual ~IComponent() {
     if (parent_) {
       parent_->removeChild(this);
-    } else if (worker_thread_) {
-      worker_thread_->join();
     }
   }
 
@@ -89,10 +96,8 @@ class IComponent
    * Used to start event loop
    */
   virtual void exec() {
-    if (owner_of_service_ && !worker_thread_) {
-      worker_thread_.reset(new std::thread([=](){
-        service_->run();
-      }));
+    if (owner_of_service_) {
+      service_->run();
     }
   }
 
@@ -101,15 +106,14 @@ class IComponent
    */
   virtual void exit() {
     push([=]{
-      if (alive_) {
-        alive_ = false;
-        worker_.reset(nullptr);
+      if (worker_) {
         for (auto & child : childern_) {
           child->exit();
         }
         if (parent_) {
           parent_->exit();
         }
+        worker_.reset(nullptr);
       }
     });
   }
@@ -122,16 +126,16 @@ class IComponent
     service_->post(_task);
   }
 
+ protected:
   /**
    * Method return used io_service
    * @return IO Service
    */
-  std::shared_ptr<boost::asio::io_service>
-  getEventLoop() const override {
+  virtual std::shared_ptr<boost::asio::io_service>
+  getEventLoop() const {
     return service_;
   }
 
- protected:
   /**
    * Method that allow to add _child component to the vector
    * @param _child Component that will be added
@@ -163,9 +167,6 @@ class IComponent
 
  protected:
   bool owner_of_service_ = false;
-  std::unique_ptr<std::thread> worker_thread_ = nullptr;
-
-  bool alive_ = true;
   std::shared_ptr<boost::asio::io_service> service_;
   std::unique_ptr<boost::asio::io_service::work> worker_;
 
