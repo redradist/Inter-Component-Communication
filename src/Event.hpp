@@ -177,11 +177,6 @@ class Event<_R(_Args...)> {
    */
   operator std::function<_R(_Args...)>() {
     return [event = *this](_Args... _args) mutable {
-      for (auto & listener : event.unchecked_listeners_) {
-        (listener.first)->push([=]() mutable {
-          ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
-        });
-      }
       for (auto & listener : event.checked_listeners_) {
         if (auto _observer = listener.first.lock()) {
           _observer->push([=]() mutable {
