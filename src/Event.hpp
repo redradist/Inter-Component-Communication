@@ -164,15 +164,11 @@ class Event<_R(_Args...)> {
         ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
       });
     }
-    for (auto listener = checked_listeners_.begin();
-         listener != checked_listeners_.end();) {
-      if (auto _observer = listener->first.lock()) {
+    for (auto listener : checked_listeners_) {
+      if (auto _observer = listener.first.lock()) {
         _observer->push([=]() mutable {
-          ((_observer.get())->*(listener->second))(std::forward<_Args>(_args)...);
+          ((_observer.get())->*(listener.second))(std::forward<_Args>(_args)...);
         });
-        ++listener;
-      } else {
-        // TODO(redra): Delete it
       }
     }
   }

@@ -68,7 +68,8 @@ int main() {
     com1.event_.connect(&Componet::Callback, com3);
   }
   std::cout << "Before callback" << std::endl;
-  com1.event_(1, 6);
+  const Event<void(const int &, double)> event3{com1.event_};
+  event3(1, 6);
   std::cout << "After callback" << std::endl;
   com.exec();
   are.join();
