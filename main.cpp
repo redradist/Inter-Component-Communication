@@ -13,7 +13,7 @@ class Componet
 
   //Timer timer_;
 
-  void processTimerEvent(const TimerEvents & _event) override {
+  void processEvent(const TimerEvents & _event) override {
     if (TimerEvents::STARTED == _event) {
       std::cout << "Timer is started" << std::endl;
     } else if (TimerEvents::EXPIRED == _event) {
@@ -44,7 +44,7 @@ int main() {
 
   Timer timer2_(&com);
   timer2_.setInterval(boost::posix_time::seconds(2));
-  timer2_.connect(&Componet::processTimerEvent, &com2);
+  timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
   timer2_.start();

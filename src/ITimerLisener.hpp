@@ -19,7 +19,7 @@ enum class TimerEvents {
 
 class ITimerLisener {
  public:
-  virtual void processTimerEvent(const TimerEvents &) = 0;
+  virtual void processEvent(const TimerEvents &) = 0;
 };
 
 #endif //ICC_TIMERLISENER_HPP

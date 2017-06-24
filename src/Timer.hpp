@@ -79,7 +79,7 @@ class Timer
     if (_listener) {
       this->connect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processTimerEvent),
+              &_Lisener::processEvent),
           static_cast<IComponent*>(_listener));
     }
   }
@@ -97,7 +97,7 @@ class Timer
     if(_listener) {
       this->connect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processTimerEvent),
+              &_Lisener::processEvent),
           static_cast<std::shared_ptr<IComponent>>(_listener));
     }
   }
@@ -115,7 +115,7 @@ class Timer
     if (_listener) {
       this->disconnect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processTimerEvent),
+              &_Lisener::processEvent),
           static_cast<IComponent*>(_listener));
     }
   }
@@ -133,7 +133,7 @@ class Timer
     if(_listener) {
       this->disconnect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processTimerEvent),
+              &_Lisener::processEvent),
           static_cast<std::shared_ptr<IComponent>>(_listener));
     }
   }
