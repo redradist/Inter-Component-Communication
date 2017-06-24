@@ -53,10 +53,20 @@ int main() {
   });
   std::function<void(const int &, double)> asdas =
       com1.event_;
+  {
+    std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
+    com1.event_.connect(&Componet::Callback, com3);
+  }
   com1.event_.connect(&Componet::Callback, &com2);
-  com1.event_.disconnect(&Componet::Callback, &com2);
+  {
+    std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
+    com1.event_.connect(&Componet::Callback, com3);
+  }
   com1.event_.connect(&Componet::Callback, com12);
-  com1.event_.disconnect(&Componet::Callback, com12);
+  {
+    std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
+    com1.event_.connect(&Componet::Callback, com3);
+  }
   std::cout << "Before callback" << std::endl;
   com1.event_(1, 6);
   std::cout << "After callback" << std::endl;

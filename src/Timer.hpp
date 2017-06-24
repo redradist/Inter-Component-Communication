@@ -84,9 +84,11 @@ class Timer
     static_assert(std::is_base_of<IComponent, _Lisener>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
-      unchecked_listeners_->push_back([=](const TimerEvents & _event){
-        _listener->push([=]() mutable {
-          (_listener->*_callback)(_event);
+      push([=]{
+        unchecked_listeners_->push_back([=](const TimerEvents & _event){
+          _listener->push([=]() mutable {
+            (_listener->*_callback)(_event);
+          });
         });
       });
     }
@@ -106,9 +108,11 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
-      checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
-        pointer->push([=]() mutable {
-          (pointer->*_callback)(_event);
+      push([=]{
+        checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
+          pointer->push([=]() mutable {
+            (pointer->*_callback)(_event);
+          });
         });
       });
     }
@@ -125,9 +129,11 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
-      unchecked_listeners_->push_back([=](const TimerEvents & _event){
-        _listener->push([=]() mutable {
-          (_listener->processTimerEvent)(_event);
+      push([=]{
+        unchecked_listeners_->push_back([=](const TimerEvents & _event){
+          _listener->push([=]() mutable {
+            (_listener->processTimerEvent)(_event);
+          });
         });
       });
     }
@@ -144,12 +150,21 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
-      checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
-        pointer->push([=]() mutable {
-          (pointer->processTimerEvent)(_event);
+      push([=]{
+        checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
+          pointer->push([=]() mutable {
+            (pointer->processTimerEvent)(_event);
+          });
         });
       });
     }
+  }
+
+  void exit() override {
+    push([=]{
+      IComponent::exit();
+      stop();
+    });
   }
 
  protected:
@@ -181,11 +196,6 @@ class Timer
         // TODO(redra): Delete it
       }
     }
-  }
-
-  void exit() override {
-    IComponent::exit();
-    stop();
   }
 
  protected:
