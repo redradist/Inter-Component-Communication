@@ -83,11 +83,7 @@ class IComponent
   /**
    * Destructor used for removing children or waiting end of event loop
    */
-  virtual ~IComponent() {
-    if (parent_) {
-      parent_->removeChild(this);
-    }
-  }
+  virtual ~IComponent() = 0;
 
  public:
   operator std::shared_ptr<IComponent>() {
@@ -177,5 +173,15 @@ class IComponent
   IComponent * parent_ = nullptr;
   std::vector<IComponent *> childern_;
 };
+
+/**
+ * Destructor used for removing children or waiting end of event loop
+ */
+inline
+IComponent::~IComponent() {
+  if (parent_) {
+    parent_->removeChild(this);
+  }
+}
 
 #endif //ICC_COMPONENT_HPP
