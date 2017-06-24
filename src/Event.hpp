@@ -148,7 +148,6 @@ class Event<_R(_Args...)> {
         ++listener;
       } else {
         // NOTE(redra): Deleting listener
-        std::cout << "listener is removed" << std::endl;
         listener = checked_listeners_.erase(listener);
       }
     }
@@ -179,13 +178,16 @@ class Event<_R(_Args...)> {
    */
   operator std::function<_R(_Args...)>() {
     return [event = *this](_Args... _args) mutable {
-      for (auto & listener : event.checked_listeners_) {
-        if (auto _observer = listener.first.lock()) {
+      for (auto listener = event.checked_listeners_.begin();
+           listener != event.checked_listeners_.end();) {
+        if (auto _observer = listener->first.lock()) {
           _observer->push([=]() mutable {
-            ((_observer.get())->*(listener.second))(std::forward<_Args>(_args)...);
+            ((_observer.get())->*(listener->second))(std::forward<_Args>(_args)...);
           });
+          ++listener;
         } else {
-          // TODO(redra): Delete it
+          // NOTE(redra): Deleting listener
+          listener = event.checked_listeners_.erase(listener);
         }
       }
       return _R();
