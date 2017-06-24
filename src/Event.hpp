@@ -174,6 +174,7 @@ class Event<_R(_Args...)> {
 
   /**
    * Convertion function is used to convert Event to std::function
+   * This function is used only for checked listeners because of safety
    * @return std::function object
    */
   operator std::function<_R(_Args...)>() {
