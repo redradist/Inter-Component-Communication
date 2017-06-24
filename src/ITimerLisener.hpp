@@ -2,7 +2,7 @@
  * @file TimerLisener.hpp
  * @author Denis Kotov
  * @date 11 Jun 2017
- * @brief Timer lisener class
+ * @brief Timer listener interface
  * @copyright MIT License. Open source:
  */
 

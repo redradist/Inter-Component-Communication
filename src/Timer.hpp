@@ -2,7 +2,8 @@
  * @file Timer.hpp
  * @author Denis Kotov
  * @date 10 Jun 2017
- * @brief Timer class
+ * @brief Thread safe version of Timer class
+ * It is based on boost::asio::deadline_timer
  * @copyright MIT License. Open source:
  */
 

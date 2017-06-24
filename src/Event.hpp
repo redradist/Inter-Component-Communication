@@ -2,7 +2,9 @@
  * @file Event.hpp
  * @author Denis Kotov
  * @date 10 Jun 2017
- * @brief Contains abstract class for Pack Buffer
+ * @brief Contains Event class.
+ * It is thread safe version of class like boost::signal and boost::signal2.
+ * Safety guarantee on client side
  * @copyright MIT License. Open source:
  */
 

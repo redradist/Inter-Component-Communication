@@ -2,7 +2,10 @@
  * @file Component.hpp
  * @author Denis Kotov
  * @date 10 Jun 2017
- * @brief Contains abstract class for Component
+ * @brief Contains abstract class for Component.
+ * It is thread safe version of Component class
+ * Can be used to create different kind of architectures
+ * without of warring og thread safety
  * @copyright MIT License. Open source:
  */
 
