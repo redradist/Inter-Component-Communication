@@ -15,23 +15,17 @@
 #include "ITimerLisener.hpp"
 
 class Timer
-  : protected IComponent {
- public:
-  using tTimerCallback = std::function<void(const TimerEvents &)>;
-  using tListCallbacks = std::vector<tTimerCallback>;
-  using tObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tTimerCallback>;
-  using tCheckedListCallbacks = std::vector<tObjectAndCallbacks>;
+  : protected IComponent,
+    public Event<void(const TimerEvents &)> {
  public:
   Timer(IComponent * _parent)
     : IComponent(_parent),
-      timer_(*service_),
-      unchecked_listeners_(std::make_shared<tListCallbacks>()),
-      checked_listeners_(std::make_shared<tCheckedListCallbacks>()) {
+      timer_(*service_) {
   }
 
  public:
   /**
-   *
+   * Setting continuos mode for the timer
    * @param is_continuos
    */
   void setContinuos(const bool & is_continuos) {
@@ -41,7 +35,7 @@ class Timer
   }
 
   /**
-   *
+   * Setting interval mode for the timer
    * @param _duration
    */
   void setInterval(const boost::posix_time::time_duration & _duration) {
@@ -56,7 +50,7 @@ class Timer
   void start() {
     push([=]{
       timer_.expires_from_now(duration_);
-      notifyOn(TimerEvents::STARTED);
+      operator()(TimerEvents::STARTED);
       timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
     });
   }
@@ -66,61 +60,14 @@ class Timer
    */
   void stop() {
     push([=]{
-      notifyOn(TimerEvents::STOPED);
+      operator()(TimerEvents::STOPED);
       timer_.cancel();
     });
   }
 
   /**
-   * Unsafe function.
-   * User should be confident that _listener lives at moment of calling callback
-   * @tparam _Component
-   * @param _callback
-   * @param _listener
-   */
-  template <typename _Lisener>
-  void connect(void(_Lisener::*_callback)(const TimerEvents &),
-               _Lisener * _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
-                  "_listener is not derived from IComponent");
-    if (_listener) {
-      push([=]{
-        unchecked_listeners_->push_back([=](const TimerEvents & _event){
-          _listener->push([=]() mutable {
-            (_listener->*_callback)(_event);
-          });
-        });
-      });
-    }
-  }
-
-  /**
-   *
-   * @tparam _Component
-   * @param _callback
-   * @param _listener
-   */
-  template <typename _Lisener>
-  void connect(void(_Lisener::*_callback)(const TimerEvents &),
-               std::shared_ptr<_Lisener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
-                  "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
-                  "_listener is not derived from ITimerLisener");
-    if(_listener) {
-      push([=]{
-        checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
-          pointer->push([=]() mutable {
-            (pointer->*_callback)(_event);
-          });
-        });
-      });
-    }
-  }
-
-  /**
-   *
-   * @param _lisener
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
    */
   template <typename _Lisener>
   void addListener(_Lisener * _listener) {
@@ -129,19 +76,16 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
-      push([=]{
-        unchecked_listeners_->push_back([=](const TimerEvents & _event){
-          _listener->push([=]() mutable {
-            (_listener->processTimerEvent)(_event);
-          });
-        });
-      });
+      this->connect(
+          static_cast<void(IComponent::*)(const TimerEvents &)>(
+              &_Lisener::processTimerEvent),
+          static_cast<IComponent*>(_listener));
     }
   }
 
   /**
-   *
-   * @param _listener
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
    */
   template <typename _Lisener>
   void addListener(std::shared_ptr<_Lisener> _listener) {
@@ -150,16 +94,52 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
-      push([=]{
-        checked_listeners_->emplace_back(_listener, [=, pointer = _listener.get()](const TimerEvents & _event) {
-          pointer->push([=]() mutable {
-            (pointer->processTimerEvent)(_event);
-          });
-        });
-      });
+      this->connect(
+          static_cast<void(IComponent::*)(const TimerEvents &)>(
+              &_Lisener::processTimerEvent),
+          static_cast<std::shared_ptr<IComponent>>(_listener));
     }
   }
 
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  template <typename _Lisener>
+  void removeListener(_Lisener * _listener) {
+    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+                  "_listener is not derived from ITimerLisener");
+    if (_listener) {
+      this->disconnect(
+          static_cast<void(IComponent::*)(const TimerEvents &)>(
+              &_Lisener::processTimerEvent),
+          static_cast<IComponent*>(_listener));
+    }
+  }
+
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  template <typename _Lisener>
+  void removeListener(std::shared_ptr<_Lisener> _listener) {
+    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+                  "_listener is not derived from ITimerLisener");
+    if(_listener) {
+      this->disconnect(
+          static_cast<void(IComponent::*)(const TimerEvents &)>(
+              &_Lisener::processTimerEvent),
+          static_cast<std::shared_ptr<IComponent>>(_listener));
+    }
+  }
+
+  /**
+   * Overrided function to specify exit event
+   */
   void exit() override {
     push([=]{
       IComponent::exit();
@@ -169,31 +149,14 @@ class Timer
 
  protected:
   /**
-   *
+   * Method that handle Timer expire event
    * @param _error
    */
   virtual void timerExpired(const boost::system::error_code& _error) {
     if (!_error) {
-      notifyOn(TimerEvents::EXPIRED);
+      operator()(TimerEvents::EXPIRED);
       if (is_continuos_) {
         start();
-      }
-    }
-  }
-
-  /**
-   * Help method used to notify clients about events
-   * @param _event Event regarding which we should notify
-   */
-  void notifyOn(TimerEvents _event) {
-    for (auto & listener : *unchecked_listeners_) {
-      listener(_event);
-    }
-    for (auto & listener : *checked_listeners_) {
-      if (auto _observer = listener.first.lock()) {
-        listener.second(_event);
-      } else {
-        // TODO(redra): Delete it
       }
     }
   }
@@ -202,10 +165,6 @@ class Timer
   bool is_continuos_;
   boost::posix_time::time_duration duration_;
   boost::asio::deadline_timer timer_;
-
- private:
-  std::shared_ptr<tListCallbacks> unchecked_listeners_;
-  std::shared_ptr<tCheckedListCallbacks> checked_listeners_;
 };
 
 #endif //ICC_TIMER_HPP
