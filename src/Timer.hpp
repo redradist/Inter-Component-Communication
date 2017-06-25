@@ -70,16 +70,16 @@ class Timer
    * Method is used to add the listener
    * @param _listener Listener that is being adding
    */
-  template <typename _Lisener>
-  void addListener(_Lisener * _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+  template <typename _Listener>
+  void addListener(_Listener * _listener) {
+    static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->connect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processEvent),
+              &_Listener::processEvent),
           static_cast<IComponent*>(_listener));
     }
   }
@@ -88,16 +88,16 @@ class Timer
    * Method is used to add the listener
    * @param _listener Listener that is being adding
    */
-  template <typename _Lisener>
-  void addListener(std::shared_ptr<_Lisener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+  template <typename _Listener>
+  void addListener(std::shared_ptr<_Listener> _listener) {
+    static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
       this->connect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processEvent),
+              &_Listener::processEvent),
           static_cast<std::shared_ptr<IComponent>>(_listener));
     }
   }
@@ -106,16 +106,16 @@ class Timer
    * Method is used to remove the listener
    * @param _listener Listener that is being removing
    */
-  template <typename _Lisener>
-  void removeListener(_Lisener * _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+  template <typename _Listener>
+  void removeListener(_Listener * _listener) {
+    static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->disconnect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processEvent),
+              &_Listener::processEvent),
           static_cast<IComponent*>(_listener));
     }
   }
@@ -124,16 +124,16 @@ class Timer
    * Method is used to remove the listener
    * @param _listener Listener that is being removing
    */
-  template <typename _Lisener>
-  void removeListener(std::shared_ptr<_Lisener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Lisener>::value,
+  template <typename _Listener>
+  void removeListener(std::shared_ptr<_Listener> _listener) {
+    static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Lisener>::value,
+    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
       this->disconnect(
           static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Lisener::processEvent),
+              &_Listener::processEvent),
           static_cast<std::shared_ptr<IComponent>>(_listener));
     }
   }
