@@ -31,8 +31,15 @@ class Event<_R(_Args...)> {
   using tCheckedListCallbacks = std::vector<tCheckedObjectAndCallbacks>;
  public:
   Event() = default;
-  Event(Event const&) = default;
-  Event(Event &&) = default;
+  /**
+   * Specific copy constructor.
+   * Disable ability to copy unchecked listeners as unsafe.
+   * @param _event Event from which we copy listeners
+   */
+  Event(Event const & _event)
+  : checked_listeners_(_event.checked_listeners_) {
+  }
+  Event(Event &&) = delete;
 
  public:
   /**
