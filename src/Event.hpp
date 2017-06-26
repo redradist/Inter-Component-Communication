@@ -5,7 +5,7 @@
  * @brief Contains Event class.
  * It is thread safe version of class like boost::signal and boost::signal2.
  * Safety guarantee on client side
- * @copyright MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source:
  */
 
 #ifndef ICC_EVENT_HPP

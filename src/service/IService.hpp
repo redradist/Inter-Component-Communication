@@ -1,25 +1,34 @@
-//
-// Created by redra on 25.06.17.
-//
+/**
+ * @file Event.hpp
+ * @author Denis Kotov
+ * @date 25 Jun 2017
+ * @brief Contains IService interface.
+ * It is thread safe version of class like boost::signal and boost::signal2.
+ * Safety guarantee on client side
+ * @copyright Denis Kotov, MIT License. Open source:
+ */
 
 #ifndef ICC_SERVICE_HPP
 #define ICC_SERVICE_HPP
 
 #include <type_traits>
+#include "../IComponent.hpp"
+#include "ProcessBus.hpp"
 
 template <typename _Interface>
 class IService
-  : public _Interface {
+  : virtual public IComponent,
+    public _Interface {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:
-  IService() {
-
+  IService(const std::string & _serviceName)
+      : service_name_(_serviceName) {
+    ProcessBus::getBus().registerService(this, service_name_);
   }
 
-  auto operator->() {
-
-  }
+ private:
+  const std::string service_name_;
 };
 
 #endif //ICC_SERVICE_HPP

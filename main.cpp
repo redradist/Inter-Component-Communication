@@ -2,14 +2,37 @@
 #include "src/IComponent.hpp"
 #include "src/Event.hpp"
 #include "src/Timer.hpp"
+#include "src/service/IService.hpp"
 #include "src/service/IClient.hpp"
 #include "InterfaceForinterface.hpp"
 
-class ASDfdgsdgfsdgs
+class NewService
+    : public IService<InterfaceForInterface> {
+ public:
+
+  NewService()
+      : IService<InterfaceForInterface>("NewService") {
+  }
+
+  void addVersion() override {
+    std::cout << "addVersion from NewService" << std::endl;
+  }
+
+};
+
+class NewClient
 : public IClient<InterfaceForInterface> {
  public:
-  void addVersion() override {
-    std::cout << "Called addVersion" << std::endl;
+
+  NewClient()
+      : IClient<InterfaceForInterface>("NewService") {
+
+  }
+
+  void connected(InterfaceForInterface&) override {
+
+  }
+  void disconnected(InterfaceForInterface&) override {
   }
 //
 //  ASDfdgsdgfsdgs * operator->() {
@@ -47,8 +70,15 @@ void dsfdfsdf(const boost::system::error_code& ec) {
 }
 
 int main() {
-  ASDfdgsdgfsdgs sf;
-  sf->addVersion();
+  NewService service;
+  NewClient sf;
+  auto are1 = std::thread([&]() {
+    service.exec();
+  });
+  auto are2 = std::thread([&]() {
+    sf.exec();
+  });
+  sf.call(&InterfaceForInterface::addVersion);
 
   std::cout << "Hello, World!" << std::endl;
   boost::asio::io_service service_;
@@ -59,6 +89,9 @@ int main() {
 
   Timer timer2_(&com);
   timer2_.setInterval(boost::posix_time::seconds(2));
+  timer2_.enableContinuous();
+  timer2_.disableContinuous();
+  timer2_.setNumberOfRepetition(5);
   timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
