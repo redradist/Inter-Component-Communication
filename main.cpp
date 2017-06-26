@@ -2,6 +2,21 @@
 #include "src/IComponent.hpp"
 #include "src/Event.hpp"
 #include "src/Timer.hpp"
+#include "src/service/IClient.hpp"
+#include "InterfaceForinterface.hpp"
+
+class ASDfdgsdgfsdgs
+: public IClient<InterfaceForInterface> {
+ public:
+  void addVersion() override {
+    std::cout << "Called addVersion" << std::endl;
+  }
+//
+//  ASDfdgsdgfsdgs * operator->() {
+//    std::cout << "Wrapped call" << std::endl;
+//    return this;
+//  }
+};
 
 class Componet
     : public IComponent,
@@ -32,12 +47,12 @@ void dsfdfsdf(const boost::system::error_code& ec) {
 }
 
 int main() {
+  ASDfdgsdgfsdgs sf;
+  sf->addVersion();
+
   std::cout << "Hello, World!" << std::endl;
   boost::asio::io_service service_;
-  boost::asio::deadline_timer timer_(service_);
-  timer_.expires_from_now(boost::posix_time::seconds(2));
-  timer_.async_wait(dsfdfsdf);
-  Componet com;
+  Componet com(&service_);
   std::shared_ptr<Componet> com12 = std::shared_ptr<Componet>(new Componet());
   Componet com1(&com);
   Componet com2(&com1);
@@ -47,6 +62,9 @@ int main() {
   timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
+
+  //timer2_.addListener(&sf);
+
   timer2_.start();
   auto are = std::thread([=]() {
     com12->exec();
@@ -68,10 +86,11 @@ int main() {
     com1.event_.connect(&Componet::Callback, com3);
   }
   std::cout << "Before callback" << std::endl;
-  const std::function<void(const int &, double)> event3{com1.event_};
-  //event3(1, 6);
+  const std::function<void(const int &, double)> event3 = com1.event_;
+  event3(1, 6);
   std::cout << "After callback" << std::endl;
   com.exec();
+  //service_.run();
   are.join();
   return 0;
 }
