@@ -6,7 +6,7 @@
  * It is thread safe version of Component class
  * Can be used to create different kind of architectures
  * without of warring og thread safety
- * @copyright MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source:
  */
 
 #ifndef ICC_COMPONENT_HPP

@@ -4,7 +4,7 @@
  * @date 10 Jun 2017
  * @brief Thread safe version of Timer class
  * It is based on boost::asio::deadline_timer
- * @copyright MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source:
  */
 
 #ifndef ICC_TIMER_HPP
@@ -19,6 +19,15 @@ class Timer
   : protected IComponent,
     public Event<void(const TimerEvents &)> {
  public:
+  /**
+   * Should be used for setting continuous mode
+   */
+  static const int32_t Infinite = -1;
+  /**
+   * Should be used for setting one time mode
+   */
+  static const int32_t OneTime = 0;
+ public:
   Timer(IComponent * _parent)
     : IComponent(_parent),
       timer_(*service_) {
@@ -26,18 +35,42 @@ class Timer
 
  public:
   /**
-   * Setting continuos mode for the timer
-   * @param is_continuos
+   * Enable continuous mode
    */
-  void setContinuos(const bool & is_continuos) {
+  void enableContinuous() {
     push([=]{
-      is_continuos_ = is_continuos;
+      counter_ = Infinite;
+    });
+  }
+
+  /**
+   * Disable continuous mode
+   */
+  void disableContinuous() {
+    push([=]{
+      if (Infinite == counter_) {
+        counter_ = OneTime;
+      }
+    });
+  }
+
+  /**
+   * Setting number of repetitions
+   * @param number Number of repetition
+   */
+  void setNumberOfRepetition(const int32_t & number) {
+    push([=]{
+      if (number < 0) {
+        counter_ = Infinite;
+      } else {
+        counter_ = number;
+      }
     });
   }
 
   /**
    * Setting interval mode for the timer
-   * @param _duration
+   * @param _duration Timeout duration
    */
   void setInterval(const boost::posix_time::time_duration & _duration) {
     push([=]{
@@ -156,14 +189,18 @@ class Timer
   virtual void timerExpired(const boost::system::error_code& _error) {
     if (!_error) {
       operator()(TimerEvents::EXPIRED);
-      if (is_continuos_) {
+      if (counter_ > 0) {
+        --counter_;
+      }
+      if (Infinite == counter_ ||
+          counter_ > 0) {
         start();
       }
     }
   }
 
  protected:
-  bool is_continuos_;
+  int32_t counter_;
   boost::posix_time::time_duration duration_;
   boost::asio::deadline_timer timer_;
 };

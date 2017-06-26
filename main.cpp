@@ -44,6 +44,9 @@ int main() {
 
   Timer timer2_(&com);
   timer2_.setInterval(boost::posix_time::seconds(2));
+  timer2_.enableContinuous();
+  timer2_.disableContinuous();
+  timer2_.setNumberOfRepetition(5);
   timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
@@ -68,7 +71,7 @@ int main() {
     com1.event_.connect(&Componet::Callback, com3);
   }
   std::cout << "Before callback" << std::endl;
-  const std::function<void(const int &, double)> event3{com1.event_};
+  const std::function<void(const int &, double)> event3 = com1.event_;
   //event3(1, 6);
   std::cout << "After callback" << std::endl;
   com.exec();
