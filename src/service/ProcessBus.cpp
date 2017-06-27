@@ -3,6 +3,8 @@
  * @author Denis Kotov
  * @date 25 Jun 2017
  * @brief Contains ProcessBus class.
+ * It is a broker pattern. Used to control registration
+ * and connection of services
  * @copyright Denis Kotov, MIT License. Open source:
  */
 

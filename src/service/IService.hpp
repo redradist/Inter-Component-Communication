@@ -3,8 +3,8 @@
  * @author Denis Kotov
  * @date 25 Jun 2017
  * @brief Contains IService interface.
- * It is thread safe version of class like boost::signal and boost::signal2.
- * Safety guarantee on client side
+ * It is used to provide service which is implemented with
+ * _Interface interface.
  * @copyright Denis Kotov, MIT License. Open source:
  */
 
@@ -12,7 +12,7 @@
 #define ICC_SERVICE_HPP
 
 #include <type_traits>
-#include "../IComponent.hpp"
+#include <IComponent.hpp>
 #include "ProcessBus.hpp"
 
 template <typename _Interface>
@@ -28,7 +28,7 @@ class IService
   }
 
   ~IService() {
-    ProcessBus::getBus().unregisterService(this, service_name_);
+    //ProcessBus::getBus().unregisterService(this, service_name_);
   }
 
  private:

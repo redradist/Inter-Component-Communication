@@ -124,12 +124,14 @@ int main() {
   std::cout << "After callback" << std::endl;
   sf.call(&InterfaceForInterface::addVersion);
   com.exec();
+  std::thread are1;
   NewService service;
 
-  auto are1 = std::thread([&]() {
-    service.exec();
-  });
-
+  {
+    are1 = std::thread([&]() {
+      service.exec();
+    });
+  }
 
   service_.run();
   are.join();

@@ -3,6 +3,8 @@
  * @author Denis Kotov
  * @date 25 Jun 2017
  * @brief Contains ProcessBus class.
+ * It is a broker pattern. Used to control registration
+ * and connection of services
  * @copyright Denis Kotov, MIT License. Open source:
  */
 
@@ -16,7 +18,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
-#include "../IComponent.hpp"
+#include <IComponent.hpp>
 
 template <typename _Interface>
 class IClient;
@@ -27,8 +29,9 @@ class IService;
 class ProcessBus
   : public IComponent {
  public:
-  using tTypeAndNameOfService = std::pair<std::type_index, std::string>;
+  using tKeyForClientList = std::pair<std::type_index, std::string>;
   using tListOfClients = std::set<void*>;
+  using tKeyForServiceList = std::type_index;
   using tListOfServices = std::map<std::string, void*>;
 
  public:
@@ -36,8 +39,8 @@ class ProcessBus
   void registerService(IService<_Interface> * _service,
                        const std::string & _serviceName) {
     push([=]{
-      services_[std::type_index(typeid(_Interface))].emplace(_serviceName, _service);
-      auto clientsKey = tTypeAndNameOfService{typeid(_Interface), _serviceName};
+      services_[tKeyForServiceList(typeid(_Interface))].emplace(_serviceName, _service);
+      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
         reinterpret_cast<IClient<_Interface>*>(client)->setService(_service);
@@ -49,7 +52,7 @@ class ProcessBus
   void unregisterService(IService<_Interface> * _service,
                          const std::string & _serviceName) {
     push([=]{
-      auto clientsKey = tTypeAndNameOfService{typeid(_Interface), _serviceName};
+      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
         reinterpret_cast<IClient<_Interface>*>(client)->setService(nullptr);
@@ -61,7 +64,7 @@ class ProcessBus
   void buildClient(IClient<_Interface> * _client,
                    const std::string & _serviceName) {
     push([=] {
-      auto clientsKey = tTypeAndNameOfService{typeid(_Interface), _serviceName};
+      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       clients_[clientsKey].emplace(_client);
       auto servicesIter = services_.find(std::type_index(typeid(_Interface)));
       if (services_.end() != servicesIter) {
@@ -82,7 +85,7 @@ class ProcessBus
   void disassembleClient(IClient<_Interface> * _client,
                          const std::string & _serviceName) {
     push([=] {
-      auto clientsKey = tTypeAndNameOfService{typeid(_Interface), _serviceName};
+      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       clients_[clientsKey].erase(_client);
     });
   }
@@ -98,8 +101,8 @@ class ProcessBus
 
  private:
   std::thread thread_;
-  std::map<tTypeAndNameOfService, tListOfClients> clients_;
-  std::map<std::type_index, tListOfServices> services_;
+  std::map<tKeyForClientList, tListOfClients> clients_;
+  std::map<tKeyForServiceList, tListOfServices> services_;
 };
 
 #endif //ICC_PROCESSBUS_HPP
