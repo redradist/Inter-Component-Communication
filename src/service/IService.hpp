@@ -27,6 +27,10 @@ class IService
     ProcessBus::getBus().registerService(this, service_name_);
   }
 
+  ~IService() {
+    ProcessBus::getBus().unregisterService(this, service_name_);
+  }
+
  private:
   const std::string service_name_;
 };

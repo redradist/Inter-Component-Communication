@@ -30,9 +30,12 @@ class NewClient
   }
 
   void connected(InterfaceForInterface&) override {
-
+    std::cout << "connected is called" << std::endl;
+    call(&InterfaceForInterface::addVersion);
   }
+
   void disconnected(InterfaceForInterface&) override {
+    std::cout << "disconnected is called" << std::endl;
   }
 //
 //  ASDfdgsdgfsdgs * operator->() {
@@ -70,11 +73,8 @@ void dsfdfsdf(const boost::system::error_code& ec) {
 }
 
 int main() {
-  NewService service;
   NewClient sf;
-  auto are1 = std::thread([&]() {
-    service.exec();
-  });
+
   auto are2 = std::thread([&]() {
     sf.exec();
   });
@@ -122,8 +122,16 @@ int main() {
   const std::function<void(const int &, double)> event3 = com1.event_;
   event3(1, 6);
   std::cout << "After callback" << std::endl;
+  sf.call(&InterfaceForInterface::addVersion);
   com.exec();
-  //service_.run();
+  NewService service;
+
+  auto are1 = std::thread([&]() {
+    service.exec();
+  });
+
+
+  service_.run();
   are.join();
   return 0;
 }

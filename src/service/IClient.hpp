@@ -16,6 +16,9 @@
 #include "ProcessBus.hpp"
 
 template <typename _Interface>
+class IService;
+
+template <typename _Interface>
 class IClient
   : virtual public IComponent {
   static_assert(std::is_abstract<_Interface>::value,
@@ -23,7 +26,11 @@ class IClient
  public:
   IClient(const std::string & _serviceName)
     : service_name_(_serviceName) {
-    ProcessBus::getBus().buildClient(this, _serviceName);
+    ProcessBus::getBus().buildClient(this, service_name_);
+  }
+
+  ~IClient() {
+    ProcessBus::getBus().disassembleClient(this, service_name_);
   }
 
  public:
@@ -33,19 +40,30 @@ class IClient
   template <typename ... _Args>
   void call(void(_Interface::*_callback)(_Args...), _Args ... _args) {
     push([=]{
-      (service_->*_callback)(std::forward<_Args>(_args)...);
+      if (service_) {
+        service_->push([=]{
+          (service_->*_callback)(std::forward<_Args>(_args)...);
+        });
+      }
     });
   };
 
  protected:
-  void setService(_Interface * _service) {
-    service_ = _service;
+  virtual void setService(IService<_Interface> * _service) {
+    push([=]{
+      service_ = _service;
+      if (service_) {
+        connected(*service_);
+      } else {
+        disconnected(*service_);
+      }
+    });
   }
 
  private:
   friend class ProcessBus;
   const std::string service_name_;
-  _Interface * service_;
+  IService<_Interface> * service_ = nullptr;
 };
 
 #endif //ICC_ISERVICECLIENT_HPP
