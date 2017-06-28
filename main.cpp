@@ -14,8 +14,13 @@ class NewService
       : IService<InterfaceForInterface>("NewService") {
   }
 
-  void addVersion() override {
+  void addVersion(std::function<void(std::string)> _reply) override {
     std::cout << "addVersion from NewService" << std::endl;
+    _reply("Denis");
+  }
+
+  virtual void addVersion2() override {
+    std::cout << "addVersion2 from NewService" << std::endl;
   }
 
 };
@@ -31,7 +36,11 @@ class NewClient
 
   void connected(InterfaceForInterface&) override {
     std::cout << "connected is called" << std::endl;
-    call(&InterfaceForInterface::addVersion);
+    std::function<void(std::string)> kjh = [](std::string str){
+      std::cout << "Hello " << str << std::endl;
+    };
+    call(&InterfaceForInterface::addVersion, kjh);
+    call(&InterfaceForInterface::addVersion2);
   }
 
   void disconnected(InterfaceForInterface&) override {
@@ -78,7 +87,7 @@ int main() {
   auto are2 = std::thread([&]() {
     sf.exec();
   });
-  sf.call(&InterfaceForInterface::addVersion);
+  //sf.call(&InterfaceForInterface::addVersion);
 
   std::cout << "Hello, World!" << std::endl;
   boost::asio::io_service service_;
@@ -122,11 +131,10 @@ int main() {
   const std::function<void(const int &, double)> event3 = com1.event_;
   event3(1, 6);
   std::cout << "After callback" << std::endl;
-  sf.call(&InterfaceForInterface::addVersion);
+  //sf.call(&InterfaceForInterface::addVersion);
   com.exec();
   std::thread are1;
   NewService service;
-
   {
     are1 = std::thread([&]() {
       service.exec();

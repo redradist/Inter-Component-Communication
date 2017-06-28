@@ -48,6 +48,25 @@ class IClient
     });
   };
 
+  template <typename ... _Params, typename ... _Args>
+  void call(void(_Interface::*_callback)(std::function<void(_Params ...)>, _Args...),
+            std::function<void(_Params ...)> _reply,
+            _Args ... _args) {
+    push([=]{
+      if (service_) {
+        std::function<void(_Params ...)> _safeReply =
+        [=](_Params ... params){
+          push([=]{
+            _reply(params...);
+          });
+        };
+        service_->push([=]{
+          (service_->*_callback)(_safeReply, std::forward<_Args>(_args)...);
+        });
+      }
+    });
+  };
+
  protected:
   virtual void setService(IService<_Interface> * _service) {
     push([=]{
