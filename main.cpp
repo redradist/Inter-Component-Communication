@@ -16,6 +16,7 @@ class NewService
 
   void addVersion(std::function<void(std::string)> _reply) override {
     std::cout << "addVersion from NewService" << std::endl;
+    event_(5);
     _reply("Denis");
   }
 
@@ -32,6 +33,10 @@ class NewClient
   NewClient()
       : IClient<InterfaceForInterface>("NewService") {
 
+  }
+
+  void callback(const int & n) {
+    std::cout << "callback = " << n << std::endl;
   }
 
   void connected(InterfaceForInterface&) override {
@@ -140,6 +145,9 @@ int main() {
       service.exec();
     });
   }
+
+  sf.subscribe(&InterfaceForInterface::event_, &NewClient::callback);
+  //sf.unsubscribe(&InterfaceForInterface::event_, &NewClient::callback);
 
   service_.run();
   are.join();

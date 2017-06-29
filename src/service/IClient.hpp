@@ -20,7 +20,7 @@ class IService;
 
 template <typename _Interface>
 class IClient
-  : virtual public IComponent {
+  : public IComponent {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:
@@ -62,6 +62,42 @@ class IClient
         };
         service_->push([=]{
           (service_->*_callback)(_safeReply, std::forward<_Args>(_args)...);
+        });
+      }
+    });
+  };
+
+  template < template <typename _T> class Event,
+             typename _Client,
+             typename _R,
+             typename ... _Args >
+  void subscribe(Event<_R(_Args...)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Args...)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "_Interface is not an abstract class");
+    push([=]{
+      if (service_) {
+        service_->push([=]{
+          (service_->*_event).connect(
+              _callback,
+              static_cast<_Client*>(this));
+        });
+      }
+    });
+  };
+
+  template < template <typename _T> class Event,
+      typename _Client,
+      typename _R,
+      typename ... _Args >
+  void unsubscribe(Event<_R(_Args...)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Args...)) {
+    push([=]{
+      if (service_) {
+        service_->push([=]{
+          (service_->*_event).disconnect(
+              _callback,
+              static_cast<_Client*>(this));
         });
       }
     });
