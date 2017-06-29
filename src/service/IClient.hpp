@@ -29,6 +29,12 @@ class IClient
     ProcessBus::getBus().buildClient(this, service_name_);
   }
 
+  IClient(const std::string & _serviceName, IComponent * _parent)
+      : IComponent(_parent)
+      , service_name_(_serviceName) {
+    ProcessBus::getBus().buildClient(this, service_name_);
+  }
+
   ~IClient() {
     ProcessBus::getBus().disassembleClient(this, service_name_);
   }

@@ -27,6 +27,12 @@ class IService
     ProcessBus::getBus().registerService(this, service_name_);
   }
 
+  IService(const std::string & _serviceName, IComponent * _parent)
+      : IComponent(_parent)
+      , service_name_(_serviceName) {
+    ProcessBus::getBus().registerService(this, service_name_);
+  }
+
   ~IService() {
     ProcessBus::getBus().unregisterService(this, service_name_);
   }
