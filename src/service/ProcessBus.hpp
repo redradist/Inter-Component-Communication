@@ -34,6 +34,20 @@ class ProcessBus
   using tListOfServices = std::map<std::string, void*>;
 
  public:
+  /**
+   * This function is used for getting ProcessBus
+   * It is used like Singleton pattern
+   * @return ProcessBus
+   */
+  static ProcessBus & getBus();
+
+ public:
+  /**
+   * This method is used for registering service
+   * @tparam _Interface Interface for registration
+   * @param _service Object of service for registration
+   * @param _serviceName Name of service for registration
+   */
   template <typename _Interface>
   void registerService(IService<_Interface> * _service,
                        const std::string & _serviceName) {
@@ -47,6 +61,12 @@ class ProcessBus
     });
   }
 
+  /**
+   * This method is used for unregistering service
+   * @tparam _Interface Interface for unregistration
+   * @param _service Object of service for unregistration
+   * @param _serviceName Name of service for unregistration
+   */
   template <typename _Interface>
   void unregisterService(IService<_Interface> * _service,
                          const std::string & _serviceName) {
@@ -59,6 +79,13 @@ class ProcessBus
     });
   }
 
+  /**
+   * This method is used for building client
+   * (IClient<_Interface>) of IService<_Interface>
+   * @tparam _Interface Interface for building client
+   * @param _client Object of client waiting for building
+   * @param _serviceName Name of service for building
+   */
   template <typename _Interface>
   void buildClient(IClient<_Interface> * _client,
                    const std::string & _serviceName) {
@@ -80,6 +107,13 @@ class ProcessBus
     });
   }
 
+  /**
+   * This method is used for disassembling client
+   * (IClient<_Interface>) of IService<_Interface>
+   * @tparam _Interface Interface for building client
+   * @param _client Object of client waiting for building
+   * @param _serviceName Name of service for building
+   */
   template <typename _Interface>
   void disassembleClient(IClient<_Interface> * _client,
                          const std::string & _serviceName) {
@@ -88,9 +122,6 @@ class ProcessBus
       clients_[clientsKey].erase(_client);
     });
   }
-
- public:
-  static ProcessBus & getBus();
 
  private:
   ProcessBus();

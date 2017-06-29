@@ -24,25 +24,49 @@ class IClient
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:
+  /**
+   * Constructor which build the client
+   * @param _serviceName Service name, should be unique in the process
+   */
   IClient(const std::string & _serviceName)
     : service_name_(_serviceName) {
     ProcessBus::getBus().buildClient(this, service_name_);
   }
 
+  /**
+   * Constructor which build the client with external event loop
+   * @param _serviceName Service name, should be unique in the process
+   * @param _parent Parent object that provides event loop
+   */
   IClient(const std::string & _serviceName, IComponent * _parent)
       : IComponent(_parent)
       , service_name_(_serviceName) {
     ProcessBus::getBus().buildClient(this, service_name_);
   }
 
+  /**
+   * Destructor which disassemble the client
+   */
   ~IClient() {
     ProcessBus::getBus().disassembleClient(this, service_name_);
   }
 
  public:
+  /**
+   * This method will be called on connect client to service
+   */
   virtual void connected(_Interface&) = 0;
+  /**
+   * This method will be called on disconnection client from service
+   */
   virtual void disconnected(_Interface&) = 0;
 
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Args Arguments types those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _args Arguments passed into external method
+   */
   template <typename ... _Args>
   void call(void(_Interface::*_callback)(_Args...), _Args ... _args) {
     push([=]{
@@ -54,6 +78,14 @@ class IClient
     });
   };
 
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Params Arguments types for reply
+   * @tparam _Args Arguments types for external method
+   * @param _callback Pointer to external method
+   * @param _reply Reply with some result from IService<>
+   * @param _args Arguments passed into external method
+   */
   template <typename ... _Params, typename ... _Args>
   void call(void(_Interface::*_callback)(std::function<void(_Params ...)>, _Args...),
             std::function<void(_Params ...)> _reply,
@@ -73,6 +105,15 @@ class IClient
     });
   };
 
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam Event Family of class for Event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Args Arguments of Event<>
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
   template < template <typename _T> class Event,
              typename _Client,
              typename _R,
@@ -92,6 +133,15 @@ class IClient
     });
   };
 
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam Event Family of class for Event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Args Arguments of Event<>
+   * @param _event Event for unsubscription
+   * @param _callback Callback for unsubscription
+   */
   template < template <typename _T> class Event,
       typename _Client,
       typename _R,
@@ -110,6 +160,10 @@ class IClient
   };
 
  protected:
+  /**
+   * Used by ProcessBus to set IService<>
+   * @param _service IService<> for set
+   */
   virtual void setService(IService<_Interface> * _service) {
     push([=]{
       service_ = _service;
