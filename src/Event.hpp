@@ -139,6 +139,14 @@ class Event<_R(_Args...)> {
   }
 
   /**
+   * Used to disconnect all clients from this event
+   */
+  void disconnectAll() {
+    unchecked_listeners_.clear();
+    checked_listeners_.clear();
+  }
+
+  /**
    * Method for calling Event
    * @param _args Parameters for calling Event
    */
