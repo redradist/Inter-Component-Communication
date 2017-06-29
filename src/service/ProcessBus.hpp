@@ -11,7 +11,6 @@
 #ifndef ICC_PROCESSBUS_HPP
 #define ICC_PROCESSBUS_HPP
 
-#include <typeinfo>
 #include <set>
 #include <map>
 #include <algorithm>
