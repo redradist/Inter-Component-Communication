@@ -139,6 +139,9 @@ int main() {
   //sf.call(&InterfaceForInterface::addVersion);
   com.exec();
   std::thread are1;
+  {
+    NewService service2;
+  }
   NewService service;
   {
     are1 = std::thread([&]() {

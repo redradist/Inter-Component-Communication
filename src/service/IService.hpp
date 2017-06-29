@@ -28,7 +28,7 @@ class IService
   }
 
   ~IService() {
-    //ProcessBus::getBus().unregisterService(this, service_name_);
+    ProcessBus::getBus().unregisterService(this, service_name_);
   }
 
  private:
