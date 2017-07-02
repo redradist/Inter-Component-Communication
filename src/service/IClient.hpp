@@ -15,6 +15,9 @@
 #include <IComponent.hpp>
 #include "ProcessBus.hpp"
 
+template <typename _T>
+class Event;
+
 template <typename _Interface>
 class IService;
 
@@ -107,15 +110,13 @@ class IClient
 
   /**
    * This method is used to subscribe on event from IService<>
-   * @tparam Event Family of class for Event
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
    * @param _event Event for subscription
    * @param _callback Callback for subscription
    */
-  template < template <typename _T> class Event,
-             typename _Client,
+  template < typename _Client,
              typename _R,
              typename ... _Args >
   void subscribe(Event<_R(_Args...)> _Interface::*_event,
@@ -135,17 +136,15 @@ class IClient
 
   /**
    * This method is used to unsubscribe on event from IService<>
-   * @tparam Event Family of class for Event
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
    * @param _event Event for unsubscription
    * @param _callback Callback for unsubscription
    */
-  template < template <typename _T> class Event,
-      typename _Client,
-      typename _R,
-      typename ... _Args >
+  template < typename _Client,
+             typename _R,
+             typename ... _Args >
   void unsubscribe(Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
     push([=]{
