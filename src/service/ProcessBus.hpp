@@ -26,7 +26,7 @@ template <typename _Interface>
 class IService;
 
 class ProcessBus
-  : public IComponent {
+  : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
   using tListOfClients = std::set<void*>;

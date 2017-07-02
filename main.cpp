@@ -92,7 +92,7 @@ int main() {
   auto are2 = std::thread([&]() {
     sf.exec();
   });
-  //sf.call(&InterfaceForInterface::addVersion);
+  //sf.call(&InterfaceForInterface::addVersion2);
 
   std::cout << "Hello, World!" << std::endl;
   boost::asio::io_service service_;

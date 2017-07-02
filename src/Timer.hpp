@@ -16,7 +16,7 @@
 #include "ITimerLisener.hpp"
 
 class Timer
-  : protected IComponent,
+  : protected virtual IComponent,
     public Event<void(const TimerEvents &)> {
  public:
   /**

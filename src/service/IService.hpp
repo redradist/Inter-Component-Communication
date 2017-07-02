@@ -17,7 +17,7 @@
 
 template <typename _Interface>
 class IService
-  : public IComponent,
+  : public virtual IComponent,
     public _Interface {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");

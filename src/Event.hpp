@@ -57,7 +57,7 @@ class Event<_R(_Args...)> {
     if (_listener) {
       unchecked_listeners_.emplace_back(
           static_cast<IComponent*>(_listener),
-          static_cast<_R(IComponent::*)(_Args...)>(_callback));
+          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback));
     }
   }
 
@@ -76,7 +76,7 @@ class Event<_R(_Args...)> {
     if(_listener) {
       checked_listeners_.emplace_back(
           static_cast<std::shared_ptr<IComponent>>(_listener),
-          static_cast<_R(IComponent::*)(_Args...)>(_callback)
+          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
       );
     }
   }
@@ -96,7 +96,7 @@ class Event<_R(_Args...)> {
     if (_listener) {
       std::pair<IComponent *, tCallback> removedCallback = {
           static_cast<IComponent*>(_listener),
-          static_cast<_R(IComponent::*)(_Args...)>(_callback)
+          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
         };
 
       auto erase = std::remove(unchecked_listeners_.begin(),
@@ -121,7 +121,7 @@ class Event<_R(_Args...)> {
     if(_listener) {
       std::pair<std::weak_ptr<IComponent>, tCallback> removedCallback = {
           static_cast<std::shared_ptr<IComponent>>(_listener),
-          static_cast<_R(IComponent::*)(_Args...)>(_callback)
+          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
       };
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
