@@ -128,7 +128,7 @@ class Event<_R(_Args...)> {
       [=](const std::pair<std::weak_ptr<IComponent>, tCallback> & rad) {
         bool result = false;
         if (auto _observer = rad.first.lock()) {
-          result = (_callback == static_cast<void(_Component::*)(_Args...)>(rad.second));
+          result = (_callback == reinterpret_cast<void(_Component::*)(_Args...)>(rad.second));
         } else {
           result = true;
         }

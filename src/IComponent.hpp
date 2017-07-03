@@ -17,8 +17,7 @@
 #include <algorithm>
 #include <boost/asio/io_service.hpp>
 
-class IComponent
-  : public std::enable_shared_from_this<IComponent> {
+class IComponent {
  public:
   /**
    * Default constructor.
@@ -28,6 +27,13 @@ class IComponent
     : owner_of_service_(true),
       service_(std::make_shared<boost::asio::io_service>()),
       worker_(new boost::asio::io_service::work(*service_)) {
+  }
+
+  /**
+   * Delegate constructor
+   */
+  IComponent(nullptr_t)
+      : IComponent() {
   }
 
   /**
@@ -84,11 +90,6 @@ class IComponent
    * Destructor used for removing children or waiting end of event loop
    */
   virtual ~IComponent() = 0;
-
- public:
-  operator std::shared_ptr<IComponent>() {
-    return shared_from_this();
-  }
 
  public:
   /**

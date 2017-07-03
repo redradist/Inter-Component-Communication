@@ -31,7 +31,8 @@ class ProcessBus
   using tKeyForClientList = std::pair<std::type_index, std::string>;
   using tListOfClients = std::set<void*>;
   using tKeyForServiceList = std::type_index;
-  using tListOfServices = std::map<std::string, void*>;
+  using tServiceStorage = std::function<void*(void)>;
+  using tListOfServices = std::map<std::string, tServiceStorage>;
 
  public:
   /**
@@ -49,10 +50,12 @@ class ProcessBus
    * @param _serviceName Name of service for registration
    */
   template <typename _Interface>
-  void registerService(IService<_Interface> * _service,
+  void registerService(std::shared_ptr<IService<_Interface>> _service,
                        const std::string & _serviceName) {
-    push([=]{
-      services_[tKeyForServiceList(typeid(_Interface))].emplace(_serviceName, _service);
+    push([=]() mutable {
+      services_[tKeyForServiceList(typeid(_Interface))].
+          emplace(_serviceName,
+                  [_service]() mutable {return reinterpret_cast<void*>(&_service);});
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
@@ -68,9 +71,10 @@ class ProcessBus
    * @param _serviceName Name of service for unregistration
    */
   template <typename _Interface>
-  void unregisterService(IService<_Interface> * _service,
+  void unregisterService(std::shared_ptr<IService<_Interface>> _service,
                          const std::string & _serviceName) {
     push([=]{
+      services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
@@ -96,12 +100,13 @@ class ProcessBus
       if (services_.end() != servicesIter) {
         auto serviceIter = std::find_if(servicesIter->second.begin(),
                                         servicesIter->second.end(),
-        [=](std::pair<std::string, void*> element) {
+        [=](std::pair<std::string, std::function<void*(void)>> element) {
           return element.first == _serviceName;
         });
         if (servicesIter->second.end() != serviceIter) {
           _client->setService(
-              reinterpret_cast<IService<_Interface>*>(serviceIter->second));
+              *reinterpret_cast<std::shared_ptr<IService<_Interface>>*>(
+                  serviceIter->second()));
         }
       }
     });

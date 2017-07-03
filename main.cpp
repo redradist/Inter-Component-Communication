@@ -2,16 +2,22 @@
 #include "src/IComponent.hpp"
 #include "src/Event.hpp"
 #include "src/Timer.hpp"
-#include "src/service/IService.hpp"
-#include "src/service/IClient.hpp"
+#include "service/IService.hpp"
+#include "service/IClient.hpp"
 #include "InterfaceForinterface.hpp"
+
 
 class NewService
     : public IService<InterfaceForInterface> {
  public:
 
-  NewService()
-      : IService<InterfaceForInterface>("NewService") {
+  NewService(IComponent * _parent)
+      : IComponent(_parent),
+        IService<InterfaceForInterface>("NewService") {
+  }
+
+  ~NewService() {
+    std::cout << "~NewService" << std::endl;
   }
 
   void addVersion(std::function<void(std::string)> _reply) override {
@@ -30,8 +36,9 @@ class NewClient
 : public IClient<InterfaceForInterface> {
  public:
 
-  NewClient()
-      : IClient<InterfaceForInterface>("NewService") {
+  NewClient(IComponent * _parent)
+      : IComponent(_parent),
+        IClient<InterfaceForInterface>("NewService") {
 
   }
 
@@ -39,7 +46,7 @@ class NewClient
     std::cout << "callback = " << n << std::endl;
   }
 
-  void connected(InterfaceForInterface&) override {
+  void connected(InterfaceForInterface*) override {
     std::cout << "connected is called" << std::endl;
     std::function<void(std::string)> kjh = [](std::string str){
       std::cout << "Hello " << str << std::endl;
@@ -48,7 +55,7 @@ class NewClient
     call(&InterfaceForInterface::addVersion2);
   }
 
-  void disconnected(InterfaceForInterface&) override {
+  void disconnected(InterfaceForInterface*) override {
     std::cout << "disconnected is called" << std::endl;
   }
 //
@@ -78,7 +85,6 @@ class Componet
 
   void Callback(const int & i, double k) {
     std::cout << "Callback was called " << i << std::endl;
-    exit();
   }
 };
 
@@ -87,19 +93,29 @@ void dsfdfsdf(const boost::system::error_code& ec) {
 }
 
 int main() {
-  NewClient sf;
-
-  auto are2 = std::thread([&]() {
-    sf.exec();
-  });
-  //sf.call(&InterfaceForInterface::addVersion2);
 
   std::cout << "Hello, World!" << std::endl;
   boost::asio::io_service service_;
-  Componet com(&service_);
+  Componet com;
   std::shared_ptr<Componet> com12 = std::shared_ptr<Componet>(new Componet());
   Componet com1(&com);
   Componet com2(&com1);
+
+  std::shared_ptr<NewService> service = std::make_shared<NewService>(&com);
+  service->registerService();
+  std::shared_ptr<NewClient> client = std::make_shared<NewClient>(&com);
+  client->subscribe(&InterfaceForInterface::event_, &NewClient::callback);
+  client->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
+    std::cout << "Response to " << _name << std::endl;
+  }));
+
+//  auto are1 = std::thread([=]() {
+//    service->exec();
+//  });
+//
+//  auto are2 = std::thread([=]() {
+//    client->exec();
+//  });
 
   Timer timer2_(&com);
   timer2_.setInterval(boost::posix_time::seconds(2));
@@ -138,20 +154,6 @@ int main() {
   std::cout << "After callback" << std::endl;
   //sf.call(&InterfaceForInterface::addVersion);
   com.exec();
-  std::thread are1;
-  {
-    NewService service2;
-  }
-  NewService service;
-  {
-    are1 = std::thread([&]() {
-      service.exec();
-    });
-  }
-
-  sf.subscribe(&InterfaceForInterface::event_, &NewClient::callback);
-  //sf.unsubscribe(&InterfaceForInterface::event_, &NewClient::callback);
-
   service_.run();
   are.join();
   return 0;
