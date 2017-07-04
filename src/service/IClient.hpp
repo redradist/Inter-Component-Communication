@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <IComponent.hpp>
 #include "ProcessBus.hpp"
+#include "helpers/memory_helper.hpp"
 
 template <typename _T>
 class Event;
@@ -24,7 +25,7 @@ class IService;
 template <typename _Interface>
 class IClient
   : public virtual IComponent,
-    public std::enable_shared_from_this<IClient<_Interface>> {
+    public std::virtual_enable_shared_from_this<IClient<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:

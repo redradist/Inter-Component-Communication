@@ -14,12 +14,13 @@
 #include <type_traits>
 #include <IComponent.hpp>
 #include "ProcessBus.hpp"
+#include "helpers/memory_helper.hpp"
 
 template <typename _Interface>
 class IService
   : public virtual IComponent,
     public _Interface,
-    public std::enable_shared_from_this<IService<_Interface>> {
+    public std::virtual_enable_shared_from_this<IService<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:

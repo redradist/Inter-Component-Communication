@@ -8,7 +8,8 @@
 
 
 class NewService
-    : public IService<InterfaceForInterface> {
+    : public virtual IComponent,
+      public IService<InterfaceForInterface> {
  public:
 
   NewService(IComponent * _parent)
@@ -32,13 +33,15 @@ class NewService
 
 };
 
-class NewClient
-: public IClient<InterfaceForInterface>,
+class CompositeObject
+: public IService<InterfaceForInterface>,
+  public IClient<InterfaceForInterface>,
   public ITimerLisener {
  public:
 
-  NewClient(IComponent * _parent)
+  CompositeObject(IComponent * _parent)
       : IComponent(_parent),
+        IService<InterfaceForInterface>("NewService"),
         IClient<InterfaceForInterface>("NewService") {
 
   }
@@ -49,6 +52,16 @@ class NewClient
     } else if (TimerEvents::EXPIRED == _event) {
       std::cout << "NewClient: Timer is expired" << std::endl;
     }
+  }
+
+  void addVersion(std::function<void(std::string)> _reply) override {
+    std::cout << "addVersion from NewService" << std::endl;
+    event_(5);
+    _reply("Denis");
+  }
+
+  virtual void addVersion2() override {
+    std::cout << "addVersion2 from NewService" << std::endl;
   }
 
   void callback2(const int & i, double h) {
@@ -116,13 +129,17 @@ int main() {
   Componet com1(&com);
   Componet com2(&com1);
 
-  std::shared_ptr<NewService> service = std::make_shared<NewService>(&com);
-  service->registerService();
-  std::shared_ptr<NewClient> client = std::make_shared<NewClient>(&com);
-  client->subscribe(&InterfaceForInterface::event_, &NewClient::callback);
-  client->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
+  std::shared_ptr<CompositeObject> composite = std::make_shared<CompositeObject>(&com);
+  composite->registerService();
+  //std::shared_ptr<NewClient> client = std::make_shared<NewClient>(&com);
+  composite->subscribe(&InterfaceForInterface::event_, &CompositeObject::callback);
+  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
     std::cout << "Response to " << _name << std::endl;
   }));
+  //client->subscribe(&InterfaceForInterface::event_, &NewClient::callback);
+//  client->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
+//    std::cout << "Response to " << _name << std::endl;
+//  }));
 
 //  auto are1 = std::thread([=]() {
 //    service->exec();
@@ -140,7 +157,7 @@ int main() {
   timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
-  timer2_.addListener(client);
+  timer2_.addListener(composite);
   timer2_.removeListener(com12);
 
   //timer2_.addListener(&sf);
