@@ -1,9 +1,14 @@
-//
-// Created by redra on 05.07.17.
-//
+/**
+ * @file memory_helper.hpp
+ * @author Denis Kotov
+ * @date 05 Jul 2017
+ * @brief Contains helper functions and classes for <memory>
+ * header from standard library
+ * @copyright Denis Kotov, MIT License. Open source:
+ */
 
-#ifndef ICC_HELPER_HPP
-#define ICC_HELPER_HPP
+#ifndef ICC_MEMORY_HELPER_HPP
+#define ICC_MEMORY_HELPER_HPP
 
 #include <memory>
 
@@ -31,4 +36,4 @@ class virtual_enable_shared_from_this
 
 }
 
-#endif //ICC_HELPER_HPP
+#endif //ICC_MEMORY_HELPER_HPP
