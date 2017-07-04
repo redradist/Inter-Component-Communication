@@ -110,10 +110,7 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
-      this->connect(
-          static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Listener::processEvent),
-          static_cast<IComponent*>(_listener));
+      this->connect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -128,10 +125,7 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
-      this->connect(
-          static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Listener::processEvent),
-          static_cast<std::shared_ptr<IComponent>>(_listener));
+      this->connect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -146,10 +140,7 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
-      this->disconnect(
-          static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Listener::processEvent),
-          static_cast<IComponent*>(_listener));
+      this->disconnect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -164,10 +155,7 @@ class Timer
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if(_listener) {
-      this->disconnect(
-          static_cast<void(IComponent::*)(const TimerEvents &)>(
-              &_Listener::processEvent),
-          static_cast<std::shared_ptr<IComponent>>(_listener));
+      this->disconnect(&_Listener::processEvent, _listener);
     }
   }
 

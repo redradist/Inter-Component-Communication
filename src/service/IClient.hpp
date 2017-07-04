@@ -59,7 +59,7 @@ class IClient
    * @param _args Arguments passed into external method
    */
   template <typename ... _Args>
-  void call(void(_Interface::*_callback)(_Args...), _Args ... _args) {
+  void call(void(_Interface::*_callback)(_Args&&...), _Args && ... _args) {
     push([=]{
       if (service_) {
         service_->push([=]{
@@ -78,9 +78,9 @@ class IClient
    * @param _args Arguments passed into external method
    */
   template <typename ... _Params, typename ... _Args>
-  void call(void(_Interface::*_callback)(std::function<void(_Params ...)>, _Args...),
+  void call(void(_Interface::*_callback)(std::function<void(_Params ...)>, _Args&&...),
             std::function<void(_Params ...)> _reply,
-            _Args ... _args) {
+            _Args && ... _args) {
     push([=]{
       if (service_) {
         std::function<void(_Params ...)> _safeReply =

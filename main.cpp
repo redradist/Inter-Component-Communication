@@ -33,7 +33,8 @@ class NewService
 };
 
 class NewClient
-: public IClient<InterfaceForInterface> {
+: public IClient<InterfaceForInterface>,
+  public ITimerLisener {
  public:
 
   NewClient(IComponent * _parent)
@@ -42,8 +43,20 @@ class NewClient
 
   }
 
+  void processEvent(const TimerEvents & _event) override {
+    if (TimerEvents::STARTED == _event) {
+      std::cout << "NewClient: Timer is started" << std::endl;
+    } else if (TimerEvents::EXPIRED == _event) {
+      std::cout << "NewClient: Timer is expired" << std::endl;
+    }
+  }
+
+  void callback2(const int & i, double h) {
+    std::cout << "NewClient: callback2 = " << i << std::endl;
+  }
+
   void callback(const int & n) {
-    std::cout << "callback = " << n << std::endl;
+    std::cout << "NewClient: callback = " << n << std::endl;
   }
 
   void connected(InterfaceForInterface*) override {
@@ -65,6 +78,8 @@ class NewClient
 //  }
 };
 
+
+
 class Componet
     : public IComponent,
       public ITimerLisener {
@@ -77,14 +92,14 @@ class Componet
 
   void processEvent(const TimerEvents & _event) override {
     if (TimerEvents::STARTED == _event) {
-      std::cout << "Timer is started" << std::endl;
+      std::cout << "Componet: Timer is started" << std::endl;
     } else if (TimerEvents::EXPIRED == _event) {
-      std::cout << "Timer is expired" << std::endl;
+      std::cout << "Componet: Timer is expired" << std::endl;
     }
   }
 
   void Callback(const int & i, double k) {
-    std::cout << "Callback was called " << i << std::endl;
+    std::cout << "Componet: Callback was called " << i << std::endl;
   }
 };
 
@@ -125,6 +140,8 @@ int main() {
   timer2_.connect(&Componet::processEvent, &com2);
   timer2_.addListener(&com);
   timer2_.addListener(com12);
+  timer2_.addListener(client);
+  timer2_.removeListener(com12);
 
   //timer2_.addListener(&sf);
 

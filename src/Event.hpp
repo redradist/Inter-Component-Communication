@@ -24,11 +24,12 @@ class Event;
 template <typename _R, typename ... _Args>
 class Event<_R(_Args...)> {
  public:
-  using tCallback = _R(IComponent::*)(_Args...);
-  using tUncheckedObjectAndCallbacks = std::pair<IComponent *, tCallback>;
-  using tUncheckedListCallbacks = std::vector<tUncheckedObjectAndCallbacks>;
-  using tCheckedObjectAndCallbacks = std::pair<std::weak_ptr<IComponent>, tCallback>;
-  using tCheckedListCallbacks = std::vector<tCheckedObjectAndCallbacks>;
+  using tPointer = void*;
+  using tCallback = std::function<_R(_Args...)>;
+  using tUncheckedCallbacks = std::tuple<IComponent*, tPointer, tCallback>;
+  using tUncheckedListCallbacks = std::vector<tUncheckedCallbacks>;
+  using tCheckedCallbacks = std::tuple<std::weak_ptr<IComponent>, tPointer, tCallback>;
+  using tCheckedListCallbacks = std::vector<tCheckedCallbacks>;
  public:
   Event() = default;
   /**
@@ -55,9 +56,13 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
-      unchecked_listeners_.emplace_back(
+      tUncheckedCallbacks callback(
           static_cast<IComponent*>(_listener),
-          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback));
+          reinterpret_cast<void*>(_callback),
+          [=](_Args ... _args){
+            (_listener->*_callback)(_args...);
+          });
+      unchecked_listeners_.push_back(callback);
     }
   }
 
@@ -74,10 +79,13 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if(_listener) {
-      checked_listeners_.emplace_back(
-          static_cast<std::shared_ptr<IComponent>>(_listener),
-          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
-      );
+      tCheckedCallbacks callback(
+          std::static_pointer_cast<IComponent>(_listener),
+          reinterpret_cast<void*>(_callback),
+          [=](_Args ... _args){
+            (_listener.get()->*_callback)(_args...);
+          });
+      checked_listeners_.push_back(callback);
     }
   }
 
@@ -94,14 +102,12 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
-      std::pair<IComponent *, tCallback> removedCallback = {
-          static_cast<IComponent*>(_listener),
-          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
-        };
-
-      auto erase = std::remove(unchecked_listeners_.begin(),
-                               unchecked_listeners_.end(),
-                               removedCallback);
+      auto erase = std::remove_if(unchecked_listeners_.begin(),
+                                  unchecked_listeners_.end(),
+      [=](const tUncheckedCallbacks & rad) {
+        return (_listener == std::get<0>(rad)) &&
+               (reinterpret_cast<void*>(_callback) == std::get<1>(rad));
+      });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
   }
@@ -119,16 +125,13 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if(_listener) {
-      std::pair<std::weak_ptr<IComponent>, tCallback> removedCallback = {
-          static_cast<std::shared_ptr<IComponent>>(_listener),
-          reinterpret_cast<_R(IComponent::*)(_Args...)>(_callback)
-      };
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
-      [=](const std::pair<std::weak_ptr<IComponent>, tCallback> & rad) {
+      [=](const tCheckedCallbacks & rad) {
         bool result = false;
-        if (auto _observer = rad.first.lock()) {
-          result = (_callback == reinterpret_cast<void(_Component::*)(_Args...)>(rad.second));
+        if (auto _observer = std::get<0>(rad).lock()) {
+          result = (_observer == _listener) &&
+                   (reinterpret_cast<void*>(_callback) == std::get<1>(rad));
         } else {
           result = true;
         }
@@ -150,17 +153,21 @@ class Event<_R(_Args...)> {
    * Method for calling Event
    * @param _args Parameters for calling Event
    */
-  void operator()(_Args... _args) {
+  void operator()(_Args ... _args) {
     for (auto & listener : unchecked_listeners_) {
-      (listener.first)->push([=]() mutable {
-        ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
+      auto client = std::get<0>(listener);
+      auto callback = std::get<2>(listener);
+      client->push([=]() mutable {
+        callback(_args...);
       });
     }
     for (auto listener = checked_listeners_.begin();
          listener != checked_listeners_.end();) {
-      if (auto _observer = listener->first.lock()) {
+      auto client = std::get<0>(*listener);
+      if (auto _observer = client.lock()) {
+        auto callback = std::get<2>(*listener);
         _observer->push([=]() mutable {
-          ((_observer.get())->*(listener->second))(std::forward<_Args>(_args)...);
+          callback(_args...);
         });
         ++listener;
       } else {
@@ -174,16 +181,20 @@ class Event<_R(_Args...)> {
    * Method for calling const Event
    * @param _args Parameters for calling const Event
    */
-  void operator()(_Args... _args) const {
+  void operator()(_Args ... _args) const {
     for (auto & listener : unchecked_listeners_) {
-      (listener.first)->push([=]() mutable {
-        ((listener.first)->*(listener.second))(std::forward<_Args>(_args)...);
+      auto client = std::get<0>(listener);
+      auto callback = std::get<2>(listener);
+      client->push([=]() mutable {
+        callback(_args...);
       });
     }
     for (auto listener : checked_listeners_) {
-      if (auto _observer = listener.first.lock()) {
+      auto client = std::get<0>(*listener);
+      if (auto _observer = client.lock()) {
+        auto callback = std::get<2>(*listener);
         _observer->push([=]() mutable {
-          ((_observer.get())->*(listener.second))(std::forward<_Args>(_args)...);
+          callback(_args...);
         });
       }
     }
@@ -195,12 +206,13 @@ class Event<_R(_Args...)> {
    * @return std::function object
    */
   operator std::function<_R(_Args...)>() {
-    return [event = *this](_Args... _args) mutable {
+    return [event = *this](_Args ... _args) mutable {
       for (auto listener = event.checked_listeners_.begin();
            listener != event.checked_listeners_.end();) {
-        if (auto _observer = listener->first.lock()) {
+        if (auto _observer = (std::get<0>(*listener)).lock()) {
+          auto callback = std::get<2>(*listener);
           _observer->push([=]() mutable {
-            ((_observer.get())->*(listener->second))(std::forward<_Args>(_args)...);
+            callback(_args...);
           });
           ++listener;
         } else {

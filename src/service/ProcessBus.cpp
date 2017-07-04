@@ -17,6 +17,7 @@ ProcessBus::ProcessBus() {
 }
 
 ProcessBus::~ProcessBus() {
+  exit();
   thread_.join();
 }
 
