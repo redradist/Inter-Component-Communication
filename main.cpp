@@ -27,7 +27,7 @@ class NewService
     _reply("Denis");
   }
 
-  virtual void addVersion2() override {
+  virtual void addVersion2(std::string) override {
     std::cout << "addVersion2 from NewService" << std::endl;
   }
 
@@ -60,7 +60,7 @@ class CompositeObject
     _reply("Denis");
   }
 
-  virtual void addVersion2() override {
+  virtual void addVersion2(std::string) override {
     std::cout << "addVersion2 from NewService" << std::endl;
   }
 
@@ -78,7 +78,8 @@ class CompositeObject
       std::cout << "Hello " << str << std::endl;
     };
     call(&InterfaceForInterface::addVersion, kjh);
-    call(&InterfaceForInterface::addVersion2);
+    std::string sda;
+    //call(&InterfaceForInterface::addVersion2, sda);
   }
 
   void disconnected(InterfaceForInterface*) override {
@@ -137,9 +138,10 @@ int main() {
     std::cout << "Response to " << _name << std::endl;
   }));
   //client->subscribe(&InterfaceForInterface::event_, &NewClient::callback);
-//  client->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
+//  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
 //    std::cout << "Response to " << _name << std::endl;
 //  }));
+  composite->call(&InterfaceForInterface::addVersion2, std::string());
 
 //  auto are1 = std::thread([=]() {
 //    service->exec();
