@@ -32,7 +32,7 @@ class IComponent {
   /**
    * Delegate constructor
    */
-  IComponent(nullptr_t)
+  IComponent(std::nullptr_t)
       : IComponent() {
   }
 
