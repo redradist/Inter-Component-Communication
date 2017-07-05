@@ -27,8 +27,8 @@ class NewService
     _reply("Denis");
   }
 
-  virtual void addVersion2(std::string) override {
-    std::cout << "addVersion2 from NewService" << std::endl;
+  virtual void addVersion2(std::string str) override {
+    std::cout << "addVersion2 from NewService" << str << std::endl;
   }
 
 };
@@ -60,8 +60,8 @@ class CompositeObject
     _reply("Denis");
   }
 
-  virtual void addVersion2(std::string) override {
-    std::cout << "addVersion2 from NewService" << std::endl;
+  virtual void addVersion2(std::string str) override {
+    std::cout << "addVersion2 from NewService " << str << std::endl;
   }
 
   void callback2(const int & i, double h) {
@@ -77,9 +77,9 @@ class CompositeObject
     std::function<void(std::string)> kjh = [](std::string str){
       std::cout << "Hello " << str << std::endl;
     };
-    call(&InterfaceForInterface::addVersion, kjh);
-    std::string sda;
-    //call(&InterfaceForInterface::addVersion2, sda);
+    //call(&InterfaceForInterface::addVersion, kjh);
+    std::string sda = "Hihihi";
+    call(&InterfaceForInterface::addVersion2, sda);
   }
 
   void disconnected(InterfaceForInterface*) override {
@@ -134,14 +134,14 @@ int main() {
   composite->registerService();
   //std::shared_ptr<NewClient> client = std::make_shared<NewClient>(&com);
   composite->subscribe(&InterfaceForInterface::event_, &CompositeObject::callback);
-  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
-    std::cout << "Response to " << _name << std::endl;
-  }));
+//  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
+//    std::cout << "Response to " << _name << std::endl;
+//  }));
   //client->subscribe(&InterfaceForInterface::event_, &NewClient::callback);
 //  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
 //    std::cout << "Response to " << _name << std::endl;
 //  }));
-  composite->call(&InterfaceForInterface::addVersion2, std::string());
+  //composite->call(&InterfaceForInterface::addVersion2, std::string());
 
 //  auto are1 = std::thread([=]() {
 //    service->exec();
@@ -172,17 +172,17 @@ int main() {
       com1.event_;
   {
     std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
-    com1.event_.connect(&Componet::Callback, com3);
+    //com1.event_.connect(&Componet::Callback, com3);
   }
   com1.event_.connect(&Componet::Callback, &com2);
   {
     std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
-    com1.event_.connect(&Componet::Callback, com3);
+    //com1.event_.connect(&Componet::Callback, com3);
   }
   com1.event_.connect(&Componet::Callback, com12);
   {
     std::shared_ptr<Componet> com3 = std::shared_ptr<Componet>(new Componet());
-    com1.event_.connect(&Componet::Callback, com3);
+    //com1.event_.connect(&Componet::Callback, com3);
   }
   std::cout << "Before callback" << std::endl;
   const std::function<void(const int &, double)> event3 = com1.event_;

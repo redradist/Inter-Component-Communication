@@ -34,6 +34,16 @@ class virtual_enable_shared_from_this
   }
 };
 
+template<typename _T, typename _R, typename ... _Args>
+void * void_cast(_R(_T::*func)(_Args...)) {
+  union {
+    _R(_T::*pf)(_Args...);
+    void *ptr;
+  };
+  pf = func;
+  return ptr;
+}
+
 }
 
 #endif //ICC_MEMORY_HELPER_HPP

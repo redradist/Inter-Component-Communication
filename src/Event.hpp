@@ -16,6 +16,7 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
+#include <helpers/memory_helper.hpp>
 #include "IComponent.hpp"
 
 template <typename _T>
@@ -58,7 +59,7 @@ class Event<_R(_Args...)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent*>(_listener),
-          reinterpret_cast<void*>(_callback),
+          std::void_cast(_callback),
           [=](_Args ... _args){
             (_listener->*_callback)(_args...);
           });
@@ -81,7 +82,7 @@ class Event<_R(_Args...)> {
     if(_listener) {
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          reinterpret_cast<void*>(_callback),
+          std::void_cast(_callback),
           [=](_Args ... _args){
             (_listener.get()->*_callback)(_args...);
           });
@@ -106,7 +107,7 @@ class Event<_R(_Args...)> {
                                   unchecked_listeners_.end(),
       [=](const tUncheckedCallbacks & rad) {
         return (_listener == std::get<0>(rad)) &&
-               (reinterpret_cast<void*>(_callback) == std::get<1>(rad));
+               (std::void_cast(_callback) == std::get<1>(rad));
       });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -131,7 +132,7 @@ class Event<_R(_Args...)> {
         bool result = false;
         if (auto _observer = std::get<0>(rad).lock()) {
           result = (_observer == _listener) &&
-                   (reinterpret_cast<void*>(_callback) == std::get<1>(rad));
+                   (std::void_cast(_callback) == std::get<1>(rad));
         } else {
           result = true;
         }
