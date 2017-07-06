@@ -19,15 +19,17 @@
 #include <helpers/memory_helper.hpp>
 #include "IComponent.hpp"
 
-template <typename _T>
+namespace icc {
+
+template<typename _T>
 class Event;
 
-template <typename _R, typename ... _Args>
+template<typename _R, typename ... _Args>
 class Event<_R(_Args...)> {
  public:
-  using tPointer = void*;
+  using tPointer = void *;
   using tCallback = std::function<_R(_Args...)>;
-  using tUncheckedCallbacks = std::tuple<IComponent*, tPointer, tCallback>;
+  using tUncheckedCallbacks = std::tuple<IComponent *, tPointer, tCallback>;
   using tUncheckedListCallbacks = std::vector<tUncheckedCallbacks>;
   using tCheckedCallbacks = std::tuple<std::weak_ptr<IComponent>, tPointer, tCallback>;
   using tCheckedListCallbacks = std::vector<tCheckedCallbacks>;
@@ -38,8 +40,8 @@ class Event<_R(_Args...)> {
    * Disable ability to copy unchecked listeners as unsafe.
    * @param _event Event from which we copy listeners
    */
-  Event(Event const & _event)
-  : checked_listeners_(_event.checked_listeners_) {
+  Event(Event const &_event)
+      : checked_listeners_(_event.checked_listeners_) {
   }
   Event(Event &&) = delete;
 
@@ -51,16 +53,16 @@ class Event<_R(_Args...)> {
    * @param _callback method in object that listen Event
    * @param _listener Object that listen Event
    */
-  template <typename _Component>
+  template<typename _Component>
   void connect(_R(_Component::*_callback)(_Args...),
-               _Component * _listener) {
+               _Component *_listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
       tUncheckedCallbacks callback(
-          static_cast<IComponent*>(_listener),
+          static_cast<IComponent *>(_listener),
           std::void_cast(_callback),
-          [=](_Args ... _args){
+          [=](_Args ... _args) {
             (_listener->*_callback)(_args...);
           });
       unchecked_listeners_.push_back(callback);
@@ -74,16 +76,16 @@ class Event<_R(_Args...)> {
    * @param _callback method in object that listen Event
    * @param _listener Object that listen Event
    */
-  template <typename _Component>
+  template<typename _Component>
   void connect(_R(_Component::*_callback)(_Args...),
                std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
-    if(_listener) {
+    if (_listener) {
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
           std::void_cast(_callback),
-          [=](_Args ... _args){
+          [=](_Args ... _args) {
             (_listener.get()->*_callback)(_args...);
           });
       checked_listeners_.push_back(callback);
@@ -97,18 +99,18 @@ class Event<_R(_Args...)> {
    * @param _callback method in object that listen Event
    * @param _listener Object that listen Event
    */
-  template <typename _Component>
+  template<typename _Component>
   void disconnect(_R(_Component::*_callback)(_Args...),
-                  _Component * _listener) {
+                  _Component *_listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
       auto erase = std::remove_if(unchecked_listeners_.begin(),
                                   unchecked_listeners_.end(),
-      [=](const tUncheckedCallbacks & rad) {
-        return (_listener == std::get<0>(rad)) &&
-               (std::void_cast(_callback) == std::get<1>(rad));
-      });
+                                  [=](const tUncheckedCallbacks &rad) {
+                                    return (_listener == std::get<0>(rad)) &&
+                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                  });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
   }
@@ -120,24 +122,24 @@ class Event<_R(_Args...)> {
    * @param _callback method in object that listen Event
    * @param _listener Object that listen Event
    */
-  template <typename _Component>
+  template<typename _Component>
   void disconnect(_R(_Component::*_callback)(_Args...),
                   std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
-    if(_listener) {
+    if (_listener) {
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
-      [=](const tCheckedCallbacks & rad) {
-        bool result = false;
-        if (auto _observer = std::get<0>(rad).lock()) {
-          result = (_observer == _listener) &&
-                   (std::void_cast(_callback) == std::get<1>(rad));
-        } else {
-          result = true;
-        }
-        return result;
-      });
+                                  [=](const tCheckedCallbacks &rad) {
+                                    bool result = false;
+                                    if (auto _observer = std::get<0>(rad).lock()) {
+                                      result = (_observer == _listener) &&
+                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                    } else {
+                                      result = true;
+                                    }
+                                    return result;
+                                  });
       checked_listeners_.erase(erase, checked_listeners_.end());
     }
   }
@@ -155,7 +157,7 @@ class Event<_R(_Args...)> {
    * @param _args Parameters for calling Event
    */
   void operator()(_Args ... _args) {
-    for (auto & listener : unchecked_listeners_) {
+    for (auto &listener : unchecked_listeners_) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
       client->push([=]() mutable {
@@ -183,7 +185,7 @@ class Event<_R(_Args...)> {
    * @param _args Parameters for calling const Event
    */
   void operator()(_Args ... _args) const {
-    for (auto & listener : unchecked_listeners_) {
+    for (auto &listener : unchecked_listeners_) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
       client->push([=]() mutable {
@@ -230,5 +232,7 @@ class Event<_R(_Args...)> {
   tUncheckedListCallbacks unchecked_listeners_;
   tCheckedListCallbacks checked_listeners_;
 };
+
+}
 
 #endif //ICC_EVENT_HPP

@@ -8,6 +8,9 @@
 #include <functional>
 #include "src/Event.hpp"
 
+template <typename _Arg>
+using Event = icc::Event<_Arg>;
+
 class InterfaceForInterface {
  public:
   virtual void addVersion(std::function<void(std::string)>) = 0;

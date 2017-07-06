@@ -6,6 +6,16 @@
 #include "service/IClient.hpp"
 #include "InterfaceForinterface.hpp"
 
+using icc::IComponent;
+template <typename ... _Args>
+using IService = icc::service::IService<_Args...>;
+template <typename ... _Args>
+using IClient = icc::service::IClient<_Args...>;
+using icc::Timer;
+template <typename _Arg>
+using Event = icc::Event<_Arg>;
+using icc::TimerEvents;
+using icc::ITimerLisener;
 
 class NewService
     : public virtual IComponent,

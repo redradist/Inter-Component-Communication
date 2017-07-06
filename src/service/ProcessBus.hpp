@@ -19,19 +19,23 @@
 #include <unordered_map>
 #include <IComponent.hpp>
 
-template <typename _Interface>
+namespace icc {
+
+namespace service {
+
+template<typename _Interface>
 class IClient;
 
-template <typename _Interface>
+template<typename _Interface>
 class IService;
 
 class ProcessBus
-  : public virtual IComponent {
+    : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
-  using tListOfClients = std::set<void*>;
+  using tListOfClients = std::set<void *>;
   using tKeyForServiceList = std::type_index;
-  using tServiceStorage = std::function<void*(void)>;
+  using tServiceStorage = std::function<void *(void)>;
   using tListOfServices = std::map<std::string, tServiceStorage>;
 
  public:
@@ -40,7 +44,7 @@ class ProcessBus
    * It is used like Singleton pattern
    * @return ProcessBus
    */
-  static ProcessBus & getBus();
+  static ProcessBus &getBus();
 
  public:
   /**
@@ -49,17 +53,17 @@ class ProcessBus
    * @param _service Object of service for registration
    * @param _serviceName Name of service for registration
    */
-  template <typename _Interface>
+  template<typename _Interface>
   void registerService(std::shared_ptr<IService<_Interface>> _service,
-                       const std::string & _serviceName) {
+                       const std::string &_serviceName) {
     push([=]() mutable {
       services_[tKeyForServiceList(typeid(_Interface))].
           emplace(_serviceName,
-                  [_service]() mutable {return reinterpret_cast<void*>(&_service);});
+                  [_service]() mutable { return reinterpret_cast<void *>(&_service); });
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
-        reinterpret_cast<IClient<_Interface>*>(client)->setService(_service);
+        reinterpret_cast<IClient<_Interface> *>(client)->setService(_service);
       }
     });
   }
@@ -70,15 +74,15 @@ class ProcessBus
    * @param _service Object of service for unregistration
    * @param _serviceName Name of service for unregistration
    */
-  template <typename _Interface>
+  template<typename _Interface>
   void unregisterService(std::shared_ptr<IService<_Interface>> _service,
-                         const std::string & _serviceName) {
-    push([=]{
+                         const std::string &_serviceName) {
+    push([=] {
       services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       auto clients = clients_[clientsKey];
       for (auto client : clients) {
-        reinterpret_cast<IClient<_Interface>*>(client)->setService(nullptr);
+        reinterpret_cast<IClient<_Interface> *>(client)->setService(nullptr);
       }
     });
   }
@@ -90,9 +94,9 @@ class ProcessBus
    * @param _client Object of client waiting for building
    * @param _serviceName Name of service for building
    */
-  template <typename _Interface>
-  void buildClient(IClient<_Interface> * _client,
-                   const std::string & _serviceName) {
+  template<typename _Interface>
+  void buildClient(IClient<_Interface> *_client,
+                   const std::string &_serviceName) {
     push([=] {
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       clients_[clientsKey].emplace(_client);
@@ -100,12 +104,12 @@ class ProcessBus
       if (services_.end() != servicesIter) {
         auto serviceIter = std::find_if(servicesIter->second.begin(),
                                         servicesIter->second.end(),
-        [=](std::pair<std::string, std::function<void*(void)>> element) {
-          return element.first == _serviceName;
-        });
+                                        [=](std::pair<std::string, std::function<void *(void)>> element) {
+                                          return element.first == _serviceName;
+                                        });
         if (servicesIter->second.end() != serviceIter) {
           _client->setService(
-              *reinterpret_cast<std::shared_ptr<IService<_Interface>>*>(
+              *reinterpret_cast<std::shared_ptr<IService<_Interface>> *>(
                   serviceIter->second()));
         }
       }
@@ -119,9 +123,9 @@ class ProcessBus
    * @param _client Object of client waiting for building
    * @param _serviceName Name of service for building
    */
-  template <typename _Interface>
-  void disassembleClient(IClient<_Interface> * _client,
-                         const std::string & _serviceName) {
+  template<typename _Interface>
+  void disassembleClient(IClient<_Interface> *_client,
+                         const std::string &_serviceName) {
     push([=] {
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       clients_[clientsKey].erase(_client);
@@ -139,5 +143,9 @@ class ProcessBus
   std::map<tKeyForClientList, tListOfClients> clients_;
   std::map<tKeyForServiceList, tListOfServices> services_;
 };
+
+}
+
+}
 
 #endif //ICC_PROCESSBUS_HPP

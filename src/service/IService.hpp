@@ -16,6 +16,10 @@
 #include "ProcessBus.hpp"
 #include "helpers/memory_helper.hpp"
 
+namespace icc {
+
+namespace service {
+
 template <typename _Interface>
 class IService
   : public virtual IComponent,
@@ -62,6 +66,10 @@ class IService
 template <typename _Interface>
 inline
 IService<_Interface>::~IService() {
+}
+
+}
+
 }
 
 #endif //ICC_SERVICE_HPP

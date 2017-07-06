@@ -11,6 +11,8 @@
 
 #include "IComponent.hpp"
 
+namespace icc {
+
 enum class TimerEvents {
   STARTED,
   EXPIRED,
@@ -21,5 +23,7 @@ class ITimerLisener {
  public:
   virtual void processEvent(const TimerEvents &) = 0;
 };
+
+}
 
 #endif //ICC_TIMERLISENER_HPP

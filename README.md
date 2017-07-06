@@ -1,4 +1,4 @@
-# Inter Component Comunication
+# Inter Component Communication
 TODO: Write a project description
 ## Installation
 TODO: Describe the installation process

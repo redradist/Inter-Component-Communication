@@ -10,6 +10,10 @@
 
 #include "ProcessBus.hpp"
 
+namespace icc {
+
+namespace service {
+
 ProcessBus::ProcessBus() {
   thread_ = std::thread([=]() {
     exec();
@@ -25,4 +29,8 @@ ProcessBus &
 ProcessBus::getBus() {
   static ProcessBus bus;
   return bus;
+}
+
+}
+
 }

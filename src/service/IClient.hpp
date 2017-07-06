@@ -17,16 +17,20 @@
 #include "ProcessBus.hpp"
 #include "helpers/memory_helper.hpp"
 
-template <typename _T>
+namespace icc {
+
+template<typename _T>
 class Event;
 
-template <typename _Interface>
+namespace service {
+
+template<typename _Interface>
 class IService;
 
-template <typename _Interface>
+template<typename _Interface>
 class IClient
-  : public virtual IComponent,
-    public std::virtual_enable_shared_from_this<IClient<_Interface>> {
+    : public virtual IComponent,
+      public std::virtual_enable_shared_from_this<IClient<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:
@@ -34,8 +38,8 @@ class IClient
    * Constructor which build the client
    * @param _serviceName Service name, should be unique in the process
    */
-  IClient(const std::string & _serviceName)
-    : service_name_(_serviceName) {
+  IClient(const std::string &_serviceName)
+      : service_name_(_serviceName) {
     ProcessBus::getBus().buildClient(this, service_name_);
   }
 
@@ -48,11 +52,11 @@ class IClient
   /**
    * This method will be called on connect client to service
    */
-  virtual void connected(_Interface*) = 0;
+  virtual void connected(_Interface *) = 0;
   /**
    * This method will be called on disconnection client from service
    */
-  virtual void disconnected(_Interface*) = 0;
+  virtual void disconnected(_Interface *) = 0;
 
   /**
    * This method is used to call method from IService<>
@@ -61,7 +65,7 @@ class IClient
    * @param _callback Pointer to external method
    * @param _values Values passed into external method
    */
-  template <typename ... _Args, typename ... _Values>
+  template<typename ... _Args, typename ... _Values>
   void call(void(_Interface::*_callback)(_Args...), _Values ... _values) {
     this->push([this, _callback, _values...]() mutable {
       if (service_) {
@@ -81,18 +85,18 @@ class IClient
    * @param _reply Reply with some result from IService<>
    * @param _values Arguments passed into external method
    */
-  template <typename ... _Params, typename ... _Args, typename ... _Values>
+  template<typename ... _Params, typename ... _Args, typename ... _Values>
   void call(void(_Interface::*_callback)(std::function<void(_Params...)>, _Args...),
             std::function<void(_Params...)> _reply,
             _Values ... _values) {
     this->push([this, _callback, _reply, _values...]() mutable {
       if (service_) {
         std::function<void(_Params ...)> _safeReply =
-        [=](_Params ... params){
-          push([=]{
-            _reply(params...);
-          });
-        };
+            [=](_Params ... params) {
+              push([=] {
+                _reply(params...);
+              });
+            };
         service_->push([=]() mutable {
           (service_.get()->*_callback)(_safeReply, _values...);
         });
@@ -108,16 +112,16 @@ class IClient
    * @param _event Event for subscription
    * @param _callback Callback for subscription
    */
-  template < typename _Client,
-             typename _R,
-             typename ... _Args >
+  template<typename _Client,
+      typename _R,
+      typename ... _Args>
   void subscribe(Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "_Interface is not an abstract class");
-    push([this, _event, _callback]{
+    push([this, _event, _callback] {
       if (service_) {
-        service_->push([=]{
+        service_->push([=] {
           (service_.get()->*_event).connect(
               _callback,
               std::shared_ptr<_Client>(
@@ -135,14 +139,14 @@ class IClient
    * @param _event Event for unsubscription
    * @param _callback Callback for unsubscription
    */
-  template < typename _Client,
-             typename _R,
-             typename ... _Args >
+  template<typename _Client,
+      typename _R,
+      typename ... _Args>
   void unsubscribe(Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
-    push([this, _event, _callback]{
+    push([this, _event, _callback] {
       if (service_) {
-        service_->push([=]{
+        service_->push([=] {
           (service_.get()->*_event).disconnect(
               _callback,
               std::shared_ptr<_Client>(
@@ -158,7 +162,7 @@ class IClient
    * @param _service IService<> for set
    */
   virtual void setService(std::shared_ptr<IService<_Interface>> _service) {
-    push([=]{
+    push([=] {
       service_ = _service;
       if (service_) {
         connected(service_.get());
@@ -177,10 +181,14 @@ class IClient
 /**
  * Destructor which disassemble the client
  */
-template <typename _Interface>
+template<typename _Interface>
 inline
 IClient<_Interface>::~IClient() {
   ProcessBus::getBus().disassembleClient(this, service_name_);
+}
+
+}
+
 }
 
 #endif //ICC_ISERVICECLIENT_HPP
