@@ -57,15 +57,16 @@ class IClient
   /**
    * This method is used to call method from IService<>
    * @tparam _Args Arguments types those is passed to external method
+   * @tparam _Values Values types those is passed to external method
    * @param _callback Pointer to external method
-   * @param _args Arguments passed into external method
+   * @param _values Values passed into external method
    */
-  template <typename ... _Args>
-  void call(void(_Interface::*_callback)(_Args...), _Args ... _args) {
-    push([=]{
+  template <typename ... _Args, typename ... _Values>
+  void call(void(_Interface::*_callback)(_Args...), _Values ... _values) {
+    this->push([this, _callback, _values...]() mutable {
       if (service_) {
-        service_->push([=]{
-          (service_.get()->*_callback)(_args...);
+        service_->push([=]() mutable {
+          (service_.get()->*_callback)(_values...);
         });
       }
     });
@@ -75,15 +76,16 @@ class IClient
    * This method is used to call method from IService<>
    * @tparam _Params Arguments types for reply
    * @tparam _Args Arguments types for external method
+   * @tparam _Values Values types those is passed to external method
    * @param _callback Pointer to external method
    * @param _reply Reply with some result from IService<>
-   * @param _args Arguments passed into external method
+   * @param _values Arguments passed into external method
    */
-  template <typename ... _Params, typename ... _Args>
-  void call(void(_Interface::*_callback)(std::function<void(_Params ...)>, _Args ...),
-            std::function<void(_Params ...)> _reply,
-            _Args ... _args) {
-    push([=]{
+  template <typename ... _Params, typename ... _Args, typename ... _Values>
+  void call(void(_Interface::*_callback)(std::function<void(_Params...)>, _Args...),
+            std::function<void(_Params...)> _reply,
+            _Values ... _values) {
+    this->push([this, _callback, _reply, _values...]() mutable {
       if (service_) {
         std::function<void(_Params ...)> _safeReply =
         [=](_Params ... params){
@@ -91,8 +93,8 @@ class IClient
             _reply(params...);
           });
         };
-        service_->push([=]{
-          (service_.get()->*_callback)(_safeReply, _args...);
+        service_->push([=]() mutable {
+          (service_.get()->*_callback)(_safeReply, _values...);
         });
       }
     });
@@ -113,7 +115,7 @@ class IClient
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "_Interface is not an abstract class");
-    push([=]{
+    push([this, _event, _callback]{
       if (service_) {
         service_->push([=]{
           (service_.get()->*_event).connect(
@@ -138,7 +140,7 @@ class IClient
              typename ... _Args >
   void unsubscribe(Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
-    push([=]{
+    push([this, _event, _callback]{
       if (service_) {
         service_->push([=]{
           (service_.get()->*_event).disconnect(

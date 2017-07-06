@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(./src)
 
+set(CMAKE_C_COMPILER "clang" )
+set(CMAKE_CXX_COMPILER "clang++" )
+add_definitions(-D__STRICT_ANSI__)
 set(SOURCE_FILES    main.cpp
                     src/IComponent.hpp
                     src/Event.hpp

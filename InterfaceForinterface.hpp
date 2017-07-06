@@ -11,7 +11,8 @@
 class InterfaceForInterface {
  public:
   virtual void addVersion(std::function<void(std::string)>) = 0;
-  virtual void addVersion2(std::string) = 0;
+  virtual void addVersion2(const std::string &) = 0;
+  //virtual void addVersion3(const std::string) = 0;
 
   Event<void(const int &)> event_;
 };

@@ -27,7 +27,7 @@ class NewService
     _reply("Denis");
   }
 
-  virtual void addVersion2(std::string str) override {
+  virtual void addVersion2(const std::string & str) override {
     std::cout << "addVersion2 from NewService" << str << std::endl;
   }
 
@@ -60,7 +60,7 @@ class CompositeObject
     _reply("Denis");
   }
 
-  virtual void addVersion2(std::string str) override {
+  virtual void addVersion2(const std::string & str) {
     std::cout << "addVersion2 from NewService " << str << std::endl;
   }
 
