@@ -207,7 +207,8 @@ class Event<_R(_Args...)> {
    * @return std::function object
    */
   operator std::function<_R(_Args...)>() {
-    return [event = *this](_Args ... _args) mutable {
+    auto event = *this;
+    return [event](_Args ... _args) mutable {
       for (auto listener = event.checked_listeners_.begin();
            listener != event.checked_listeners_.end();) {
         if (auto _observer = (std::get<0>(*listener)).lock()) {
