@@ -19,7 +19,7 @@ set(SOURCE_FILES    main.cpp
                     src/service/ProcessBus.hpp
                     src/helpers/memory_helpers.hpp
                     src/helpers/hash_helpers.hpp
-                    InterfaceForinterface.hpp)
+                    InterfaceForinterface.hpp src/command/ICommand.hpp src/command/ICommandLoop.hpp src/command/CommandLoop.hpp src/command/CommandLoop.cpp)
 add_executable(ICC ${SOURCE_FILES})
 target_link_libraries(ICC boost_system
                           pthread
