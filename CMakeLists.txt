@@ -17,7 +17,8 @@ set(SOURCE_FILES    main.cpp
                     src/service/IClient.hpp
                     src/service/ProcessBus.cpp
                     src/service/ProcessBus.hpp
-                    src/helpers/memory_helper.hpp
+                    src/helpers/memory_helpers.hpp
+                    src/helpers/hash_helpers.hpp
                     InterfaceForinterface.hpp)
 add_executable(ICC ${SOURCE_FILES})
 target_link_libraries(ICC boost_system

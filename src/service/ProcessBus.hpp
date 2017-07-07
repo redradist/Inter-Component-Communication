@@ -16,10 +16,15 @@
 #include <algorithm>
 #include <typeinfo>
 #include <typeindex>
+#include <unordered_set>
 #include <unordered_map>
 #include <IComponent.hpp>
+#include <helpers/hash_helpers.hpp>
 
 namespace icc {
+
+template<typename _T>
+class Event;
 
 namespace service {
 
@@ -33,10 +38,10 @@ class ProcessBus
     : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
-  using tListOfClients = std::set<void *>;
+  using tListOfClients = std::unordered_set<void *>;
   using tKeyForServiceList = std::type_index;
   using tServiceStorage = std::function<void *(void)>;
-  using tListOfServices = std::map<std::string, tServiceStorage>;
+  using tListOfServices = std::unordered_map<std::string, tServiceStorage>;
 
  public:
   /**
@@ -57,13 +62,15 @@ class ProcessBus
   void registerService(std::shared_ptr<IService<_Interface>> _service,
                        const std::string &_serviceName) {
     push([=]() mutable {
-      services_[tKeyForServiceList(typeid(_Interface))].
-          emplace(_serviceName,
-                  [_service]() mutable { return reinterpret_cast<void *>(&_service); });
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      auto clients = clients_[clientsKey];
-      for (auto client : clients) {
-        reinterpret_cast<IClient<_Interface> *>(client)->setService(_service);
+      if (_service) {
+        services_[tKeyForServiceList(typeid(_Interface))].
+            emplace(_serviceName,
+                    [_service]() mutable { return reinterpret_cast<void *>(&_service); });
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        auto clients = clients_[clientsKey];
+        for (auto client : clients) {
+          reinterpret_cast<IClient<_Interface> *>(client)->connected(_service.get());
+        }
       }
     });
   }
@@ -78,11 +85,13 @@ class ProcessBus
   void unregisterService(std::shared_ptr<IService<_Interface>> _service,
                          const std::string &_serviceName) {
     push([=] {
-      services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      auto clients = clients_[clientsKey];
-      for (auto client : clients) {
-        reinterpret_cast<IClient<_Interface> *>(client)->setService(nullptr);
+      if (_service) {
+        services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        auto clients = clients_[clientsKey];
+        for (auto client : clients) {
+          reinterpret_cast<IClient<_Interface> *>(client)->disconnected(nullptr);
+        }
       }
     });
   }
@@ -100,19 +109,6 @@ class ProcessBus
     push([=] {
       auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
       clients_[clientsKey].emplace(_client);
-      auto servicesIter = services_.find(std::type_index(typeid(_Interface)));
-      if (services_.end() != servicesIter) {
-        auto serviceIter = std::find_if(servicesIter->second.begin(),
-                                        servicesIter->second.end(),
-                                        [=](std::pair<std::string, std::function<void *(void)>> element) {
-                                          return element.first == _serviceName;
-                                        });
-        if (servicesIter->second.end() != serviceIter) {
-          _client->setService(
-              *reinterpret_cast<std::shared_ptr<IService<_Interface>> *>(
-                  serviceIter->second()));
-        }
-      }
     });
   }
 
@@ -132,16 +128,159 @@ class ProcessBus
     });
   }
 
+ public:
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Args Arguments types those is passed to external method
+   * @tparam _Values Values types those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _values Values passed into external method
+   */
+  template<typename _Interface,
+           typename ... _Args,
+           typename ... _Values>
+  void call(const std::string &_serviceName,
+            void(_Interface::*_callback)(_Args...), _Values ... _values) {
+    this->push([this, _serviceName, _callback, _values...]() mutable {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->push([=]() mutable {
+          (service.get()->*_callback)(_values...);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Params Arguments types for reply
+   * @tparam _Args Arguments types for external method
+   * @tparam _Values Values types those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _reply Reply with some result from IService<>
+   * @param _values Arguments passed into external method
+   */
+  template<typename _Interface,
+           typename ... _Params,
+           typename ... _Args,
+           typename ... _Values>
+  void call(const std::string &_serviceName,
+            void(_Interface::*_callback)(std::function<void(_Params...)>, _Args...),
+            std::function<void(_Params...)> _reply,
+            _Values ... _values) {
+    this->push([this, _serviceName, _callback, _reply, _values...]() mutable {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        std::function<void(_Params ...)> _safeReply =
+        [=](_Params ... params) {
+          push([=] {
+            _reply(params...);
+          });
+        };
+        service->push([=]() mutable {
+          (service.get()->*_callback)(_safeReply, _values...);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Args Arguments of Event<>
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename ... _Args>
+  void subscribe(IClient<_Interface> * _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Args...)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Args...)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "_Interface is not an abstract class");
+    push([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->push([=] {
+          (service.get()->*_event).connect(
+              _callback,
+              std::shared_ptr<_Client>(
+                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Args Arguments of Event<>
+   * @param _event Event for unsubscription
+   * @param _callback Callback for unsubscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename ... _Args>
+  void unsubscribe(IClient<_Interface> * _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Args...)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Args...)) {
+    push([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->push([=] {
+          (service.get()->*_event).disconnect(
+              _callback,
+              std::shared_ptr<_Client>(
+                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+        });
+      }
+    });
+  };
+
+ protected:
+  /**
+   * Helper function for finding service in ProcessBus tables
+   * @tparam _Interface Interface type for searching
+   * @param _serviceName Service name for searching
+   * @return Service std::shared_ptr<IService<_Interface>>
+   */
+  template<typename _Interface>
+  std::shared_ptr<IService<_Interface>>
+  getService(const std::string &_serviceName) const {
+    auto servicesIter = services_.find(std::type_index(typeid(_Interface)));
+    if (services_.end() != servicesIter) {
+      auto serviceIter = std::find_if(servicesIter->second.begin(),
+                                      servicesIter->second.end(),
+                                      [=](std::pair<std::string, std::function<void *(void)>> element) {
+                                        return element.first == _serviceName;
+                                      });
+      if (servicesIter->second.end() != serviceIter) {
+        return *reinterpret_cast<std::shared_ptr<IService<_Interface>> *>(
+                                 serviceIter->second());
+      }
+    }
+    return nullptr;
+  }
+
  private:
   ProcessBus();
   ProcessBus(const ProcessBus &) = delete;
+  ProcessBus & operator=(const ProcessBus &) = delete;
   ProcessBus(ProcessBus &&) = delete;
+  ProcessBus & operator=(ProcessBus &&) = delete;
   virtual ~ProcessBus();
 
  private:
   std::thread thread_;
-  std::map<tKeyForClientList, tListOfClients> clients_;
-  std::map<tKeyForServiceList, tListOfServices> services_;
+  std::unordered_map<tKeyForClientList, tListOfClients, std::pair_hash> clients_;
+  std::unordered_map<tKeyForServiceList, tListOfServices> services_;
 };
 
 }

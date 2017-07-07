@@ -13,8 +13,8 @@
 
 #include <type_traits>
 #include <IComponent.hpp>
+#include <helpers/memory_helpers.hpp>
 #include "ProcessBus.hpp"
-#include "helpers/memory_helper.hpp"
 
 namespace icc {
 

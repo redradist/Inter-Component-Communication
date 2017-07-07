@@ -72,6 +72,7 @@ class CompositeObject
 
   virtual void addVersion2(const std::string & str) {
     std::cout << "addVersion2 from NewService " << str << std::endl;
+    event_(5);
   }
 
   void callback2(const int & i, double h) {
@@ -144,6 +145,7 @@ int main() {
   composite->registerService();
   //std::shared_ptr<NewClient> client = std::make_shared<NewClient>(&com);
   composite->subscribe(&InterfaceForInterface::event_, &CompositeObject::callback);
+  //composite->unsubscribe(&InterfaceForInterface::event_, &CompositeObject::callback);
 //  composite->call(&InterfaceForInterface::addVersion, std::function<void(std::string)>([](std::string _name){
 //    std::cout << "Response to " << _name << std::endl;
 //  }));
@@ -202,5 +204,6 @@ int main() {
   com.exec();
   service_.run();
   are.join();
+  composite->unregisterService();
   return 0;
 }

@@ -16,7 +16,7 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
-#include <helpers/memory_helper.hpp>
+#include <helpers/memory_helpers.hpp>
 #include "IComponent.hpp"
 
 namespace icc {
