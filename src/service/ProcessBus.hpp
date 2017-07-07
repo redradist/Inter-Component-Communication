@@ -107,8 +107,14 @@ class ProcessBus
   void buildClient(IClient<_Interface> *_client,
                    const std::string &_serviceName) {
     push([=] {
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      clients_[clientsKey].emplace(_client);
+      if (_client) {
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        clients_[clientsKey].emplace(_client);
+        auto service = this->getService<_Interface>(_serviceName);
+        if (service) {
+          _client->connected(service.get());
+        }
+      }
     });
   }
 
@@ -123,8 +129,14 @@ class ProcessBus
   void disassembleClient(IClient<_Interface> *_client,
                          const std::string &_serviceName) {
     push([=] {
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      clients_[clientsKey].erase(_client);
+      if (_client) {
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        clients_[clientsKey].erase(_client);
+        auto service = this->getService<_Interface>(_serviceName);
+        if (service) {
+          _client->disconnected(service.get());
+        }
+      }
     });
   }
 
