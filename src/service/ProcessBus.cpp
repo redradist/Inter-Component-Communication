@@ -5,10 +5,14 @@
  * @brief Contains ProcessBus class.
  * It is a broker pattern. Used to control registration
  * and connection of services
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #include "ProcessBus.hpp"
+
+namespace icc {
+
+namespace service {
 
 ProcessBus::ProcessBus() {
   thread_ = std::thread([=]() {
@@ -25,4 +29,8 @@ ProcessBus &
 ProcessBus::getBus() {
   static ProcessBus bus;
   return bus;
+}
+
+}
+
 }

@@ -6,7 +6,7 @@
  * It is thread safe version of Component class
  * Can be used to create different kind of architectures
  * without of warring og thread safety
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_COMPONENT_HPP
@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <boost/asio/io_service.hpp>
 
+namespace icc {
+
 class IComponent {
  public:
   /**
@@ -24,15 +26,15 @@ class IComponent {
    * Only with this constructor object will be owner of service_.
    */
   IComponent()
-    : owner_of_service_(true),
-      service_(std::make_shared<boost::asio::io_service>()),
-      worker_(new boost::asio::io_service::work(*service_)) {
+      : owner_of_service_(true),
+        service_(std::make_shared<boost::asio::io_service>()),
+        worker_(new boost::asio::io_service::work(*service_)) {
   }
 
   /**
    * Delegate constructor
    */
-  IComponent(nullptr_t)
+  IComponent(std::nullptr_t)
       : IComponent() {
   }
 
@@ -41,11 +43,11 @@ class IComponent {
    * Owner of this pointer is not we
    * @param _eventLoop Event loop that will be used
    */
-  IComponent(boost::asio::io_service * _eventLoop)
+  IComponent(boost::asio::io_service *_eventLoop)
       : service_(std::shared_ptr<boost::asio::io_service>(_eventLoop,
-  [=](boost::asio::io_service *){
-    // NOTE(redra): Nothing need to do. Owner of this pointer is not we
-  })),
+                                                          [=](boost::asio::io_service *) {
+                                                            // NOTE(redra): Nothing need to do. Owner of this pointer is not we
+                                                          })),
         worker_(new boost::asio::io_service::work(*service_)) {
   }
 
@@ -54,18 +56,18 @@ class IComponent {
    * @param _eventLoop Event loop that will be used
    */
   IComponent(std::shared_ptr<boost::asio::io_service> _eventLoop)
-    : service_(_eventLoop),
-      worker_(new boost::asio::io_service::work(*service_)) {
+      : service_(_eventLoop),
+        worker_(new boost::asio::io_service::work(*service_)) {
   }
 
   /**
    * Used to share event loop of parent object
    * @param _parent Parent compenent that will share event loop
    */
-  IComponent(IComponent * _parent)
-    : service_(_parent->getEventLoop()),
-      worker_(new boost::asio::io_service::work(*service_)),
-      parent_(_parent) {
+  IComponent(IComponent *_parent)
+      : service_(_parent->getEventLoop()),
+        worker_(new boost::asio::io_service::work(*service_)),
+        parent_(_parent) {
     _parent->setChild(this);
   }
 
@@ -84,7 +86,7 @@ class IComponent {
    * Disable ability to copy Component class
    */
   IComponent(IComponent const &) = delete;
-  IComponent & operator=(IComponent const &) = delete;
+  IComponent &operator=(IComponent const &) = delete;
 
   /**
    * Destructor used for removing children or waiting end of event loop
@@ -105,9 +107,9 @@ class IComponent {
    * Called to exit from execution in main loop
    */
   virtual void exit() {
-    push([=]{
+    push([=] {
       if (worker_) {
-        for (auto & child : childern_) {
+        for (auto &child : childern_) {
           child->exit();
         }
         if (parent_) {
@@ -140,9 +142,9 @@ class IComponent {
    * Method that allow to add _child component to the vector
    * @param _child Component that will be added
    */
-  virtual void setChild(IComponent * _child) {
+  virtual void setChild(IComponent *_child) {
     if (_child) {
-      push([=]{
+      push([=] {
         childern_.push_back(_child);
       });
     }
@@ -152,9 +154,9 @@ class IComponent {
    * Method that allow to delete _child component from the vector
    * @param _child Component that will be deleted
    */
-  virtual void removeChild(IComponent * _child) {
+  virtual void removeChild(IComponent *_child) {
     if (_child) {
-      push([=]{
+      push([=] {
         auto childIter = std::find(childern_.begin(),
                                    childern_.end(),
                                    _child);
@@ -171,7 +173,7 @@ class IComponent {
   std::unique_ptr<boost::asio::io_service::work> worker_;
 
  private:
-  IComponent * parent_ = nullptr;
+  IComponent *parent_ = nullptr;
   std::vector<IComponent *> childern_;
 };
 
@@ -183,6 +185,8 @@ IComponent::~IComponent() {
   if (parent_) {
     parent_->removeChild(this);
   }
+}
+
 }
 
 #endif //ICC_COMPONENT_HPP

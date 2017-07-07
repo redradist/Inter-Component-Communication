@@ -4,7 +4,7 @@
  * @date 10 Jun 2017
  * @brief Thread safe version of Timer class
  * It is based on boost::asio::deadline_timer
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_TIMER_HPP
@@ -15,9 +15,11 @@
 #include "IComponent.hpp"
 #include "ITimerLisener.hpp"
 
+namespace icc {
+
 class Timer
-  : protected virtual IComponent,
-    public Event<void(const TimerEvents &)> {
+    : protected virtual IComponent,
+      public Event<void(const TimerEvents &)> {
  public:
   /**
    * Should be used for setting continuous mode
@@ -28,9 +30,9 @@ class Timer
    */
   static const int32_t OneTime = 0;
  public:
-  Timer(IComponent * _parent)
-    : IComponent(_parent),
-      timer_(*service_) {
+  Timer(IComponent *_parent)
+      : IComponent(_parent),
+        timer_(*service_) {
   }
 
  public:
@@ -38,7 +40,7 @@ class Timer
    * Enable continuous mode
    */
   void enableContinuous() {
-    push([=]{
+    push([=] {
       counter_ = Infinite;
     });
   }
@@ -47,7 +49,7 @@ class Timer
    * Disable continuous mode
    */
   void disableContinuous() {
-    push([=]{
+    push([=] {
       if (Infinite == counter_) {
         counter_ = OneTime;
       }
@@ -58,8 +60,8 @@ class Timer
    * Setting number of repetitions
    * @param number Number of repetition
    */
-  void setNumberOfRepetition(const int32_t & number) {
-    push([=]{
+  void setNumberOfRepetition(const int32_t &number) {
+    push([=] {
       if (number < 0) {
         counter_ = Infinite;
       } else {
@@ -72,8 +74,8 @@ class Timer
    * Setting interval mode for the timer
    * @param _duration Timeout duration
    */
-  void setInterval(const boost::posix_time::time_duration & _duration) {
-    push([=]{
+  void setInterval(const boost::posix_time::time_duration &_duration) {
+    push([=] {
       duration_ = _duration;
     });
   }
@@ -82,7 +84,7 @@ class Timer
    * Method is used to start async waiting timer
    */
   void start() {
-    push([=]{
+    push([=] {
       timer_.expires_from_now(duration_);
       operator()(TimerEvents::STARTED);
       timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
@@ -93,7 +95,7 @@ class Timer
    * Method is used to stop waiting timer
    */
   void stop() {
-    push([=]{
+    push([=] {
       operator()(TimerEvents::STOPED);
       timer_.cancel();
     });
@@ -103,8 +105,8 @@ class Timer
    * Method is used to add the listener
    * @param _listener Listener that is being adding
    */
-  template <typename _Listener>
-  void addListener(_Listener * _listener) {
+  template<typename _Listener>
+  void addListener(_Listener *_listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
@@ -118,13 +120,13 @@ class Timer
    * Method is used to add the listener
    * @param _listener Listener that is being adding
    */
-  template <typename _Listener>
+  template<typename _Listener>
   void addListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
-    if(_listener) {
+    if (_listener) {
       this->connect(&_Listener::processEvent, _listener);
     }
   }
@@ -133,8 +135,8 @@ class Timer
    * Method is used to remove the listener
    * @param _listener Listener that is being removing
    */
-  template <typename _Listener>
-  void removeListener(_Listener * _listener) {
+  template<typename _Listener>
+  void removeListener(_Listener *_listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
@@ -148,13 +150,13 @@ class Timer
    * Method is used to remove the listener
    * @param _listener Listener that is being removing
    */
-  template <typename _Listener>
+  template<typename _Listener>
   void removeListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
-    if(_listener) {
+    if (_listener) {
       this->disconnect(&_Listener::processEvent, _listener);
     }
   }
@@ -163,7 +165,7 @@ class Timer
    * Overrided function to specify exit event
    */
   void exit() override {
-    push([=]{
+    push([=] {
       IComponent::exit();
       stop();
     });
@@ -174,7 +176,7 @@ class Timer
    * Method that handle Timer expire event
    * @param _error
    */
-  virtual void timerExpired(const boost::system::error_code& _error) {
+  virtual void timerExpired(const boost::system::error_code &_error) {
     if (!_error) {
       operator()(TimerEvents::EXPIRED);
       if (counter_ > 0) {
@@ -192,5 +194,7 @@ class Timer
   boost::posix_time::time_duration duration_;
   boost::asio::deadline_timer timer_;
 };
+
+}
 
 #endif //ICC_TIMER_HPP

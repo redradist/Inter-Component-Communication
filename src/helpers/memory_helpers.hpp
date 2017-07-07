@@ -4,7 +4,7 @@
  * @date 05 Jul 2017
  * @brief Contains helper functions and classes for <memory>
  * header from standard library
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_MEMORY_HELPER_HPP
@@ -33,6 +33,16 @@ class virtual_enable_shared_from_this
         virtual_enable_shared_from_this_base::shared_from_this());
   }
 };
+
+template<typename _T, typename _R, typename ... _Args>
+void * void_cast(_R(_T::*func)(_Args...)) {
+  union {
+    _R(_T::*pf)(_Args...);
+    void *ptr;
+  };
+  pf = func;
+  return ptr;
+}
 
 }
 

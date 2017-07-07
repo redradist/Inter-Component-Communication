@@ -13,7 +13,7 @@ class Forecast {
   virtual void setIntervalForUpdate(int &) = 0;
 
  public:
-  Event<void(const double &)> temperature_;
+  icc::Event<void(const double &)> temperature_;
 };
 
 #endif //ICC_FORECAST_HPP

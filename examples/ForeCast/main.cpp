@@ -11,12 +11,12 @@
 #include "Forecast.hpp"
 
 class WeatherStation
-    : public IService<Forecast>,
-      public ITimerLisener {
+    : public icc::service::IService<Forecast>,
+      public icc::ITimerLisener {
  public:
   WeatherStation(boost::asio::io_service & _io_service)
-      : IComponent(&_io_service),
-        IService<Forecast>("WeatherStation"),
+      : icc::IComponent(&_io_service),
+        icc::service::IService<Forecast>("WeatherStation"),
         timer_(this) {
     std::cout << "WeatherStation" << std::endl;
   }
@@ -25,29 +25,32 @@ class WeatherStation
     std::cout << "~WeatherStation" << std::endl;
   }
 
-  void processEvent(const TimerEvents & _event) override {
-    if (TimerEvents::EXPIRED == _event) {
+  void processEvent(const icc::TimerEvents & _event) override {
+    if (icc::TimerEvents::EXPIRED == _event) {
+      std::cout << "processEvent icc::TimerEvents::EXPIRED" << std::endl;
       temperature_(28.3);
     }
   }
 
   void setIntervalForUpdate(int & _seconds) override {
+    std::cout << "setIntervalForUpdate: seconds = " << _seconds << std::endl;
     timer_.setInterval(boost::posix_time::seconds(_seconds));
-    timer_.stop();
+    timer_.setNumberOfRepetition(-1);
+    //timer_.stop();
     timer_.addListener(this);
     timer_.start();
   }
 
  private:
-  Timer timer_;
+  icc::Timer timer_;
 };
 
 class WeatherObserver
-    : public IClient<Forecast> {
+    : public icc::service::IClient<Forecast> {
  public:
   WeatherObserver(boost::asio::io_service & _io_service)
-      : IComponent(&_io_service),
-        IClient<Forecast>("WeatherStation") {
+      : icc::IComponent(&_io_service),
+        icc::service::IClient<Forecast>("WeatherStation") {
     std::cout << "WeatherObserver" << std::endl;
   }
 
@@ -58,9 +61,9 @@ class WeatherObserver
  protected:
   void connected(Forecast*) override {
     std::cout << "connected is called" << std::endl;
-    subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
     int i = 7;
-    //call(&Forecast::setIntervalForUpdate, i);
+    call(&Forecast::setIntervalForUpdate, i);
+    subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
   }
 
   void disconnected(Forecast*) override {

@@ -5,7 +5,7 @@
  * @brief Contains IService interface.
  * It is used to provide service which is implemented with
  * _Interface interface.
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_SERVICE_HPP
@@ -13,8 +13,12 @@
 
 #include <type_traits>
 #include <IComponent.hpp>
+#include <helpers/memory_helpers.hpp>
 #include "ProcessBus.hpp"
-#include "helpers/memory_helper.hpp"
+
+namespace icc {
+
+namespace service {
 
 template <typename _Interface>
 class IService
@@ -62,6 +66,10 @@ class IService
 template <typename _Interface>
 inline
 IService<_Interface>::~IService() {
+}
+
+}
+
 }
 
 #endif //ICC_SERVICE_HPP
