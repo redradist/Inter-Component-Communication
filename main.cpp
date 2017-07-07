@@ -105,7 +105,7 @@ class CompositeObject
 
 
 class Componet
-    : public IComponent,
+    : public virtual IComponent,
       public ITimerLisener {
  public:
   using IComponent::IComponent;

@@ -4,7 +4,7 @@
  * @date 10 Jun 2017
  * @brief Thread safe version of Timer class
  * It is based on boost::asio::deadline_timer
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_TIMER_HPP

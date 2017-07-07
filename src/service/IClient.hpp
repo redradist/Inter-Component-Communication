@@ -5,7 +5,7 @@
  * @brief Contains IClient interface.
  * It is used to connect service which is implemented by
  * _Interface interface.
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_ISERVICECLIENT_HPP

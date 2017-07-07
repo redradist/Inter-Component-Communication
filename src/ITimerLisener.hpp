@@ -3,7 +3,7 @@
  * @author Denis Kotov
  * @date 11 Jun 2017
  * @brief Timer listener interface
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_TIMERLISENER_HPP

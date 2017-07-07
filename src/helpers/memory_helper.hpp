@@ -4,7 +4,7 @@
  * @date 05 Jul 2017
  * @brief Contains helper functions and classes for <memory>
  * header from standard library
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_MEMORY_HELPER_HPP

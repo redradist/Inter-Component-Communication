@@ -5,7 +5,7 @@
  * @brief Contains ProcessBus class.
  * It is a broker pattern. Used to control registration
  * and connection of services
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_PROCESSBUS_HPP

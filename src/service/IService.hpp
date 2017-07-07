@@ -5,7 +5,7 @@
  * @brief Contains IService interface.
  * It is used to provide service which is implemented with
  * _Interface interface.
- * @copyright Denis Kotov, MIT License. Open source:
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
 #ifndef ICC_SERVICE_HPP
