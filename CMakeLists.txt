@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(./src)
 
+# This comented lines only for testing purposes
 #set(CMAKE_C_COMPILER "clang" )
 #set(CMAKE_CXX_COMPILER "clang++" )
 #add_definitions(-D__STRICT_ANSI__)

@@ -35,8 +35,7 @@ class WeatherStation
   void setIntervalForUpdate(int & _seconds) override {
     std::cout << "setIntervalForUpdate: seconds = " << _seconds << std::endl;
     timer_.setInterval(boost::posix_time::seconds(_seconds));
-    timer_.setNumberOfRepetition(-1);
-    //timer_.stop();
+    timer_.setNumberOfRepetition(icc::Timer::Infinite);
     timer_.addListener(this);
     timer_.start();
   }
@@ -57,7 +56,9 @@ class WeatherObserver
   ~WeatherObserver() {
     std::cout << "~WeatherObserver" << std::endl;
   }
-
+  void onTemperature(const double & _temperature) {
+    std::cout << "Temperature is " << _temperature << std::endl;
+  }
  protected:
   void connected(Forecast*) override {
     std::cout << "connected is called" << std::endl;
@@ -69,10 +70,6 @@ class WeatherObserver
   void disconnected(Forecast*) override {
     std::cout << "disconnected is called" << std::endl;
   }
-
-  void onTemperature(const double & _temperature) {
-    std::cout << "Temperature is " << _temperature << std::endl;
-  }
 };
 
 int main() {
@@ -82,8 +79,6 @@ int main() {
   station->registerService();
   std::shared_ptr<WeatherObserver> observer =
       std::make_shared<WeatherObserver>(service_);
-  observer->call(&Forecast::setIntervalForUpdate, 1);
-
   // Start event loop
   service_.run();
   return 0;
