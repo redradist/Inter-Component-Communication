@@ -201,7 +201,7 @@ class ProcessBus
                  Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
-                  "_Interface is not an abstract class");
+                  "IClient<_Interface> is not a base class of _Client");
     push([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
@@ -231,6 +231,8 @@ class ProcessBus
                    const std::string & _serviceName,
                    Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
     push([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
