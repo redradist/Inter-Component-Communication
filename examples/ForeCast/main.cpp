@@ -77,8 +77,11 @@ int main() {
   std::shared_ptr<WeatherStation> station =
       std::make_shared<WeatherStation>(service_);
   station->registerService();
-  std::shared_ptr<WeatherObserver> observer =
-      std::make_shared<WeatherObserver>(service_);
+  {
+    std::shared_ptr<WeatherObserver> observer =
+        std::make_shared<WeatherObserver>(service_);
+    observer->buildClient();
+  }
   // Start event loop
   service_.run();
   return 0;

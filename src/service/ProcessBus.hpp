@@ -104,12 +104,12 @@ class ProcessBus
    * @param _serviceName Name of service for building
    */
   template<typename _Interface>
-  void buildClient(IClient<_Interface> *_client,
+  void buildClient(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string &_serviceName) {
     push([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-        clients_[clientsKey].emplace(_client);
+        clients_[clientsKey].emplace(_client.get());
         auto service = this->getService<_Interface>(_serviceName);
         if (service) {
           _client->connected(service.get());
@@ -126,16 +126,12 @@ class ProcessBus
    * @param _serviceName Name of service for building
    */
   template<typename _Interface>
-  void disassembleClient(IClient<_Interface> *_client,
+  void disassembleClient(IClient<_Interface> * _client,
                          const std::string &_serviceName) {
     push([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         clients_[clientsKey].erase(_client);
-        auto service = this->getService<_Interface>(_serviceName);
-        if (service) {
-          _client->disconnected(service.get());
-        }
       }
     });
   }
@@ -208,7 +204,7 @@ class ProcessBus
            typename _Client,
            typename _R,
            typename ... _Args>
-  void subscribe(IClient<_Interface> * _client,
+  void subscribe(std::shared_ptr<IClient<_Interface>> _client,
                  const std::string & _serviceName,
                  Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
@@ -220,8 +216,7 @@ class ProcessBus
         service->push([=] {
           (service.get()->*_event).connect(
               _callback,
-              std::shared_ptr<_Client>(
-                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+              std::static_pointer_cast<_Client>(_client));
         });
       }
     });
@@ -239,7 +234,7 @@ class ProcessBus
            typename _Client,
            typename _R,
            typename ... _Args>
-  void unsubscribe(IClient<_Interface> * _client,
+  void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string & _serviceName,
                    Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
@@ -251,8 +246,7 @@ class ProcessBus
         service->push([=] {
           (service.get()->*_event).disconnect(
               _callback,
-              std::shared_ptr<_Client>(
-                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+              std::static_pointer_cast<_Client>(_client));
         });
       }
     });
