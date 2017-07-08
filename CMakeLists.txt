@@ -5,22 +5,14 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(./src)
 
+# This comented lines only for testing purposes
 #set(CMAKE_C_COMPILER "clang" )
 #set(CMAKE_CXX_COMPILER "clang++" )
 #add_definitions(-D__STRICT_ANSI__)
-set(SOURCE_FILES    main.cpp
-                    src/IComponent.hpp
-                    src/Event.hpp
-                    src/Timer.hpp
-                    src/ITimerLisener.hpp
-                    src/service/IService.hpp
-                    src/service/IClient.hpp
-                    src/service/ProcessBus.cpp
-                    src/service/ProcessBus.hpp
-                    src/helpers/memory_helpers.hpp
-                    src/helpers/hash_helpers.hpp
-                    InterfaceForinterface.hpp src/command/ICommand.hpp src/command/ICommandLoop.hpp src/command/CommandLoop.hpp src/command/CommandLoop.cpp)
-add_executable(ICC ${SOURCE_FILES})
-target_link_libraries(ICC boost_system
-                          pthread
-                     )
+set(SOURCE_FILES    src/service/ProcessBus.cpp)
+add_library(${PROJECT_NAME} ${SOURCE_FILES})
+target_link_libraries(
+        ${PROJECT_NAME}
+        boost_system
+        pthread
+)

@@ -38,9 +38,9 @@ class ProcessBus
     : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
-  using tListOfClients = std::unordered_set<void *>;
+  using tListOfClients = std::unordered_map<void*, std::function<void*(void)>>;
   using tKeyForServiceList = std::type_index;
-  using tServiceStorage = std::function<void *(void)>;
+  using tServiceStorage = std::function<void*(void)>;
   using tListOfServices = std::unordered_map<std::string, tServiceStorage>;
 
  public:
@@ -68,8 +68,16 @@ class ProcessBus
                     [_service]() mutable { return reinterpret_cast<void *>(&_service); });
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         auto clients = clients_[clientsKey];
-        for (auto client : clients) {
-          reinterpret_cast<IClient<_Interface> *>(client)->connected(_service.get());
+        for (auto client = clients.begin();
+             client != clients.end();) {
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
+          if (auto _client = weak_client.lock()) {
+            _client->connected(_service.get());
+            ++client;
+          } else {
+            // NOTE(redra): Deleting client
+            client = clients.erase(client);
+          }
         }
       }
     });
@@ -89,8 +97,16 @@ class ProcessBus
         services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         auto clients = clients_[clientsKey];
-        for (auto client : clients) {
-          reinterpret_cast<IClient<_Interface> *>(client)->disconnected(nullptr);
+        for (auto client = clients.begin();
+             client != clients.end();) {
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
+          if (auto _client = weak_client.lock()) {
+            _client->disconnected(nullptr);
+            ++client;
+          } else {
+            // NOTE(redra): Deleting client
+            client = clients.erase(client);
+          }
         }
       }
     });
@@ -104,11 +120,20 @@ class ProcessBus
    * @param _serviceName Name of service for building
    */
   template<typename _Interface>
-  void buildClient(IClient<_Interface> *_client,
+  void buildClient(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string &_serviceName) {
     push([=] {
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      clients_[clientsKey].emplace(_client);
+      if (_client) {
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        std::weak_ptr<IClient<_Interface>> weak_client = _client;
+        clients_[clientsKey].emplace(
+            _client.get(),
+            [weak_client]() mutable { return reinterpret_cast<void *>(&weak_client); });
+        auto service = this->getService<_Interface>(_serviceName);
+        if (service) {
+          _client->connected(service.get());
+        }
+      }
     });
   }
 
@@ -120,11 +145,13 @@ class ProcessBus
    * @param _serviceName Name of service for building
    */
   template<typename _Interface>
-  void disassembleClient(IClient<_Interface> *_client,
+  void disassembleClient(IClient<_Interface> * _client,
                          const std::string &_serviceName) {
     push([=] {
-      auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-      clients_[clientsKey].erase(_client);
+      if (_client) {
+        auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
+        clients_[clientsKey].erase(_client);
+      }
     });
   }
 
@@ -196,20 +223,19 @@ class ProcessBus
            typename _Client,
            typename _R,
            typename ... _Args>
-  void subscribe(IClient<_Interface> * _client,
+  void subscribe(std::shared_ptr<IClient<_Interface>> _client,
                  const std::string & _serviceName,
                  Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
-                  "_Interface is not an abstract class");
+                  "IClient<_Interface> is not a base class of _Client");
     push([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->push([=] {
           (service.get()->*_event).connect(
               _callback,
-              std::shared_ptr<_Client>(
-                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+              std::static_pointer_cast<_Client>(_client));
         });
       }
     });
@@ -227,18 +253,19 @@ class ProcessBus
            typename _Client,
            typename _R,
            typename ... _Args>
-  void unsubscribe(IClient<_Interface> * _client,
+  void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string & _serviceName,
                    Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
     push([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->push([=] {
           (service.get()->*_event).disconnect(
               _callback,
-              std::shared_ptr<_Client>(
-                  std::static_pointer_cast<_Client>(_client->shared_from_this())));
+              std::static_pointer_cast<_Client>(_client));
         });
       }
     });

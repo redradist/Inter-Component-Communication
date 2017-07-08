@@ -82,11 +82,12 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
           std::void_cast(_callback),
           [=](_Args ... _args) {
-            (_listener.get()->*_callback)(_args...);
+            (_p_listener->*_callback)(_args...);
           });
       checked_listeners_.push_back(callback);
     }

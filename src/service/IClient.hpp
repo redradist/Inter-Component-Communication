@@ -34,7 +34,10 @@ class IClient
    */
   IClient(const std::string &_serviceName)
       : service_name_(_serviceName) {
-    ProcessBus::getBus().buildClient(this, service_name_);
+  }
+
+  void buildClient() {
+    ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
   }
 
   /**
@@ -93,7 +96,7 @@ class IClient
   template<typename _Event,
            typename _Callback>
   void subscribe(_Event && _event, _Callback && _callback) {
-    ProcessBus::getBus().subscribe(this, service_name_,
+    ProcessBus::getBus().subscribe(this->shared_from_this(), service_name_,
                                    std::forward<_Event>(_event),
                                    std::forward<_Callback>(_callback));
   };
@@ -108,7 +111,7 @@ class IClient
   template<typename _Event,
            typename _Callback>
   void unsubscribe(_Event && _event, _Callback && _callback) {
-    ProcessBus::getBus().unsubscribe(this, service_name_,
+    ProcessBus::getBus().unsubscribe(this->shared_from_this(), service_name_,
                                      std::forward<_Event>(_event),
                                      std::forward<_Callback>(_callback));
   };

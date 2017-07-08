@@ -7,26 +7,38 @@
 
 #include <IComponent.hpp>
 
+class ICommandLoop;
+
 namespace icc {
 
 namespace command {
 
 enum class CommandResult {
-  SUCCESFULLY,
+  SUCCESS,
   FAILED,
-  STOPED,
+  ABORTED,
 };
 
 class ICommand
     : public IComponent {
  public:
-  virtual void start();
-  virtual void stop();
+
+  virtual void startCommand() = 0;
+  virtual void abortCommand() = 0;
 
  protected:
-  void finished(CommandResult);
+  void finished(const CommandResult &);
 
+ private:
+  friend class ICommandLoop;
+  std::shared_ptr<IComponent> p_loop_;
 };
+
+void ICommand::finished(CommandResult) {
+  p_loop_->push([=]() {
+
+  });
+}
 
 }
 

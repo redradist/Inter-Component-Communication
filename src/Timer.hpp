@@ -21,14 +21,17 @@ class Timer
     : protected virtual IComponent,
       public Event<void(const TimerEvents &)> {
  public:
-  /**
-   * Should be used for setting continuous mode
-   */
-  static const int32_t Infinite = -1;
-  /**
-   * Should be used for setting one time mode
-   */
-  static const int32_t OneTime = 0;
+  enum : int32_t {
+    /**
+     * Should be used for setting continuous mode
+     */
+    Infinite = -1,
+    /**
+     * Should be used for setting one time mode
+     */
+    OneTime = 0,
+  };
+
  public:
   Timer(IComponent *_parent)
       : IComponent(_parent),
