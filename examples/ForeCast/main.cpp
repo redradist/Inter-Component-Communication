@@ -74,14 +74,15 @@ class WeatherObserver
 
 int main() {
   boost::asio::io_service service_;
+
+  std::shared_ptr<WeatherStation> station =
+      std::make_shared<WeatherStation>(service_);
+  station->registerService();
   {
     std::shared_ptr<WeatherObserver> observer =
         std::make_shared<WeatherObserver>(service_);
     observer->buildClient();
   }
-  std::shared_ptr<WeatherStation> station =
-      std::make_shared<WeatherStation>(service_);
-  station->registerService();
   // Start event loop
   service_.run();
   return 0;

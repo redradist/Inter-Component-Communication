@@ -9,7 +9,7 @@ include_directories(./src)
 #set(CMAKE_C_COMPILER "clang" )
 #set(CMAKE_CXX_COMPILER "clang++" )
 #add_definitions(-D__STRICT_ANSI__)
-set(SOURCE_FILES    src/service/ProcessBus.cpp)
+set(SOURCE_FILES    src/service/ProcessBus.cpp src/command/CommandLoop.cpp src/command/CommandLoop.hpp)
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries(
         ${PROJECT_NAME}

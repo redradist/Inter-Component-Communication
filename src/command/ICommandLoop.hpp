@@ -18,17 +18,42 @@ class ICommandLoop
   ICommandLoop() = default;
   ~ICommandLoop() = default;
 
-  bool push_back(std::shared_ptr<ICommand>);
+  void push_back(std::shared_ptr<ICommand> _command) {
+    push([=]{
+      commands_.push(_command);
+    });
+  }
 
-  virtual void startCommand();
-  virtual void abortCommand();
+  virtual void start();
+  virtual void nextCommand() {
+    push([=]{
+      if (!commands_.empty()) {
+        auto command = commands_.front();
+        command->setLoop(this);
+        command->start();
+      }
+    });
+  }
+
+  virtual void abortCommand() {
+
+  }
 
   virtual void receiveNotifications(const CommandResult &) = 0;
 
  protected:
-  void finished(CommandResult);
+  virtual void onFinishCommand(const CommandResult & _result) {
+    push([=]{
+      this->receiveNotifications(_result);
+      if (!commands_.empty()) {
+        commands_.pop();
+      }
+      nextCommand();
+    });
+  }
 
  protected:
+  bool is_active_command_ = false;
   std::queue<std::shared_ptr<ICommand>> commands_;
 };
 
