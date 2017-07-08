@@ -38,9 +38,9 @@ class ProcessBus
     : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
-  using tListOfClients = std::unordered_set<void *>;
+  using tListOfClients = std::unordered_map<void*, std::function<void*(void)>>;
   using tKeyForServiceList = std::type_index;
-  using tServiceStorage = std::function<void *(void)>;
+  using tServiceStorage = std::function<void*(void)>;
   using tListOfServices = std::unordered_map<std::string, tServiceStorage>;
 
  public:
@@ -68,8 +68,16 @@ class ProcessBus
                     [_service]() mutable { return reinterpret_cast<void *>(&_service); });
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         auto clients = clients_[clientsKey];
-        for (auto client : clients) {
-          reinterpret_cast<IClient<_Interface> *>(client)->connected(_service.get());
+        for (auto client = clients.begin();
+             client != clients.end();) {
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
+          if (auto _client = weak_client.lock()) {
+            _client->connected(_service.get());
+            ++client;
+          } else {
+            // NOTE(redra): Deleting client
+            client = clients.erase(client);
+          }
         }
       }
     });
@@ -89,8 +97,16 @@ class ProcessBus
         services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         auto clients = clients_[clientsKey];
-        for (auto client : clients) {
-          reinterpret_cast<IClient<_Interface> *>(client)->disconnected(nullptr);
+        for (auto client = clients.begin();
+             client != clients.end();) {
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
+          if (auto _client = weak_client.lock()) {
+            _client->disconnected(nullptr);
+            ++client;
+          } else {
+            // NOTE(redra): Deleting client
+            client = clients.erase(client);
+          }
         }
       }
     });
@@ -109,7 +125,10 @@ class ProcessBus
     push([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
-        clients_[clientsKey].emplace(_client.get());
+        std::weak_ptr<IClient<_Interface>> weak_client = _client;
+        clients_[clientsKey].emplace(
+            _client.get(),
+            [weak_client]() mutable { return reinterpret_cast<void *>(&weak_client); });
         auto service = this->getService<_Interface>(_serviceName);
         if (service) {
           _client->connected(service.get());
