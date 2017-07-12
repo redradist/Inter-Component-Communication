@@ -70,23 +70,6 @@ class IClient
   };
 
   /**
-   * This method is used to call method from IService<>
-   * @tparam _Callback Type of callback functor
-   * @tparam _Reply Type of reply functor
-   * @tparam _Values Values types those is passed to external method
-   * @param _callback Pointer to external method
-   * @param _reply Reply with some result from IService<>
-   * @param _values Arguments passed into external method
-   */
-  template<typename _Callback, typename _Reply, typename ... _Values>
-  void call(_Callback && _callback, _Reply && _reply, _Values && ... _values) {
-    ProcessBus::getBus().call(service_name_,
-                              std::forward<_Callback>(_callback),
-                              std::forward<_Reply>(_reply),
-                              std::forward<_Values>(_values)...);
-  };
-
-  /**
    * This method is used to subscribe on event from IService<>
    * @tparam _Event Event object to subscribe
    * @tparam _Callback Callback object to subscribe
