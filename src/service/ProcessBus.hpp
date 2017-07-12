@@ -61,6 +61,8 @@ class ProcessBus
   template<typename _Interface>
   void registerService(std::shared_ptr<IService<_Interface>> _service,
                        const std::string &_serviceName) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     push([=]() mutable {
       if (_service) {
         services_[tKeyForServiceList(typeid(_Interface))].
@@ -92,6 +94,8 @@ class ProcessBus
   template<typename _Interface>
   void unregisterService(std::shared_ptr<IService<_Interface>> _service,
                          const std::string &_serviceName) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     push([=] {
       if (_service) {
         services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
@@ -122,6 +126,8 @@ class ProcessBus
   template<typename _Interface>
   void buildClient(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string &_serviceName) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     push([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
@@ -147,6 +153,8 @@ class ProcessBus
   template<typename _Interface>
   void disassembleClient(IClient<_Interface> * _client,
                          const std::string &_serviceName) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     push([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
@@ -168,6 +176,8 @@ class ProcessBus
            typename ... _Values>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Args...), _Values ... _values) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     this->push([this, _serviceName, _callback, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
@@ -195,6 +205,8 @@ class ProcessBus
             void(_Interface::*_callback)(std::function<void(_Params...)>, _Args...),
             std::function<void(_Params...)> _reply,
             _Values ... _values) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
     this->push([this, _serviceName, _callback, _reply, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {

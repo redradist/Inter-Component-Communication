@@ -1,11 +1,11 @@
 /**
- * @file Component.hpp
+ * @file IComponent.hpp
  * @author Denis Kotov
  * @date 10 Jun 2017
  * @brief Contains abstract class for Component.
  * It is thread safe version of Component class
  * Can be used to create different kind of architectures
- * without of warring og thread safety
+ * without of worrying of thread safety
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 

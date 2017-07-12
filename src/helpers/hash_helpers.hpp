@@ -1,6 +1,12 @@
-//
-// Created by redra on 07.07.17.
-//
+
+/**
+ * @file hash_helpers.hpp
+ * @author Denis Kotov
+ * @date 07 Jul 2017
+ * @brief Contains helper functions and classes for <unordered_set> and <unordered_map>
+ * header from standard library
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_HASH_HELPER_HPP
 #define ICC_HASH_HELPER_HPP
