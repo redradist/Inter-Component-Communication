@@ -58,32 +58,151 @@ class IClient
   /**
    * This method is used to call method from IService<>
    * @tparam _Callback Type of callback functor
-   * @tparam _Values Values types those is passed to external method
+   * @tparam _Value0 Value #0 type those is passed to external method
    * @param _callback Pointer to external method
-   * @param _values Arguments passed into external method
+   * @param _value0 Argument #0 passed into external method
    */
-  template<typename _Callback, typename ... _Values>
-  void call(_Callback && _callback, _Values && ... _values) {
+  template<typename _Callback,
+           typename _Value0>
+  void call(_Callback && _callback, _Value0 && _value0) {
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
-                              std::forward<_Values>(_values)...);
+                              std::forward<_Value0>(_value0));
   };
 
   /**
-   * This method is used to call method from IService<>
+   *
    * @tparam _Callback Type of callback functor
-   * @tparam _Reply Type of reply functor
-   * @tparam _Values Values types those is passed to external method
+   * @tparam _Value0 Value #0 type those is passed to external method
+   * @tparam _Value1 Value #1 type those is passed to external method
    * @param _callback Pointer to external method
-   * @param _reply Reply with some result from IService<>
-   * @param _values Arguments passed into external method
+   * @param _value0 Argument #0 passed into external method
+   * @param _value1 Argument #1 passed into external method
    */
-  template<typename _Callback, typename _Reply, typename ... _Values>
-  void call(_Callback && _callback, _Reply && _reply, _Values && ... _values) {
+  template<typename _Callback,
+           typename _Value0,
+           typename _Value1>
+  void call(_Callback && _callback, _Value0 && _value0, _Value1 && _value1) {
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
-                              std::forward<_Reply>(_reply),
-                              std::forward<_Values>(_values)...);
+                              std::forward<_Value0>(_value0),
+                              std::forward<_Value0>(_value1));
+  };
+
+  /**
+   *
+   * @tparam _Callback Type of callback functor
+   * @tparam _Value0 Value #0 type those is passed to external method
+   * @tparam _Value1 Value #1 type those is passed to external method
+   * @tparam _Value2 Value #2 type those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _value0 Argument #0 passed into external method
+   * @param _value1 Argument #1 passed into external method
+   * @param _value2 Argument #2 passed into external method
+   */
+  template<typename _Callback,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2>
+  void call(_Callback && _callback, _Value0 && _value0, _Value1 && _value1, _Value2 && _value2) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback),
+                              std::forward<_Value0>(_value0),
+                              std::forward<_Value0>(_value1),
+                              std::forward<_Value0>(_value2));
+  };
+
+  /**
+   *
+   * @tparam _Callback Type of callback functor
+   * @tparam _Value0 Value #0 type those is passed to external method
+   * @tparam _Value1 Value #1 type those is passed to external method
+   * @tparam _Value2 Value #2 type those is passed to external method
+   * @tparam _Value3 Value #3 type those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _value0 Argument #0 passed into external method
+   * @param _value1 Argument #1 passed into external method
+   * @param _value2 Argument #2 passed into external method
+   * @param _value3 Argument #3 passed into external method
+   */
+  template<typename _Callback,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3>
+  void call(_Callback && _callback, _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback),
+                              std::forward<_Value0>(_value0),
+                              std::forward<_Value0>(_value1),
+                              std::forward<_Value0>(_value2),
+                              std::forward<_Value0>(_value3));
+  };
+
+  /**
+   *
+   * @tparam _Callback Type of callback functor
+   * @tparam _Value0 Value #0 type those is passed to external method
+   * @tparam _Value1 Value #1 type those is passed to external method
+   * @tparam _Value2 Value #2 type those is passed to external method
+   * @tparam _Value3 Value #3 type those is passed to external method
+   * @tparam _Value4 Value #4 type those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _value0 Argument #0 passed into external method
+   * @param _value1 Argument #1 passed into external method
+   * @param _value2 Argument #2 passed into external method
+   * @param _value3 Argument #3 passed into external method
+   * @param _value4 Argument #4 passed into external method
+   */
+  template<typename _Callback,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3,
+           typename _Value4>
+  void call(_Callback && _callback, _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3, _Value4 && _value4) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback),
+                              std::forward<_Value0>(_value0),
+                              std::forward<_Value0>(_value1),
+                              std::forward<_Value0>(_value2),
+                              std::forward<_Value0>(_value3),
+                              std::forward<_Value0>(_value4));
+  };
+
+  /**
+   *
+   * @tparam _Callback Type of callback functor
+   * @tparam _Value0 Value #0 type those is passed to external method
+   * @tparam _Value1 Value #1 type those is passed to external method
+   * @tparam _Value2 Value #2 type those is passed to external method
+   * @tparam _Value3 Value #3 type those is passed to external method
+   * @tparam _Value4 Value #4 type those is passed to external method
+   * @tparam _Value5 Value #5 type those is passed to external method
+   * @param _callback Pointer to external method
+   * @param _value0 Argument #0 passed into external method
+   * @param _value1 Argument #1 passed into external method
+   * @param _value2 Argument #2 passed into external method
+   * @param _value3 Argument #3 passed into external method
+   * @param _value4 Argument #4 passed into external method
+   * @param _value5 Argument #5 passed into external method
+   */
+  template<typename _Callback,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3,
+           typename _Value4,
+           typename _Value5>
+  void call(_Callback && _callback, _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3, _Value4 && _value4, _Value5 && _value5) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback),
+                              std::forward<_Value0>(_value0),
+                              std::forward<_Value0>(_value1),
+                              std::forward<_Value0>(_value2),
+                              std::forward<_Value0>(_value3),
+                              std::forward<_Value0>(_value4),
+                              std::forward<_Value0>(_value5));
   };
 
   /**
