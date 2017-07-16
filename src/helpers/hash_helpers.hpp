@@ -1,4 +1,3 @@
-
 /**
  * @file hash_helpers.hpp
  * @author Denis Kotov

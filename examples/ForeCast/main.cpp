@@ -28,7 +28,7 @@ class WeatherStation
   void processEvent(const icc::TimerEvents & _event) override {
     if (icc::TimerEvents::EXPIRED == _event) {
       std::cout << "processEvent icc::TimerEvents::EXPIRED" << std::endl;
-      temperature_(28.3);
+      temperature_(28.3,1);
     }
   }
 
@@ -56,7 +56,7 @@ class WeatherObserver
   ~WeatherObserver() {
     std::cout << "~WeatherObserver" << std::endl;
   }
-  void onTemperature(const double & _temperature) {
+  void onTemperature(const double & _temperature,int) {
     std::cout << "Temperature is " << _temperature << std::endl;
   }
  protected:
@@ -65,6 +65,7 @@ class WeatherObserver
     int i = 7;
     call(&Forecast::setIntervalForUpdate, i);
     subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    //unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
   }
 
   void disconnected(Forecast*) override {
@@ -74,12 +75,12 @@ class WeatherObserver
 
 int main() {
   boost::asio::io_service service_;
-  std::shared_ptr<WeatherStation> station =
-      std::make_shared<WeatherStation>(service_);
-  station->registerService();
   std::shared_ptr<WeatherObserver> observer =
       std::make_shared<WeatherObserver>(service_);
   observer->buildClient();
+  std::shared_ptr<WeatherStation> station =
+      std::make_shared<WeatherStation>(service_);
+  station->registerService();
   // Start event loop
   service_.run();
   return 0;
