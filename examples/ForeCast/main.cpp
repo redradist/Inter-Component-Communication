@@ -12,7 +12,7 @@
 
 class WeatherStation
     : public icc::service::IService<Forecast>,
-      public icc::ITimerLisener {
+      public icc::ITimerListener {
  public:
   WeatherStation(boost::asio::io_service & _io_service)
       : icc::IComponent(&_io_service),
