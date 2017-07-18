@@ -13,7 +13,7 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "IComponent.hpp"
-#include "ITimerLisener.hpp"
+#include "ITimerListener.hpp"
 
 namespace icc {
 
@@ -99,7 +99,7 @@ class Timer
    */
   void stop() {
     push([=] {
-      operator()(TimerEvents::STOPED);
+      operator()(TimerEvents::STOPPED);
       timer_.cancel();
     });
   }
@@ -112,7 +112,7 @@ class Timer
   void addListener(_Listener *_listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
+    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->connect(&_Listener::processEvent, _listener);
@@ -127,7 +127,7 @@ class Timer
   void addListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
+    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->connect(&_Listener::processEvent, _listener);
@@ -142,7 +142,7 @@ class Timer
   void removeListener(_Listener *_listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
+    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->disconnect(&_Listener::processEvent, _listener);
@@ -157,7 +157,7 @@ class Timer
   void removeListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerLisener, _Listener>::value,
+    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
       this->disconnect(&_Listener::processEvent, _listener);

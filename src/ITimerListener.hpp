@@ -16,10 +16,10 @@ namespace icc {
 enum class TimerEvents {
   STARTED,
   EXPIRED,
-  STOPED,
+  STOPPED,
 };
 
-class ITimerLisener {
+class ITimerListener {
  public:
   virtual void processEvent(const TimerEvents &) = 0;
 };
