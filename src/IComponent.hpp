@@ -128,6 +128,16 @@ class IComponent {
     service_->post(_task);
   }
 
+  /**
+   * Method used to call task in this thread if
+   * current context is io::service itself otherwise
+   * push it in queue
+   * @param _task Task that will be executed
+   */
+  virtual void send(std::function<void(void)> _task) {
+    service_->dispatch(_task);
+  }
+
  protected:
   /**
    * Method return used io_service
