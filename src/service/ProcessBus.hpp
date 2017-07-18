@@ -63,7 +63,7 @@ class ProcessBus
                        const std::string &_serviceName) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    push([=]() mutable {
+    send([=]() mutable {
       if (_service) {
         services_[tKeyForServiceList(typeid(_Interface))].
             emplace(_serviceName,
@@ -96,7 +96,7 @@ class ProcessBus
                          const std::string &_serviceName) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    push([=] {
+    send([=] {
       if (_service) {
         services_[tKeyForServiceList(typeid(_Interface))].erase(_serviceName);
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
@@ -128,7 +128,7 @@ class ProcessBus
                    const std::string &_serviceName) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    push([=] {
+    send([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         std::weak_ptr<IClient<_Interface>> weak_client = _client;
@@ -155,7 +155,7 @@ class ProcessBus
                          const std::string &_serviceName) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    push([=] {
+    send([=] {
       if (_client) {
         auto clientsKey = tKeyForClientList{typeid(_Interface), _serviceName};
         clients_[clientsKey].erase(_client);
@@ -178,10 +178,10 @@ class ProcessBus
             void(_Interface::*_callback)(_Args...), _Values ... _values) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->push([this, _serviceName, _callback, _values...]() mutable {
+    this->send([this, _serviceName, _callback, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
-        service->push([=]() mutable {
+        service->send([=]() mutable {
           (service.get()->*_callback)(_values...);
         });
       }
@@ -207,16 +207,16 @@ class ProcessBus
             _Values ... _values) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->push([this, _serviceName, _callback, _reply, _values...]() mutable {
+    this->send([this, _serviceName, _callback, _reply, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         std::function<void(_Params ...)> _safeReply =
         [=](_Params ... params) {
-          push([=] {
+          send([=] {
             _reply(params...);
           });
         };
-        service->push([=]() mutable {
+        service->send([=]() mutable {
           (service.get()->*_callback)(_safeReply, _values...);
         });
       }
@@ -241,10 +241,10 @@ class ProcessBus
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
-    push([this, _client, _serviceName, _event, _callback] {
+    send([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
-        service->push([=] {
+        service->send([=] {
           (service.get()->*_event).connect(
               _callback,
               std::static_pointer_cast<_Client>(_client));
@@ -271,10 +271,10 @@ class ProcessBus
                    _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
-    push([this, _client, _serviceName, _event, _callback] {
+    send([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
-        service->push([=] {
+        service->send([=] {
           (service.get()->*_event).disconnect(
               _callback,
               std::static_pointer_cast<_Client>(_client));

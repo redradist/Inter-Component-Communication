@@ -68,7 +68,7 @@ class IComponent {
       : service_(_parent->getEventLoop()),
         worker_(new boost::asio::io_service::work(*service_)),
         parent_(_parent) {
-    _parent->setChild(this);
+    _parent->addChild(this);
   }
 
   /**
@@ -79,7 +79,7 @@ class IComponent {
       : service_(_parent->getEventLoop()),
         worker_(new boost::asio::io_service::work(*service_)),
         parent_(_parent.get()) {
-    _parent->setChild(this);
+    _parent->addChild(this);
   }
 
   /**
@@ -128,6 +128,16 @@ class IComponent {
     service_->post(_task);
   }
 
+  /**
+   * Method used to call task in this thread if
+   * current context is io::service itself otherwise
+   * push it in queue
+   * @param _task Task that will be executed
+   */
+  virtual void send(std::function<void(void)> _task) {
+    service_->dispatch(_task);
+  }
+
  protected:
   /**
    * Method return used io_service
@@ -142,7 +152,7 @@ class IComponent {
    * Method that allow to add _child component to the vector
    * @param _child Component that will be added
    */
-  virtual void setChild(IComponent *_child) {
+  virtual void addChild(IComponent *_child) {
     if (_child) {
       push([=] {
         childern_.push_back(_child);
