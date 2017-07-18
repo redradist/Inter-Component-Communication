@@ -43,7 +43,7 @@ class Timer
    * Enable continuous mode
    */
   void enableContinuous() {
-    push([=] {
+    send([=] {
       counter_ = Infinite;
     });
   }
@@ -52,7 +52,7 @@ class Timer
    * Disable continuous mode
    */
   void disableContinuous() {
-    push([=] {
+    send([=] {
       if (Infinite == counter_) {
         counter_ = OneTime;
       }
@@ -64,7 +64,7 @@ class Timer
    * @param number Number of repetition
    */
   void setNumberOfRepetition(const int32_t &number) {
-    push([=] {
+    send([=] {
       if (number < 0) {
         counter_ = Infinite;
       } else {
@@ -78,7 +78,7 @@ class Timer
    * @param _duration Timeout duration
    */
   void setInterval(const boost::posix_time::time_duration &_duration) {
-    push([=] {
+    send([=] {
       duration_ = _duration;
     });
   }
@@ -87,7 +87,7 @@ class Timer
    * Method is used to start async waiting timer
    */
   void start() {
-    push([=] {
+    send([=] {
       timer_.expires_from_now(duration_);
       operator()(TimerEvents::STARTED);
       timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
@@ -98,7 +98,7 @@ class Timer
    * Method is used to stop waiting timer
    */
   void stop() {
-    push([=] {
+    send([=] {
       operator()(TimerEvents::STOPPED);
       timer_.cancel();
     });
