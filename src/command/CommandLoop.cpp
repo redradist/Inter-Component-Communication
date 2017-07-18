@@ -9,7 +9,7 @@ namespace icc {
 namespace command {
 
 void CommandLoop::start() {
-  push([=]{
+  send([=]{
     if (LoopState::INACTIVE == state_) {
       state_ = LoopState::ACTIVE;
       nextCommand();
@@ -18,7 +18,7 @@ void CommandLoop::start() {
 }
 
 void CommandLoop::resume() {
-  push([=]{
+  send([=]{
     if (LoopState::SUSPENDED == state_) {
       state_ = LoopState::ACTIVE;
       if (!commands_.empty()) {
@@ -30,7 +30,7 @@ void CommandLoop::resume() {
 }
 
 void CommandLoop::suspend() {
-  push([=]{
+  send([=]{
     state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
       auto command = commands_.front();
@@ -40,7 +40,7 @@ void CommandLoop::suspend() {
 }
 
 void CommandLoop::stop() {
-  push([=]{
+  send([=]{
     state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
       auto command = commands_.front();
@@ -52,7 +52,7 @@ void CommandLoop::stop() {
 }
 
 void CommandLoop::setMode(LoopMode _mode) {
-  push([=]{
+  send([=]{
     if (LoopState::INACTIVE == state_) {
       mode_ = _mode;
     }
@@ -60,7 +60,7 @@ void CommandLoop::setMode(LoopMode _mode) {
 }
 
 void CommandLoop::push_back(std::shared_ptr<ICommand> _command) {
-  push([=]{
+  send([=]{
     commands_.push(_command);
     if (1 == commands_.size()) {
       nextCommand();
@@ -73,7 +73,7 @@ CommandLoop::getState() {
   std::shared_ptr<std::promise<LoopState>> promise =
     std::make_shared<std::promise<LoopState>>();
   std::future<LoopState> result = promise->get_future();
-  push([=]() mutable {
+  send([=]() mutable {
     promise->set_value(state_);
   });
   return result;
@@ -92,7 +92,7 @@ void CommandLoop::nextCommand() {
 }
 
 void CommandLoop::processEvent(const CommandEvent & _event) {
-  push([=]{
+  send([=]{
     if (!commands_.empty()) {
       commands_.pop();
     }
