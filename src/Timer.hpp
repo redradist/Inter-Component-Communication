@@ -168,7 +168,7 @@ class Timer
    * Overrided function to specify exit event
    */
   void exit() override {
-    send([=] {
+    push([=] {
       IComponent::exit();
       stop();
     });
