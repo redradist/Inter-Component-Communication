@@ -22,7 +22,7 @@ void CommandLoop::resume() {
     if (LoopState::SUSPENDED == state_) {
       state_ = LoopState::ACTIVE;
       if (!commands_.empty()) {
-        auto command = commands_.front();
+        auto & command = commands_.front();
         command->resume();
       }
     }
@@ -33,7 +33,7 @@ void CommandLoop::suspend() {
   send([=]{
     state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
-      auto command = commands_.front();
+      auto & command = commands_.front();
       command->suspend();
     }
   });
@@ -43,7 +43,7 @@ void CommandLoop::stop() {
   send([=]{
     state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
-      auto command = commands_.front();
+      auto & command = commands_.front();
       command->stop();
       commands_.pop();
     }
@@ -82,7 +82,7 @@ CommandLoop::getState() {
 void CommandLoop::nextCommand() {
   if (LoopState::ACTIVE == state_) {
     if (!commands_.empty()) {
-      auto command = commands_.front();
+      auto & command = commands_.front();
       command->subscribe(std::static_pointer_cast<ICommandListener>(this->shared_from_this()));
       command->start();
     } else if (Finite == mode_) {
