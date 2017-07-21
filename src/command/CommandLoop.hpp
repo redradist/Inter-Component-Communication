@@ -1,6 +1,11 @@
-//
-// Created by redra on 08.07.17.
-//
+/**
+ * @file CommandLoop.hpp
+ * @author Denis Kotov
+ * @date 08 Jun 2017
+ * @brief Contains default Command Loop class which could process
+ * any commands or be executed as command by itself
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_ICOMMANDLOOP_HPP
 #define ICC_ICOMMANDLOOP_HPP

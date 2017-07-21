@@ -1,6 +1,10 @@
-//
-// Created by redra on 08.07.17.
-//
+/**
+ * @file ICommand.hpp
+ * @author Denis Kotov
+ * @date 08 Jun 2017
+ * @brief Interface class that is used for creation commands
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_ICOMMAND_HPP
 #define ICC_ICOMMAND_HPP
