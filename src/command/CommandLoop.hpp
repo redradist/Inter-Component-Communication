@@ -69,7 +69,7 @@ class CommandLoop
   /**
    * Overridden exit method from ICommand
    */
-  virtual void finished(const CommandEvent & _event) override;
+  virtual void finished(const CommandResult & _result) override;
 
   /**
    * Overridden exit method from IComponent
@@ -83,7 +83,7 @@ class CommandLoop
   std::future<LoopState> getState();
 
  protected:
-  virtual void processEvent(const CommandEvent & _event) override;
+  virtual void processEvent(const CommandResult & _result) override;
   virtual void nextCommand();
 
  protected:

@@ -15,7 +15,7 @@ namespace icc {
 
 namespace command {
 
-enum class CommandEvent {
+enum class CommandResult {
   SUCCESS,
   FAILED,
   ABORTED,
@@ -27,7 +27,7 @@ class ICommandListener
   /**
    * Method proved by derived class to listen results of command
    */
-  virtual void processEvent(const CommandEvent &) = 0;
+  virtual void processEvent(const CommandResult &) = 0;
 };
 
 }

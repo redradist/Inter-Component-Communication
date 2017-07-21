@@ -52,7 +52,7 @@ void CommandLoop::stopCommand() {
       command->stopCommand();
       commands_.pop();
     }
-    finished(CommandEvent::ABORTED);
+    finished(CommandResult::ABORTED);
   });
 }
 
@@ -91,27 +91,27 @@ void CommandLoop::nextCommand() {
       command->subscribe(std::static_pointer_cast<ICommandListener>(this->shared_from_this()));
       command->startCommand();
     } else if (Finite == mode_) {
-      finished(CommandEvent::SUCCESS);
+      finished(CommandResult::SUCCESS);
     }
   }
 }
 
-void CommandLoop::processEvent(const CommandEvent & _event) {
+void CommandLoop::processEvent(const CommandResult & _result) {
   send([=]{
     if (!commands_.empty()) {
       commands_.pop();
     }
     if (Finite == mode_ &&
-        CommandEvent::FAILED == _event) {
-      finished(CommandEvent::FAILED);
+        CommandResult::FAILED == _result) {
+      finished(CommandResult::FAILED);
     } else {
       nextCommand();
     }
   });
 }
 
-void CommandLoop::finished(const CommandEvent & _event) {
-  ICommand::finished(_event);
+void CommandLoop::finished(const CommandResult & _result) {
+  ICommand::finished(_result);
   exit();
 }
 

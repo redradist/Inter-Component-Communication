@@ -18,7 +18,7 @@ namespace command {
 
 class ICommand {
  public:
-  using tCallback = void(IComponent::*)(const CommandEvent &);
+  using tCallback = void(IComponent::*)(const CommandResult &);
 
  public:
   ICommand() = default;
@@ -104,14 +104,14 @@ class ICommand {
    * Method to finish command
    * @param _result Result with which command is finished
    */
-  virtual void finished(const CommandEvent & _event) {
-    event_.operator()(_event);
+  virtual void finished(const CommandResult & _result) {
+    event_.operator()(_result);
   }
 
  private:
   std::weak_ptr<IComponent> p_loop_;
-  std::function<void(const CommandEvent &)> callback_;
-  Event<void(const CommandEvent &)> event_;
+  std::function<void(const CommandResult &)> callback_;
+  Event<void(const CommandResult &)> event_;
 };
 
 inline
