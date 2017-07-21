@@ -1,7 +1,7 @@
 /**
  * @file CommandLoop.cpp
  * @author Denis Kotov
- * @date 08 Jun 2017
+ * @date 08 Jul 2017
  * @brief Contains default Command Loop class which could process
  * any commands or be executed as command by itself
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
@@ -92,6 +92,7 @@ void CommandLoop::nextCommand() {
       command->start();
     } else if (Finite == mode_) {
       finished(CommandEvent::SUCCESS);
+      exit();
     }
   }
 }
@@ -108,6 +109,13 @@ void CommandLoop::processEvent(const CommandEvent & _event) {
       nextCommand();
     }
   });
+}
+
+void CommandLoop::exit() {
+  while (!commands_.empty()) {
+    commands_.pop();
+  }
+  IComponent::exit();
 }
 
 }

@@ -1,7 +1,7 @@
 /**
  * @file ICommand.hpp
  * @author Denis Kotov
- * @date 08 Jun 2017
+ * @date 08 Jul 2017
  * @brief Interface class that is used for creation commands
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */

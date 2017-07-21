@@ -1,7 +1,7 @@
 /**
  * @file ICommand.hpp
  * @author Denis Kotov
- * @date 16 Jun 2017
+ * @date 16 Jul 2017
  * @brief Interface class that is used for listening for command
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */

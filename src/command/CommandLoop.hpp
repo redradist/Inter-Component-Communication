@@ -1,7 +1,7 @@
 /**
  * @file CommandLoop.hpp
  * @author Denis Kotov
- * @date 08 Jun 2017
+ * @date 08 Jul 2017
  * @brief Contains default Command Loop class which could process
  * any commands or be executed as command by itself
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
@@ -65,6 +65,10 @@ class CommandLoop
    * Used to stop CommandLoop
    */
   virtual void stop() override;
+  /**
+   * Overridden exit method from IComponent
+   */
+  virtual void exit() override;
 
  public:
   virtual void setMode(LoopMode _mode);
