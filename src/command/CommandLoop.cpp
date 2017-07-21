@@ -13,7 +13,7 @@ namespace icc {
 
 namespace command {
 
-void CommandLoop::start() {
+void CommandLoop::startCommand() {
   send([=]{
     if (LoopState::INACTIVE == state_) {
       state_ = LoopState::ACTIVE;
@@ -22,34 +22,34 @@ void CommandLoop::start() {
   });
 }
 
-void CommandLoop::resume() {
+void CommandLoop::resumeCommand() {
   send([=]{
     if (LoopState::SUSPENDED == state_) {
       state_ = LoopState::ACTIVE;
       if (!commands_.empty()) {
         auto & command = commands_.front();
-        command->resume();
+        command->resumeCommand();
       }
     }
   });
 }
 
-void CommandLoop::suspend() {
+void CommandLoop::suspendCommand() {
   send([=]{
     state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
       auto & command = commands_.front();
-      command->suspend();
+      command->suspendCommand();
     }
   });
 }
 
-void CommandLoop::stop() {
+void CommandLoop::stopCommand() {
   send([=]{
     state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
       auto & command = commands_.front();
-      command->stop();
+      command->stopCommand();
       commands_.pop();
     }
     finished(CommandEvent::ABORTED);
@@ -89,10 +89,9 @@ void CommandLoop::nextCommand() {
     if (!commands_.empty()) {
       auto & command = commands_.front();
       command->subscribe(std::static_pointer_cast<ICommandListener>(this->shared_from_this()));
-      command->start();
+      command->startCommand();
     } else if (Finite == mode_) {
       finished(CommandEvent::SUCCESS);
-      exit();
     }
   }
 }
@@ -109,6 +108,11 @@ void CommandLoop::processEvent(const CommandEvent & _event) {
       nextCommand();
     }
   });
+}
+
+void CommandLoop::finished(const CommandEvent & _event) {
+  ICommand::finished(_event);
+  exit();
 }
 
 void CommandLoop::exit() {

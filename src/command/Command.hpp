@@ -21,28 +21,28 @@ class Command
   /**
    * Default implementation of start()
    */
-  virtual void start() override {
+  virtual void startCommand() override {
     finished(CommandEvent::SUCCESS);
   }
 
   /**
    * Default implementation of resume()
    */
-  virtual void resume() override {
+  virtual void resumeCommand() override {
     finished(CommandEvent::FAILED);
   }
 
   /**
    * Default implementation of suspend()
    */
-  virtual void suspend() override {
+  virtual void suspendCommand() override {
     finished(CommandEvent::FAILED);
   }
 
   /**
    * Default implementation of stop()
    */
-  virtual void stop() override {
+  virtual void stopCommand() override {
     finished(CommandEvent::ABORTED);
   }
 

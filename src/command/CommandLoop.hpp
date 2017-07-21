@@ -52,19 +52,25 @@ class CommandLoop
   /**
    * Used to start CommandLoop
    */
-  virtual void start() override;
+  virtual void startCommand() override;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resume() override;
+  virtual void resumeCommand() override;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspend() override;
+  virtual void suspendCommand() override;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stop() override;
+  virtual void stopCommand() override;
+
+  /**
+   * Overridden exit method from ICommand
+   */
+  virtual void finished(const CommandEvent & _event) override;
+
   /**
    * Overridden exit method from IComponent
    */

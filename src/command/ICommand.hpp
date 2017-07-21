@@ -28,19 +28,19 @@ class ICommand {
   /**
    * Used to start CommandLoop
    */
-  virtual void start() = 0;
+  virtual void startCommand() = 0;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resume() = 0;
+  virtual void resumeCommand() = 0;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspend() = 0;
+  virtual void suspendCommand() = 0;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stop() = 0;
+  virtual void stopCommand() = 0;
 
  public:
   /**
