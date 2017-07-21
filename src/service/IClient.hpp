@@ -58,6 +58,17 @@ class IClient
   /**
    * This method is used to call method from IService<>
    * @tparam _Callback Type of callback functor
+   * @param _callback Pointer to external method without parameters
+   */
+  template<typename _Callback>
+  void call(_Callback && _callback) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback));
+  };
+
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Callback Type of callback functor
    * @tparam _Value0 Value #0 type those is passed to external method
    * @param _callback Pointer to external method
    * @param _value0 Argument #0 passed into external method

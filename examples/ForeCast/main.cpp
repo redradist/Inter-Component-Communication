@@ -32,12 +32,15 @@ class WeatherStation
     }
   }
 
+  void enable() override {
+    timer_.start();
+  }
+
   void setIntervalForUpdate(int & _seconds) override {
     std::cout << "setIntervalForUpdate: seconds = " << _seconds << std::endl;
     timer_.setInterval(boost::posix_time::seconds(_seconds));
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
     timer_.addListener(this);
-    timer_.start();
   }
 
  private:
@@ -65,6 +68,7 @@ class WeatherObserver
     int i = 7;
     call(&Forecast::setIntervalForUpdate, i);
     subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    call(&Forecast::enable);
     //unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
   }
 
@@ -75,12 +79,13 @@ class WeatherObserver
 
 int main() {
   boost::asio::io_service service_;
-  std::shared_ptr<WeatherObserver> observer =
-      std::make_shared<WeatherObserver>(service_);
-  observer->buildClient();
   std::shared_ptr<WeatherStation> station =
       std::make_shared<WeatherStation>(service_);
   station->registerService();
+  std::shared_ptr<WeatherObserver> observer =
+      std::make_shared<WeatherObserver>(service_);
+  observer->buildClient();
+
   // Start event loop
   service_.run();
   return 0;
