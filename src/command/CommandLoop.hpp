@@ -7,8 +7,8 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef ICC_ICOMMANDLOOP_HPP
-#define ICC_ICOMMANDLOOP_HPP
+#ifndef ICC_COMMANDLOOP_HPP
+#define ICC_COMMANDLOOP_HPP
 
 #include <queue>
 #include <future>
@@ -96,4 +96,4 @@ class CommandLoop
 
 }
 
-#endif //ICC_ICOMMANDLOOP_HPP
+#endif //ICC_COMMANDLOOP_HPP

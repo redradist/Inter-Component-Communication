@@ -111,15 +111,19 @@ void CommandLoop::processEvent(const CommandResult & _result) {
 }
 
 void CommandLoop::finished(const CommandResult & _result) {
-  ICommand::finished(_result);
-  exit();
+  send([=]{
+    ICommand::finished(_result);
+    exit();
+  });
 }
 
 void CommandLoop::exit() {
-  while (!commands_.empty()) {
-    commands_.pop();
-  }
-  IComponent::exit();
+  push([=]{
+    while (!commands_.empty()) {
+      commands_.pop();
+    }
+    IComponent::exit();
+  });
 }
 
 }

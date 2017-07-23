@@ -73,8 +73,7 @@ class Connect
 
 int main() {
   boost::asio::io_service service_;
-  std::shared_ptr<Connect> mainLoop =
-      std::make_shared<Connect>(&service_);
+  std::shared_ptr<Connect> mainLoop = std::make_shared<Connect>(&service_);
   mainLoop->startCommand();
   std::shared_ptr<ConnectionBTProfiles> loop =
       std::make_shared<ConnectionBTProfiles>(&service_);
