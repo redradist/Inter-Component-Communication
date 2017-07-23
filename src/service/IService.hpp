@@ -1,5 +1,5 @@
 /**
- * @file Event.hpp
+ * @file IService.hpp
  * @author Denis Kotov
  * @date 25 Jun 2017
  * @brief Contains IService interface.

@@ -17,7 +17,7 @@ class WeatherStation
   WeatherStation(boost::asio::io_service & _io_service)
       : icc::IComponent(&_io_service),
         icc::service::IService<Forecast>("WeatherStation"),
-        timer_(this) {
+        timer_(service_) {
     std::cout << "WeatherStation" << std::endl;
   }
 
@@ -41,6 +41,17 @@ class WeatherStation
     timer_.setInterval(boost::posix_time::seconds(_seconds));
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
     timer_.addListener(this);
+  }
+
+ protected:
+  /**
+   * Service with timer should override exit
+   * method from parent component for stopping timer
+   * and releasing io::service
+   */
+  void exit() override {
+    icc::service::IService<Forecast>::exit();
+    timer_.stop();
   }
 
  private:

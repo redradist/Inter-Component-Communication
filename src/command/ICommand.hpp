@@ -1,6 +1,10 @@
-//
-// Created by redra on 08.07.17.
-//
+/**
+ * @file ICommand.hpp
+ * @author Denis Kotov
+ * @date 08 Jul 2017
+ * @brief Interface class that is used for creation commands
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_ICOMMAND_HPP
 #define ICC_ICOMMAND_HPP
@@ -14,7 +18,7 @@ namespace command {
 
 class ICommand {
  public:
-  using tCallback = void(IComponent::*)(const CommandEvent &);
+  using tCallback = void(IComponent::*)(const CommandResult &);
 
  public:
   ICommand() = default;
@@ -24,19 +28,19 @@ class ICommand {
   /**
    * Used to start CommandLoop
    */
-  virtual void start() = 0;
+  virtual void startCommand() = 0;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resume() = 0;
+  virtual void resumeCommand() = 0;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspend() = 0;
+  virtual void suspendCommand() = 0;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stop() = 0;
+  virtual void stopCommand() = 0;
 
  public:
   /**
@@ -100,14 +104,14 @@ class ICommand {
    * Method to finish command
    * @param _result Result with which command is finished
    */
-  virtual void finished(const CommandEvent & _event) {
-    event_.operator()(_event);
+  virtual void finished(const CommandResult & _result) {
+    event_.operator()(_result);
   }
 
  private:
   std::weak_ptr<IComponent> p_loop_;
-  std::function<void(const CommandEvent &)> callback_;
-  Event<void(const CommandEvent &)> event_;
+  std::function<void(const CommandResult &)> callback_;
+  Event<void(const CommandResult &)> event_;
 };
 
 inline
