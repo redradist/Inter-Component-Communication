@@ -603,8 +603,8 @@ class ProcessBus
    * @param _callback Callback for subscription without parameters
    */
   template<typename _Interface,
-      typename _Client,
-      typename _R>
+           typename _Client,
+           typename _R>
   void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string & _serviceName,
                    Event<_R(void)> _Interface::*_event,

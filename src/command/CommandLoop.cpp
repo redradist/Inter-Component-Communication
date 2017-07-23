@@ -112,7 +112,7 @@ void CommandLoop::processEvent(const CommandResult & _result) {
 
 void CommandLoop::finished(const CommandResult & _result) {
   ICommand::finished(_result);
-  send([=]{
+  push([=]{
     exit();
   });
 }
