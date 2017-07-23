@@ -18,8 +18,7 @@
 namespace icc {
 
 class Timer
-    : protected virtual IComponent,
-      public Event<void(const TimerEvents &)> {
+    : public Event<void(const TimerEvents &)> {
  public:
   enum : int32_t {
     /**
@@ -33,9 +32,12 @@ class Timer
   };
 
  public:
-  Timer(IComponent *_parent)
-      : IComponent(_parent),
-        timer_(*service_) {
+  Timer(boost::asio::io_service * service_)
+      : timer_(*service_) {
+  }
+
+  Timer(std::shared_ptr<boost::asio::io_service> service_)
+      : timer_(*service_) {
   }
 
  public:
@@ -43,20 +45,16 @@ class Timer
    * Enable continuous mode
    */
   void enableContinuous() {
-    send([=] {
-      counter_ = Infinite;
-    });
+    counter_ = Infinite;
   }
 
   /**
    * Disable continuous mode
    */
   void disableContinuous() {
-    send([=] {
-      if (Infinite == counter_) {
-        counter_ = OneTime;
-      }
-    });
+    if (Infinite == counter_) {
+      counter_ = OneTime;
+    }
   }
 
   /**
@@ -64,13 +62,11 @@ class Timer
    * @param number Number of repetition
    */
   void setNumberOfRepetition(const int32_t &number) {
-    send([=] {
-      if (number < 0) {
-        counter_ = Infinite;
-      } else {
-        counter_ = number;
-      }
-    });
+    if (number < 0) {
+      counter_ = Infinite;
+    } else {
+      counter_ = number;
+    }
   }
 
   /**
@@ -78,30 +74,24 @@ class Timer
    * @param _duration Timeout duration
    */
   void setInterval(const boost::posix_time::time_duration &_duration) {
-    send([=] {
-      duration_ = _duration;
-    });
+    duration_ = _duration;
   }
 
   /**
    * Method is used to start async waiting timer
    */
   void start() {
-    send([=] {
-      timer_.expires_from_now(duration_);
-      operator()(TimerEvents::STARTED);
-      timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
-    });
+    timer_.expires_from_now(duration_);
+    operator()(TimerEvents::STARTED);
+    timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
   }
 
   /**
    * Method is used to stop waiting timer
    */
   void stop() {
-    send([=] {
-      operator()(TimerEvents::STOPPED);
-      timer_.cancel();
-    });
+    operator()(TimerEvents::STOPPED);
+    timer_.cancel();
   }
 
   /**
@@ -162,16 +152,6 @@ class Timer
     if (_listener) {
       this->disconnect(&_Listener::processEvent, _listener);
     }
-  }
-
-  /**
-   * Overrided function to specify exit event
-   */
-  void exit() override {
-    push([=] {
-      IComponent::exit();
-      stop();
-    });
   }
 
  protected:

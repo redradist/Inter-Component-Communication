@@ -11,12 +11,9 @@
 #ifndef ICC_PROCESSBUS_HPP
 #define ICC_PROCESSBUS_HPP
 
-#include <set>
-#include <map>
 #include <algorithm>
 #include <typeinfo>
 #include <typeindex>
-#include <unordered_set>
 #include <unordered_map>
 #include <IComponent.hpp>
 #include <helpers/hash_helpers.hpp>
