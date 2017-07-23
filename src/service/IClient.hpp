@@ -1,5 +1,5 @@
 /**
- * @file Event.hpp
+ * @file IClient.hpp
  * @author Denis Kotov
  * @date 25 Jun 2017
  * @brief Contains IClient interface.
@@ -54,6 +54,17 @@ class IClient
    * This method will be called on disconnection client from service
    */
   virtual void disconnected(_Interface *) = 0;
+
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Callback Type of callback functor
+   * @param _callback Pointer to external method without parameters
+   */
+  template<typename _Callback>
+  void call(_Callback && _callback) {
+    ProcessBus::getBus().call(service_name_,
+                              std::forward<_Callback>(_callback));
+  };
 
   /**
    * This method is used to call method from IService<>

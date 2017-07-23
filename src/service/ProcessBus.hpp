@@ -11,15 +11,11 @@
 #ifndef ICC_PROCESSBUS_HPP
 #define ICC_PROCESSBUS_HPP
 
-#include <set>
 #include <map>
 #include <algorithm>
 #include <typeinfo>
 #include <typeindex>
-#include <unordered_set>
-#include <unordered_map>
 #include <IComponent.hpp>
-#include <helpers/hash_helpers.hpp>
 
 namespace icc {
 
@@ -38,10 +34,10 @@ class ProcessBus
     : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
-  using tListOfClients = std::unordered_map<void*, std::function<void*(void)>>;
+  using tListOfClients = std::map<void*, std::function<void*(void)>>;
   using tKeyForServiceList = std::type_index;
   using tServiceStorage = std::function<void*(void)>;
-  using tListOfServices = std::unordered_map<std::string, tServiceStorage>;
+  using tListOfServices = std::map<std::string, tServiceStorage>;
 
  public:
   /**
@@ -164,6 +160,27 @@ class ProcessBus
   }
 
  public:
+  /**
+   * This method is used to call method from IService<>
+   * @tparam _Interface Interface for calling method
+   * @param _serviceName Service name to send request
+   * @param _callback Pointer to external method without parameters
+   */
+  template<typename _Interface>
+  void call(const std::string &_serviceName,
+            void(_Interface::*_callback)(void)) {
+    static_assert(std::is_abstract<_Interface>::value,
+                  "_Interface is not an abstract class");
+    this->send([=]() mutable {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=]() mutable {
+          (service.get()->*_callback)();
+        });
+      }
+    });
+  };
+
   /**
    * This method is used to call method from IService<>
    * @tparam _Interface Interface for calling method
@@ -364,6 +381,37 @@ class ProcessBus
    * @tparam _Interface Interface for subscribing on _event
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription without parameters
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R>
+  void subscribe(std::shared_ptr<IClient<_Interface>> _client,
+                 const std::string & _serviceName,
+                 Event<_R(void)> _Interface::*_event,
+                 _R(_Client::*_callback)(void)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(
+              _callback,
+              std::static_pointer_cast<_Client>(_client));
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
    * @tparam _Arg0 Argument #0 type those will appear in _callback method
    * @param _client Client object that tries to subscribe on _event
    * @param _serviceName Service name to send request
@@ -543,6 +591,38 @@ class ProcessBus
       }
     });
   };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription without parameters
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R>
+  void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
+                   const std::string & _serviceName,
+                   Event<_R(void)> _Interface::*_event,
+                   _R(_Client::*_callback)(void)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(
+              _callback,
+              std::static_pointer_cast<_Client>(_client));
+        });
+      }
+    });
+  };
+
 
   /**
    * This method is used to unsubscribe on event from IService<>
@@ -764,8 +844,8 @@ class ProcessBus
 
  private:
   std::thread thread_;
-  std::unordered_map<tKeyForClientList, tListOfClients, std::pair_hash> clients_;
-  std::unordered_map<tKeyForServiceList, tListOfServices> services_;
+  std::map<tKeyForClientList, tListOfClients> clients_;
+  std::map<tKeyForServiceList, tListOfServices> services_;
 };
 
 }

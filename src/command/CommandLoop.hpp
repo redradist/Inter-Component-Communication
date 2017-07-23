@@ -1,9 +1,14 @@
-//
-// Created by redra on 08.07.17.
-//
+/**
+ * @file CommandLoop.hpp
+ * @author Denis Kotov
+ * @date 08 Jul 2017
+ * @brief Contains default Command Loop class which could process
+ * any commands or be executed as command by itself
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
-#ifndef ICC_ICOMMANDLOOP_HPP
-#define ICC_ICOMMANDLOOP_HPP
+#ifndef ICC_COMMANDLOOP_HPP
+#define ICC_COMMANDLOOP_HPP
 
 #include <queue>
 #include <future>
@@ -47,19 +52,29 @@ class CommandLoop
   /**
    * Used to start CommandLoop
    */
-  virtual void start() override;
+  virtual void startCommand() override;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resume() override;
+  virtual void resumeCommand() override;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspend() override;
+  virtual void suspendCommand() override;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stop() override;
+  virtual void stopCommand() override;
+
+  /**
+   * Overridden exit method from ICommand
+   */
+  virtual void finished(const CommandResult & _result) override;
+
+  /**
+   * Overridden exit method from IComponent
+   */
+  virtual void exit() override;
 
  public:
   virtual void setMode(LoopMode _mode);
@@ -68,7 +83,7 @@ class CommandLoop
   std::future<LoopState> getState();
 
  protected:
-  virtual void processEvent(const CommandEvent & _event) override;
+  virtual void processEvent(const CommandResult & _result) override;
   virtual void nextCommand();
 
  protected:
@@ -81,4 +96,4 @@ class CommandLoop
 
 }
 
-#endif //ICC_ICOMMANDLOOP_HPP
+#endif //ICC_COMMANDLOOP_HPP

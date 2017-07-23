@@ -10,6 +10,7 @@
 
 class Forecast {
  public:
+  virtual void enable() = 0;
   virtual void setIntervalForUpdate(int &) = 0;
 
  public:

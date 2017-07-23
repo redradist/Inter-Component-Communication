@@ -1,6 +1,11 @@
-//
-// Created by redra on 08.07.17.
-//
+/**
+ * @file CommandLoop.cpp
+ * @author Denis Kotov
+ * @date 08 Jul 2017
+ * @brief Contains default Command Loop class which could process
+ * any commands or be executed as command by itself
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #include "CommandLoop.hpp"
 
@@ -8,8 +13,8 @@ namespace icc {
 
 namespace command {
 
-void CommandLoop::start() {
-  send([=] {
+void CommandLoop::startCommand() {
+  send([=]{
     if (LoopState::INACTIVE == state_) {
       state_ = LoopState::ACTIVE;
       nextCommand();
@@ -17,42 +22,42 @@ void CommandLoop::start() {
   });
 }
 
-void CommandLoop::resume() {
-  send([=] {
+void CommandLoop::resumeCommand() {
+  send([=]{
     if (LoopState::SUSPENDED == state_) {
       state_ = LoopState::ACTIVE;
       if (!commands_.empty()) {
-        auto command = commands_.front();
-        command->resume();
+        auto & command = commands_.front();
+        command->resumeCommand();
       }
     }
   });
 }
 
-void CommandLoop::suspend() {
-  send([=] {
+void CommandLoop::suspendCommand() {
+  send([=]{
     state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
-      auto command = commands_.front();
-      command->suspend();
+      auto & command = commands_.front();
+      command->suspendCommand();
     }
   });
 }
 
-void CommandLoop::stop() {
-  send([=] {
+void CommandLoop::stopCommand() {
+  send([=]{
     state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
-      auto command = commands_.front();
-      command->stop();
+      auto & command = commands_.front();
+      command->stopCommand();
       commands_.pop();
     }
-    finished(CommandEvent::ABORTED);
+    finished(CommandResult::ABORTED);
   });
 }
 
 void CommandLoop::setMode(LoopMode _mode) {
-  send([=] {
+  send([=]{
     if (LoopState::INACTIVE == state_) {
       mode_ = _mode;
     }
@@ -82,26 +87,42 @@ CommandLoop::getState() {
 void CommandLoop::nextCommand() {
   if (LoopState::ACTIVE == state_) {
     if (!commands_.empty()) {
-      auto command = commands_.front();
+      auto & command = commands_.front();
       command->subscribe(std::static_pointer_cast<ICommandListener>(this->shared_from_this()));
-      command->start();
+      command->startCommand();
     } else if (Finite == mode_) {
-      finished(CommandEvent::SUCCESS);
+      finished(CommandResult::SUCCESS);
     }
   }
 }
 
-void CommandLoop::processEvent(const CommandEvent & _event) {
-  send([=] {
+void CommandLoop::processEvent(const CommandResult & _result) {
+  send([=]{
     if (!commands_.empty()) {
       commands_.pop();
     }
     if (Finite == mode_ &&
-        CommandEvent::FAILED == _event) {
-      finished(CommandEvent::FAILED);
+        CommandResult::FAILED == _result) {
+      finished(CommandResult::FAILED);
     } else {
       nextCommand();
     }
+  });
+}
+
+void CommandLoop::finished(const CommandResult & _result) {
+  ICommand::finished(_result);
+  push([=]{
+    exit();
+  });
+}
+
+void CommandLoop::exit() {
+  push([=]{
+    while (!commands_.empty()) {
+      commands_.pop();
+    }
+    IComponent::exit();
   });
 }
 
