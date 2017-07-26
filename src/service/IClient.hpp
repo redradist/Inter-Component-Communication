@@ -111,9 +111,9 @@ class IClient
            typename _Client,
            typename _Callback>
   void unsubscribe(_Event && _event, _Client && _client, _Callback && _callback) {
-    ProcessBus::getBus().subscribe(_client, service_name_,
-                                   std::forward<_Event>(_event),
-                                   std::forward<_Callback>(_callback));
+    ProcessBus::getBus().unsubscribe(_client, service_name_,
+                                     std::forward<_Event>(_event),
+                                     std::forward<_Callback>(_callback));
   };
 
   /**
