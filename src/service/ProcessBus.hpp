@@ -389,6 +389,216 @@ class ProcessBus
   template<typename _Interface,
            typename _Client,
            typename _R>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(void)> _Interface::*_event,
+                 _R(_Client::*_callback)(void)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Arg0)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Arg0)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Arg0, _Arg1)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Arg0, _Arg1)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Arg0, _Arg1, _Arg2)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @tparam _Arg3 Argument #3 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2,
+           typename _Arg3>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @tparam _Arg3 Argument #3 type those will appear in _callback method
+   * @tparam _Arg4 Argument #4 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2,
+           typename _Arg3,
+           typename _Arg4>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> _Interface::*_event,
+                 _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).connect(_callback,
+                                           _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription without parameters
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R>
   void subscribe(std::shared_ptr<IClient<_Interface>> _client,
                  const std::string & _serviceName,
                  Event<_R(void)> _Interface::*_event,
@@ -605,6 +815,216 @@ class ProcessBus
   template<typename _Interface,
            typename _Client,
            typename _R>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(void)> _Interface::*_event,
+                   _R(_Client::*_callback)(void)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Arg0)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Arg0)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Arg0, _Arg1)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Arg0, _Arg1)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Arg0, _Arg1, _Arg2)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @tparam _Arg3 Argument #3 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2,
+           typename _Arg3>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @tparam _Arg0 Argument #0 type those will appear in _callback method
+   * @tparam _Arg1 Argument #1 type those will appear in _callback method
+   * @tparam _Arg2 Argument #2 type those will appear in _callback method
+   * @tparam _Arg3 Argument #3 type those will appear in _callback method
+   * @tparam _Arg4 Argument #4 type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R,
+           typename _Arg0,
+           typename _Arg1,
+           typename _Arg2,
+           typename _Arg3,
+           typename _Arg4>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> _Interface::*_event,
+                   _R(_Client::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    send([this, _client, _serviceName, _event, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->send([=] {
+          (service.get()->*_event).disconnect(_callback,
+                                              _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _R Return value of Event<>
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription without parameters
+   */
+  template<typename _Interface,
+           typename _Client,
+           typename _R>
   void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string & _serviceName,
                    Event<_R(void)> _Interface::*_event,
@@ -622,7 +1042,6 @@ class ProcessBus
       }
     });
   };
-
 
   /**
    * This method is used to unsubscribe on event from IService<>

@@ -58,6 +58,16 @@ class WeatherStation
   icc::Timer timer_;
 };
 
+class TestObserver
+    : public icc::IComponent {
+ public:
+  using icc::IComponent::IComponent;
+ public:
+  void onTemperature(const double & _temperature, int) {
+    std::cout << "TestObserver::Temperature is " << _temperature << std::endl;
+  }
+};
+
 class WeatherObserver
     : public icc::service::IClient<Forecast> {
  public:
@@ -70,17 +80,22 @@ class WeatherObserver
   ~WeatherObserver() {
     std::cout << "~WeatherObserver" << std::endl;
   }
-  void onTemperature(const double & _temperature,int) {
-    std::cout << "Temperature is " << _temperature << std::endl;
+  void onTemperature(const double & _temperature, int) {
+    std::cout << "WeatherObserver::Temperature is " << _temperature << std::endl;
   }
+
  protected:
+  std::shared_ptr<TestObserver> p_test_ = std::make_shared<TestObserver>(this);
+
   void connected(Forecast*) override {
     std::cout << "connected is called" << std::endl;
     int i = 7;
     call(&Forecast::setIntervalForUpdate, i);
-    subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
     call(&Forecast::enable);
-    //unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    subscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
+    unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    unsubscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
   }
 
   void disconnected(Forecast*) override {

@@ -224,11 +224,43 @@ class IClient
    * @param _callback Callback type object to subscribe
    */
   template<typename _Event,
+           typename _Client,
+           typename _Callback>
+  void subscribe(_Event && _event, _Client && _client, _Callback && _callback) {
+    ProcessBus::getBus().subscribe(_client, service_name_,
+                                   std::forward<_Event>(_event),
+                                   std::forward<_Callback>(_callback));
+  };
+
+  /**
+   * This method is used to subscribe on event from IService<>
+   * @tparam _Event Event object to subscribe
+   * @tparam _Callback Callback object to subscribe
+   * @param _event Event object to subscribe
+   * @param _callback Callback type object to subscribe
+   */
+  template<typename _Event,
            typename _Callback>
   void subscribe(_Event && _event, _Callback && _callback) {
     ProcessBus::getBus().subscribe(this->shared_from_this(), service_name_,
                                    std::forward<_Event>(_event),
                                    std::forward<_Callback>(_callback));
+  };
+
+  /**
+   * This method is used to unsubscribe on event from IService<>
+   * @tparam _Event Event object to unsubscribe
+   * @tparam _Callback Callback object to unsubscribe
+   * @param _event Event object to unsubscribe
+   * @param _callback Callback type object to unsubscribe
+   */
+  template<typename _Event,
+           typename _Client,
+           typename _Callback>
+  void unsubscribe(_Event && _event, _Client && _client, _Callback && _callback) {
+    ProcessBus::getBus().unsubscribe(_client, service_name_,
+                                     std::forward<_Event>(_event),
+                                     std::forward<_Callback>(_callback));
   };
 
   /**
