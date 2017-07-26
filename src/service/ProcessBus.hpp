@@ -373,7 +373,7 @@ class ProcessBus
 
  private:
   std::thread thread_;
-  std::unordered_map<tKeyForClientList, tListOfClients, std::pair_hash> clients_;
+  std::unordered_map<tKeyForClientList, tListOfClients, icc::helpers::pair_hash> clients_;
   std::unordered_map<tKeyForServiceList, tListOfServices> services_;
 };
 

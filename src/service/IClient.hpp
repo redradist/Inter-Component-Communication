@@ -24,7 +24,7 @@ namespace service {
 template<typename _Interface>
 class IClient
     : public virtual IComponent,
-      public std::virtual_enable_shared_from_this<IClient<_Interface>> {
+      public icc::helpers::virtual_enable_shared_from_this<IClient<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:

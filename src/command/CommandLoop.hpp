@@ -31,7 +31,7 @@ class CommandLoop
     : public virtual IComponent,
       public ICommand,
       public ICommandListener,
-      public std::virtual_enable_shared_from_this<CommandLoop> {
+      public icc::helpers::virtual_enable_shared_from_this<CommandLoop> {
  public:
   enum LoopMode {
   /**
