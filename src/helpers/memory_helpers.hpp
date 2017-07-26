@@ -16,7 +16,9 @@
  * Header with helper classes and functions for <memory>
  * from standard library
  */
-namespace std {
+namespace icc {
+
+namespace helpers {
 
 class virtual_enable_shared_from_this_base
     : public std::enable_shared_from_this<virtual_enable_shared_from_this_base> {
@@ -24,7 +26,7 @@ class virtual_enable_shared_from_this_base
   virtual ~virtual_enable_shared_from_this_base() {}
 };
 
-template <typename _T>
+template<typename _T>
 class virtual_enable_shared_from_this
     : public virtual virtual_enable_shared_from_this_base {
  public:
@@ -35,13 +37,15 @@ class virtual_enable_shared_from_this
 };
 
 template<typename _T, typename _R, typename ... _Args>
-void * void_cast(_R(_T::*func)(_Args...)) {
+void *void_cast(_R(_T::*func)(_Args...)) {
   union {
-    _R(_T::*pf)(_Args...);
+    _R (_T::*pf)(_Args...);
     void *ptr;
   };
   pf = func;
   return ptr;
+}
+
 }
 
 }

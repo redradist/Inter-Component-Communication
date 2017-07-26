@@ -61,7 +61,7 @@ class Event<_R(void)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=]() {
             (_listener->*_callback)();
           });
@@ -85,7 +85,7 @@ class Event<_R(void)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=]() {
             (_p_listener->*_callback)();
           });
@@ -110,7 +110,7 @@ class Event<_R(void)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -135,7 +135,7 @@ class Event<_R(void)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }
@@ -269,7 +269,7 @@ class Event<_R(_Arg0)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0) {
             (_listener->*_callback)(_arg0);
           });
@@ -293,7 +293,7 @@ class Event<_R(_Arg0)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0) {
             (_p_listener->*_callback)(_arg0);
           });
@@ -318,7 +318,7 @@ class Event<_R(_Arg0)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -343,7 +343,7 @@ class Event<_R(_Arg0)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }
@@ -480,7 +480,7 @@ class Event<_R(_Arg0, _Arg1)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1) {
             (_listener->*_callback)(_arg0, _arg1);
           });
@@ -504,7 +504,7 @@ class Event<_R(_Arg0, _Arg1)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1) {
             (_p_listener->*_callback)(_arg0, _arg1);
           });
@@ -529,7 +529,7 @@ class Event<_R(_Arg0, _Arg1)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -554,7 +554,7 @@ class Event<_R(_Arg0, _Arg1)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }
@@ -694,7 +694,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2) {
             (_listener->*_callback)(_arg0, _arg1, _arg2);
           });
@@ -718,7 +718,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2) {
             (_p_listener->*_callback)(_arg0, _arg1, _arg2);
           });
@@ -743,7 +743,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -768,7 +768,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }
@@ -911,7 +911,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2, _Arg3 _arg3) {
             (_listener->*_callback)(_arg0, _arg1, _arg2, _arg3);
           });
@@ -935,7 +935,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2, _Arg3 _arg3) {
             (_p_listener->*_callback)(_arg0, _arg1, _arg2, _arg3);
           });
@@ -960,7 +960,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -985,7 +985,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }
@@ -1131,7 +1131,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
     if (_listener) {
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2, _Arg3 _arg3, _Arg4 _arg4) {
             (_listener->*_callback)(_arg0, _arg1, _arg2, _arg3, _arg4);
           });
@@ -1155,7 +1155,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
-          std::void_cast(_callback),
+          icc::helpers::void_cast(_callback),
           [=](_Arg0 _arg0, _Arg1 _arg1, _Arg2 _arg2, _Arg3 _arg3, _Arg4 _arg4) {
             (_p_listener->*_callback)(_arg0, _arg1, _arg2, _arg3, _arg4);
           });
@@ -1180,7 +1180,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
                                     return (_listener == std::get<0>(rad)) &&
-                                        (std::void_cast(_callback) == std::get<1>(rad));
+                                        (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                   });
       unchecked_listeners_.erase(erase, unchecked_listeners_.end());
     }
@@ -1205,7 +1205,7 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
                                     bool result = false;
                                     if (auto _observer = std::get<0>(rad).lock()) {
                                       result = (_observer == _listener) &&
-                                          (std::void_cast(_callback) == std::get<1>(rad));
+                                          (icc::helpers::void_cast(_callback) == std::get<1>(rad));
                                     } else {
                                       result = true;
                                     }

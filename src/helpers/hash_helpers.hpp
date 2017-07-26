@@ -12,16 +12,20 @@
 
 #include <functional>
 
-namespace std {
+namespace icc {
+
+namespace helpers {
 
 struct pair_hash {
-  template <typename T1, typename T2>
-  std::size_t operator () (const std::pair<T1, T2> & _p) const {
+  template<typename T1, typename T2>
+  std::size_t operator()(const std::pair<T1, T2> &_p) const {
     auto h1 = std::hash<T1>{}(_p.first);
     auto h2 = std::hash<T2>{}(_p.second);
     return h1 ^ h2;
   }
 };
+
+}
 
 }
 

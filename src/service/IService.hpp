@@ -24,7 +24,7 @@ template <typename _Interface>
 class IService
   : public virtual IComponent,
     public _Interface,
-    public std::virtual_enable_shared_from_this<IService<_Interface>> {
+    public icc::helpers::virtual_enable_shared_from_this<IService<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
  public:
