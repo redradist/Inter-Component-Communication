@@ -16,7 +16,8 @@ namespace icc {
 
 namespace command {
 
-class ICommand {
+class ICommand
+  : public icc::helpers::virtual_enable_shared_from_this<ICommand> {
  public:
   using tCallback = void(IComponent::*)(const CommandResult &);
 
@@ -105,13 +106,14 @@ class ICommand {
    * @param _result Result with which command is finished
    */
   virtual void finished(const CommandResult & _result) {
-    event_.operator()(_result);
+    CommandData data;
+    data.p_command_ = this->shared_from_this();
+    data.result_ = _result;
+    event_.operator()(data);
   }
 
  private:
-  std::weak_ptr<IComponent> p_loop_;
-  std::function<void(const CommandResult &)> callback_;
-  Event<void(const CommandResult &)> event_;
+  Event<void(const CommandData &)> event_;
 };
 
 inline

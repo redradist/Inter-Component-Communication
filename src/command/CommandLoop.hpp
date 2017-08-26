@@ -83,7 +83,7 @@ class CommandLoop
   std::future<LoopState> getState();
 
  protected:
-  virtual void processEvent(const CommandResult & _result) override;
+  virtual void processEvent(const CommandData & _result) override;
   virtual void nextCommand();
 
  protected:

@@ -9,6 +9,7 @@
 #ifndef FORECAST_ICOMMANDLISENER_HPP
 #define FORECAST_ICOMMANDLISENER_HPP
 
+#include <memory>
 #include "ICommand.hpp"
 
 namespace icc {
@@ -21,13 +22,18 @@ enum class CommandResult {
   ABORTED,
 };
 
+struct CommandData {
+  std::weak_ptr<ICommand> p_command_;
+  CommandResult           result_;
+};
+
 class ICommandListener
   : public virtual IComponent {
  public:
   /**
    * Method proved by derived class to listen results of command
    */
-  virtual void processEvent(const CommandResult &) = 0;
+  virtual void processEvent(const CommandData &) = 0;
 };
 
 }

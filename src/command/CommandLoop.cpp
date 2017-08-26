@@ -96,16 +96,19 @@ void CommandLoop::nextCommand() {
   }
 }
 
-void CommandLoop::processEvent(const CommandResult & _result) {
+void CommandLoop::processEvent(const CommandData & _data) {
   send([=]{
-    if (!commands_.empty()) {
-      commands_.pop();
-    }
-    if (Finite == mode_ &&
-        CommandResult::FAILED == _result) {
-      finished(CommandResult::FAILED);
-    } else {
-      nextCommand();
+    if (auto command = _data.p_command_.lock()) {
+      CommandResult result = _data.result_;
+      if (!commands_.empty()) {
+        commands_.pop();
+      }
+      if (Finite == mode_ &&
+          CommandResult::FAILED == result) {
+        finished(CommandResult::FAILED);
+      } else {
+        nextCommand();
+      }
     }
   });
 }

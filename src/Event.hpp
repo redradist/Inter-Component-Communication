@@ -161,7 +161,7 @@ class Event<_R(_Args...)> {
     for (auto &listener : unchecked_listeners_) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
-      client->send([=]() mutable {
+      client->push([=]() mutable {
         callback(_args...);
       });
     }
@@ -170,7 +170,7 @@ class Event<_R(_Args...)> {
       auto client = std::get<0>(*listener);
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(*listener);
-        _observer->send([=]() mutable {
+        _observer->push([=]() mutable {
           callback(_args...);
         });
         ++listener;
@@ -189,7 +189,7 @@ class Event<_R(_Args...)> {
     for (auto &listener : unchecked_listeners_) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
-      client->send([=]() mutable {
+      client->push([=]() mutable {
         callback(_args...);
       });
     }
@@ -197,7 +197,7 @@ class Event<_R(_Args...)> {
       auto client = std::get<0>(*listener);
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(*listener);
-        _observer->send([=]() mutable {
+        _observer->push([=]() mutable {
           callback(_args...);
         });
       }
@@ -216,7 +216,7 @@ class Event<_R(_Args...)> {
            listener != event.checked_listeners_.end();) {
         if (auto _observer = (std::get<0>(*listener)).lock()) {
           auto callback = std::get<2>(*listener);
-          _observer->send([=]() mutable {
+          _observer->push([=]() mutable {
             callback(_args...);
           });
           ++listener;
