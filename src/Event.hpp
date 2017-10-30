@@ -16,6 +16,7 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
+#include <mutex>
 #include <helpers/memory_helpers.hpp>
 #include "IComponent.hpp"
 
@@ -59,6 +60,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
           icc::helpers::void_cast(_callback),
@@ -82,6 +84,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
@@ -106,6 +109,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(unchecked_listeners_.begin(),
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
@@ -129,6 +133,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
                                   [=](const tCheckedCallbacks &rad) {
@@ -149,6 +154,7 @@ class Event<_R(_Args...)> {
    * Used to disconnect all clients from this event
    */
   void disconnectAll() {
+    std::lock_guard<std::mutex> lock(mutex_);
     unchecked_listeners_.clear();
     checked_listeners_.clear();
   }
@@ -230,6 +236,7 @@ class Event<_R(_Args...)> {
   }
 
  private:
+  std::mutex mutex_;
   tUncheckedListCallbacks unchecked_listeners_;
   tCheckedListCallbacks checked_listeners_;
 };
