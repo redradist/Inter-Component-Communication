@@ -10,6 +10,7 @@
 #define ICC_ICOMMAND_HPP
 
 #include <IComponent.hpp>
+#include "CommandData.h"
 #include "ICommandLisener.hpp"
 
 namespace icc {
@@ -42,6 +43,14 @@ class ICommand
    * Used to stop CommandLoop
    */
   virtual void stopCommand() = 0;
+
+ protected:
+  /**
+   * Sections that discribed Command Meta Data
+   */
+  getCommandType() {
+
+  }
 
  public:
   /**
@@ -106,10 +115,7 @@ class ICommand
    * @param _result Result with which command is finished
    */
   virtual void finished(const CommandResult & _result) {
-    CommandData data;
-    data.p_command_ = this->shared_from_this();
-    data.result_ = _result;
-    event_.operator()(data);
+    event_.operator()({shared_from_this(), _result});
   }
 
  private:

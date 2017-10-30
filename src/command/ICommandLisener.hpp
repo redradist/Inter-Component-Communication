@@ -10,21 +10,17 @@
 #define FORECAST_ICOMMANDLISENER_HPP
 
 #include <memory>
-#include "ICommand.hpp"
 
 namespace icc {
 
 namespace command {
 
-enum class CommandResult {
-  SUCCESS,
-  FAILED,
-  ABORTED,
-};
+class CommandData;
 
-struct CommandData {
-  std::weak_ptr<ICommand> p_command_;
-  CommandResult           result_;
+enum class CommandResult {
+    SUCCESS,
+    FAILED,
+    ABORTED,
 };
 
 class ICommandListener
