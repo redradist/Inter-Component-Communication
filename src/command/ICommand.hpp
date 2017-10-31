@@ -10,17 +10,38 @@
 #define ICC_ICOMMAND_HPP
 
 #include <IComponent.hpp>
-#include "CommandData.h"
-#include "ICommandLisener.hpp"
 
 namespace icc {
 
 namespace command {
 
+enum class CommandResult {
+  SUCCESS,
+  FAILED,
+  ABORTED,
+};
+
+enum class CommandTypes : int {
+  LOOP = -1,   // Default value for command loops
+  COMMAND = 0, // Default value for commands
+};
+
 class ICommand
   : public icc::helpers::virtual_enable_shared_from_this<ICommand> {
  public:
-  using tCallback = void(IComponent::*)(const CommandResult &);
+
+  struct CommandData {
+    std::shared_ptr<ICommand> p_command_;
+    CommandResult             result_;
+  };
+
+  class IListener : public virtual IComponent {
+   public:
+    /**
+     * Method proved by derived class to listen results of command
+     */
+    virtual void processEvent(const CommandData &) = 0;
+  };
 
  public:
   ICommand() = default;
@@ -44,13 +65,11 @@ class ICommand
    */
   virtual void stopCommand() = 0;
 
- protected:
+ public:
   /**
-   * Sections that discribed Command Meta Data
+   * Sections that described Command Meta Data
    */
-  getCommandType() {
-
-  }
+  virtual int getCommandType() = 0;
 
  public:
   /**
@@ -59,8 +78,8 @@ class ICommand
    */
   template<typename _Listener>
   void subscribe(_Listener *_listener) {
-    static_assert(std::is_base_of<ICommandListener, _Listener>::value,
-                  "_listener is not derived from ICommandListener");
+    static_assert(std::is_base_of<IListener, _Listener>::value,
+                  "_listener is not derived from ICommand::IListener");
     if (_listener) {
       event_.connect(&_Listener::processEvent, _listener);
     }
@@ -72,8 +91,8 @@ class ICommand
    */
   template<typename _Listener>
   void subscribe(std::shared_ptr<_Listener> _listener) {
-    static_assert(std::is_base_of<ICommandListener, _Listener>::value,
-                  "_listener is not derived from ICommandListener");
+    static_assert(std::is_base_of<IListener, _Listener>::value,
+                  "_listener is not derived from ICommand::IListener");
     if (_listener) {
       event_.connect(&_Listener::processEvent, _listener);
     }
@@ -87,8 +106,8 @@ class ICommand
   void unsubscribe(_Listener *_listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ICommandListener, _Listener>::value,
-                  "_listener is not derived from ICommandListener");
+    static_assert(std::is_base_of<IListener, _Listener>::value,
+                  "_listener is not derived from ICommand::IListener");
     if (_listener) {
       event_.disconnect(&_Listener::processEvent, _listener);
     }
@@ -102,8 +121,8 @@ class ICommand
   void unsubscribe(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<IComponent, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ICommandListener, _Listener>::value,
-                  "_listener is not derived from ICommandListener");
+    static_assert(std::is_base_of<IListener, _Listener>::value,
+                  "_listener is not derived from ICommand::IListener");
     if (_listener) {
       event_.disconnect(&_Listener::processEvent, _listener);
     }

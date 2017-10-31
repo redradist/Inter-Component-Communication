@@ -16,7 +16,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 #set(CMAKE_C_COMPILER "gcc-4.9" )
 #set(CMAKE_CXX_COMPILER "g++-4.9" )
 set(SOURCE_FILES    src/service/ProcessBus.cpp
-                    src/command/CommandLoop.cpp src/command/CommandData.h)
+                    src/command/CommandLoop.cpp)
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries(
         ${PROJECT_NAME}

@@ -27,23 +27,22 @@ enum class LoopState {
   SUSPENDED,
 };
 
-class CommandLoop
-    : public virtual IComponent,
-      public ICommand,
-      public ICommandListener,
-      public icc::helpers::virtual_enable_shared_from_this<CommandLoop> {
- public:
-  enum LoopMode {
+enum class LoopMode {
   /**
    * Should be used for setting continuous mode
    */
-      Finite,
+  Finite,
   /**
    * Should be used for setting one time mode
    */
-      Continuous,
-  };
+  Continuous,
+};
 
+class CommandLoop
+    : public icc::helpers::virtual_enable_shared_from_this<CommandLoop>,
+      public virtual IComponent,
+      public ICommand,
+      public ICommand::IListener {
  public:
   CommandLoop() = default;
   virtual ~CommandLoop() = default;
@@ -72,6 +71,11 @@ class CommandLoop
   virtual void finished(const CommandResult & _result) override;
 
   /**
+   * Overridden getting command type method
+   */
+  virtual int getCommandType() override;
+
+  /**
    * Overridden exit method from IComponent
    */
   virtual void exit() override;
@@ -87,7 +91,7 @@ class CommandLoop
   virtual void nextCommand();
 
  protected:
-  LoopMode mode_ = Continuous;
+  LoopMode mode_ = LoopMode::Continuous;
   LoopState state_ = LoopState::INACTIVE;
   std::queue<std::shared_ptr<ICommand>> commands_;
 };
