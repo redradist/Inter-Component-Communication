@@ -88,21 +88,23 @@ void CommandLoop::nextCommand() {
   if (LoopState::ACTIVE == state_) {
     if (!commands_.empty()) {
       auto & command = commands_.front();
-      command->subscribe(std::static_pointer_cast<ICommandListener>(this->shared_from_this()));
+      command->subscribe(std::static_pointer_cast<ICommand::IListener>(
+          this->icc::helpers::virtual_enable_shared_from_this<CommandLoop>::shared_from_this()));
       command->startCommand();
-    } else if (Finite == mode_) {
+    } else if (LoopMode::Finite == mode_) {
       finished(CommandResult::SUCCESS);
     }
   }
 }
 
-void CommandLoop::processEvent(const CommandResult & _result) {
+void CommandLoop::processEvent(const CommandData & _data) {
   send([=]{
+    CommandResult result = _data.result_;
     if (!commands_.empty()) {
       commands_.pop();
     }
-    if (Finite == mode_ &&
-        CommandResult::FAILED == _result) {
+    if (LoopMode::Finite == mode_ &&
+        CommandResult::FAILED == result) {
       finished(CommandResult::FAILED);
     } else {
       nextCommand();
@@ -115,6 +117,10 @@ void CommandLoop::finished(const CommandResult & _result) {
     ICommand::finished(_result);
     exit();
   });
+}
+
+int CommandLoop::getCommandType() {
+  return static_cast<int>(CommandTypes::LOOP);
 }
 
 void CommandLoop::exit() {

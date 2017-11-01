@@ -164,27 +164,26 @@ class Event<_R(_Args...)> {
    * @param _args Parameters for calling Event
    */
   void operator()(_Args ... _args) {
-    for (auto &listener : unchecked_listeners_) {
+    tUncheckedListCallbacks uncheckedListeners;
+    tCheckedListCallbacks checkedListeners;
+    copyClients(uncheckedListeners, checkedListeners);
+    for (auto &listener : uncheckedListeners) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
       client->push([=]() mutable {
         callback(_args...);
       });
     }
-    for (auto listener = checked_listeners_.begin();
-         listener != checked_listeners_.end();) {
-      auto client = std::get<0>(*listener);
+    for (auto &listener : checkedListeners) {
+      auto client = std::get<0>(listener);
       if (auto _observer = client.lock()) {
-        auto callback = std::get<2>(*listener);
+        auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
           callback(_args...);
         });
-        ++listener;
-      } else {
-        // NOTE(redra): Deleting listener
-        listener = checked_listeners_.erase(listener);
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -199,10 +198,10 @@ class Event<_R(_Args...)> {
         callback(_args...);
       });
     }
-    for (auto listener : checked_listeners_) {
-      auto client = std::get<0>(*listener);
+    for (auto &listener : checked_listeners_) {
+      auto client = std::get<0>(listener);
       if (auto _observer = client.lock()) {
-        auto callback = std::get<2>(*listener);
+        auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
           callback(_args...);
         });
@@ -211,28 +210,49 @@ class Event<_R(_Args...)> {
   }
 
   /**
-   * Convertion function is used to convert Event to std::function
+   * Conversion function is used to convert Event to std::function
    * This function is used only for checked listeners because of safety
    * @return std::function object
    */
   operator std::function<_R(_Args...)>() {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto event = *this;
     return [event](_Args ... _args) mutable {
-      for (auto listener = event.checked_listeners_.begin();
-           listener != event.checked_listeners_.end();) {
-        if (auto _observer = (std::get<0>(*listener)).lock()) {
-          auto callback = std::get<2>(*listener);
+      tUncheckedListCallbacks _;
+      tCheckedListCallbacks checkedListeners;
+      event.copyClients(_, checkedListeners);
+      for (auto &listener : checkedListeners) {
+        auto client = std::get<0>(listener);
+        if (auto _observer = client.lock()) {
+          auto callback = std::get<2>(listener);
           _observer->push([=]() mutable {
             callback(_args...);
           });
-          ++listener;
-        } else {
-          // NOTE(redra): Deleting listener
-          listener = event.checked_listeners_.erase(listener);
         }
       }
+      event.clearExpiredClient();
       return _R();
     };
+  }
+
+  void copyClients(tUncheckedListCallbacks & _uncheckedListeners,
+                   tCheckedListCallbacks & _checkedListeners) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    _uncheckedListeners = unchecked_listeners_;
+    _checkedListeners = checked_listeners_;
+  }
+
+  void clearExpiredClient() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto listener = checked_listeners_.begin();
+         listener != checked_listeners_.end();) {
+      if (std::get<0>(*listener).expired()) {
+        // NOTE(redra): Deleting listener
+        listener = checked_listeners_.erase(listener);
+      } else {
+        ++listener;
+      }
+    }
   }
 
  private:
