@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.7)
 project(ICC)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "")
-set(CMAKE_BIN_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/products)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 

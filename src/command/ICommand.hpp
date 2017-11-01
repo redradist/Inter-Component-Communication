@@ -24,6 +24,7 @@ enum class CommandResult {
 enum class CommandTypes : int {
   LOOP = -1,   // Default value for command loops
   COMMAND = 0, // Default value for commands
+  // ... Other user-defined command types
 };
 
 class ICommand

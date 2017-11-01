@@ -60,6 +60,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       tUncheckedCallbacks callback(
           static_cast<IComponent *>(_listener),
           icc::helpers::void_cast(_callback),
@@ -83,6 +84,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
           std::static_pointer_cast<IComponent>(_listener),
@@ -107,6 +109,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(unchecked_listeners_.begin(),
                                   unchecked_listeners_.end(),
                                   [=](const tUncheckedCallbacks &rad) {
@@ -130,6 +133,7 @@ class Event<_R(_Args...)> {
     static_assert(std::is_base_of<IComponent, _Component>::value,
                   "_listener is not derived from IComponent");
     if (_listener) {
+      std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(checked_listeners_.begin(),
                                   checked_listeners_.end(),
                                   [=](const tCheckedCallbacks &rad) {
@@ -150,6 +154,7 @@ class Event<_R(_Args...)> {
    * Used to disconnect all clients from this event
    */
   void disconnectAll() {
+    std::lock_guard<std::mutex> lock(mutex_);
     unchecked_listeners_.clear();
     checked_listeners_.clear();
   }
@@ -159,27 +164,27 @@ class Event<_R(_Args...)> {
    * @param _args Parameters for calling Event
    */
   void operator()(_Args ... _args) {
-    for (auto &listener : unchecked_listeners_) {
+    tUncheckedListCallbacks uncheckedListeners;
+    tCheckedListCallbacks checkedListeners;
+    copyClients(uncheckedListeners, checkedListeners);
+    for (auto &listener : uncheckedListeners) {
       auto client = std::get<0>(listener);
       auto callback = std::get<2>(listener);
       client->push([=]() mutable {
         callback(_args...);
       });
     }
-    for (auto listener = checked_listeners_.begin();
-         listener != checked_listeners_.end();) {
+    for (auto listener = checkedListeners.begin();
+         listener != checkedListeners.end(); ++listener) {
       auto client = std::get<0>(*listener);
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(*listener);
         _observer->push([=]() mutable {
           callback(_args...);
         });
-        ++listener;
-      } else {
-        // NOTE(redra): Deleting listener
-        listener = checked_listeners_.erase(listener);
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -206,31 +211,53 @@ class Event<_R(_Args...)> {
   }
 
   /**
-   * Convertion function is used to convert Event to std::function
+   * Conversion function is used to convert Event to std::function
    * This function is used only for checked listeners because of safety
    * @return std::function object
    */
   operator std::function<_R(_Args...)>() {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto event = *this;
     return [event](_Args ... _args) mutable {
-      for (auto listener = event.checked_listeners_.begin();
-           listener != event.checked_listeners_.end();) {
+      tUncheckedListCallbacks _;
+      tCheckedListCallbacks checkedListeners;
+      event.copyClients(_, checkedListeners);
+      for (auto listener = checkedListeners.begin();
+           listener != checkedListeners.end(); ++listener) {
         if (auto _observer = (std::get<0>(*listener)).lock()) {
           auto callback = std::get<2>(*listener);
           _observer->push([=]() mutable {
             callback(_args...);
           });
-          ++listener;
-        } else {
-          // NOTE(redra): Deleting listener
-          listener = event.checked_listeners_.erase(listener);
         }
       }
+      event.clearExpiredClient();
       return _R();
     };
   }
 
+  void copyClients(tUncheckedListCallbacks & _uncheckedListeners,
+                   tCheckedListCallbacks & _checkedListeners) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    _uncheckedListeners = unchecked_listeners_;
+    _checkedListeners = checked_listeners_;
+  }
+
+  void clearExpiredClient() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto listener = checked_listeners_.begin();
+         listener != checked_listeners_.end();) {
+      if (std::get<0>(*listener).expired()) {
+        // NOTE(redra): Deleting listener
+        listener = checked_listeners_.erase(listener);
+      } else {
+        ++listener;
+      }
+    }
+  }
+
  private:
+  std::mutex mutex_;
   tUncheckedListCallbacks unchecked_listeners_;
   tCheckedListCallbacks checked_listeners_;
 };
