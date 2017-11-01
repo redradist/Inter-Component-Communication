@@ -174,11 +174,10 @@ class Event<_R(_Args...)> {
         callback(_args...);
       });
     }
-    for (auto listener = checkedListeners.begin();
-         listener != checkedListeners.end(); ++listener) {
-      auto client = std::get<0>(*listener);
+    for (auto &listener : checkedListeners) {
+      auto client = std::get<0>(listener);
       if (auto _observer = client.lock()) {
-        auto callback = std::get<2>(*listener);
+        auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
           callback(_args...);
         });
@@ -199,10 +198,10 @@ class Event<_R(_Args...)> {
         callback(_args...);
       });
     }
-    for (auto listener : checked_listeners_) {
-      auto client = std::get<0>(*listener);
+    for (auto &listener : checked_listeners_) {
+      auto client = std::get<0>(listener);
       if (auto _observer = client.lock()) {
-        auto callback = std::get<2>(*listener);
+        auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
           callback(_args...);
         });
@@ -222,10 +221,10 @@ class Event<_R(_Args...)> {
       tUncheckedListCallbacks _;
       tCheckedListCallbacks checkedListeners;
       event.copyClients(_, checkedListeners);
-      for (auto listener = checkedListeners.begin();
-           listener != checkedListeners.end(); ++listener) {
-        if (auto _observer = (std::get<0>(*listener)).lock()) {
-          auto callback = std::get<2>(*listener);
+      for (auto &listener : checkedListeners) {
+        auto client = std::get<0>(listener);
+        if (auto _observer = client.lock()) {
+          auto callback = std::get<2>(listener);
           _observer->push([=]() mutable {
             callback(_args...);
           });
