@@ -27,12 +27,25 @@ class CommonAPIClient
       Proxy<>([=]() {
         std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
         auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
+        proxy->getProxyStatusEvent().subscribe(
+        [=](const CommonAPI::AvailabilityStatus & _status) mutable {
+          if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
+            connected(*this);
+          } else {
+            disconnected(*this);
+          }
+        });
         return proxy;
       }()) {
   }
 
   CommonAPIClient(CommonAPIClient const &) = default;
+  CommonAPIClient & operator=(CommonAPIClient const &) = default;
   CommonAPIClient(CommonAPIClient &&) = default;
+  CommonAPIClient & operator=(CommonAPIClient &&) = default;
+
+  virtual void connected(Proxy<> &) = 0;
+  virtual void disconnected(Proxy<> &) = 0;
 };
 
 }
