@@ -50,6 +50,8 @@ class CommonAPIService
         if (is_registered) {
           domain_ = _domain;
           instance_ = _instance;
+        } else {
+          service_ = nullptr;
         }
       }
     }
