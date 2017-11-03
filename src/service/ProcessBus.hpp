@@ -171,7 +171,7 @@ class ProcessBus
             void(_Interface::*_callback)(void)) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -196,7 +196,7 @@ class ProcessBus
             _Arg0 && _value0) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -224,7 +224,7 @@ class ProcessBus
             _Arg0 && _value0, _Arg1 && _value1) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -255,7 +255,7 @@ class ProcessBus
             _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -289,7 +289,7 @@ class ProcessBus
             _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -326,7 +326,7 @@ class ProcessBus
             _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3, _Arg4 && _value4) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -366,7 +366,7 @@ class ProcessBus
             _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3, _Arg4 && _value4, _Arg5 && _value5) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([=]() mutable {
+    push([=]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
