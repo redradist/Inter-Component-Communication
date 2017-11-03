@@ -190,10 +190,11 @@ class ProcessBus
    * @param _value0 Argument #0 passed into external method
    */
   template<typename _Interface,
-           typename _Arg0>
+           typename _Arg0,
+           typename _Value0>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0),
-            _Arg0 && _value0) {
+            _Value0 && _value0) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {
@@ -218,10 +219,12 @@ class ProcessBus
    */
   template<typename _Interface,
            typename _Arg0,
-           typename _Arg1>
+           typename _Arg1,
+           typename _Value0,
+           typename _Value1>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0, _Arg1),
-            _Arg0 && _value0, _Arg1 && _value1) {
+            _Value0 && _value0, _Value1 && _value1) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {
@@ -249,10 +252,13 @@ class ProcessBus
   template<typename _Interface,
            typename _Arg0,
            typename _Arg1,
-           typename _Arg2>
+           typename _Arg2,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0, _Arg1, _Arg2),
-            _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2) {
+            _Value0 && _value0, _Value1 && _value1, _Value2 && _value2) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {
@@ -283,10 +289,14 @@ class ProcessBus
            typename _Arg0,
            typename _Arg1,
            typename _Arg2,
-           typename _Arg3>
+           typename _Arg3,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3),
-            _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3) {
+            _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {
@@ -320,10 +330,15 @@ class ProcessBus
            typename _Arg1,
            typename _Arg2,
            typename _Arg3,
-           typename _Arg4>
+           typename _Arg4,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3,
+           typename _Value4>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4),
-            _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3, _Arg4 && _value4) {
+            _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3, _Value4 && _value4) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {
@@ -360,10 +375,16 @@ class ProcessBus
            typename _Arg2,
            typename _Arg3,
            typename _Arg4,
-           typename _Arg5>
+           typename _Arg5,
+           typename _Value0,
+           typename _Value1,
+           typename _Value2,
+           typename _Value3,
+           typename _Value4,
+           typename _Value5>
   void call(const std::string &_serviceName,
             void(_Interface::*_callback)(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4, _Arg5),
-            _Arg0 && _value0, _Arg1 && _value1, _Arg2 && _value2, _Arg3 && _value3, _Arg4 && _value4, _Arg5 && _value5) {
+            _Value0 && _value0, _Value1 && _value1, _Value2 && _value2, _Value3 && _value3, _Value4 && _value4, _Value5 && _value5) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
     push([=]() mutable {

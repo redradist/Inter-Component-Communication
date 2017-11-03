@@ -36,7 +36,7 @@ class WeatherStation
     timer_.start();
   }
 
-  void setIntervalForUpdate(int & _seconds) override {
+  void setIntervalForUpdate(const int & _seconds) override {
     std::cout << "setIntervalForUpdate: seconds = " << _seconds << std::endl;
     timer_.setInterval(boost::posix_time::seconds(_seconds));
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
@@ -90,7 +90,7 @@ class WeatherObserver
   void connected(Forecast*) override {
     std::cout << "connected is called" << std::endl;
     int i = 7;
-    call(&Forecast::setIntervalForUpdate, i);
+    call(&Forecast::setIntervalForUpdate, 7);
     call(&Forecast::enable);
     subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
     subscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
