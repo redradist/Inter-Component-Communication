@@ -134,7 +134,7 @@ class IComponent {
    * push it in queue
    * @param _task Task that will be executed
    */
-  virtual void send(std::function<void(void)> _task) {
+  virtual void invoke(std::function<void(void)> _task) {
     service_->dispatch(_task);
   }
 
