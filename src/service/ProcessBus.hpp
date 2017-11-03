@@ -69,7 +69,7 @@ class ProcessBus
         auto clients = clients_[clientsKey];
         for (auto client = clients.begin();
              client != clients.end();) {
-          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>> *>(client->second());
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
           if (auto _client = weak_client.lock()) {
             _client->connected(_service.get());
             ++client;
@@ -100,7 +100,7 @@ class ProcessBus
         auto clients = clients_[clientsKey];
         for (auto client = clients.begin();
              client != clients.end();) {
-          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>> *>(client->second());
+          auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
           if (auto _client = weak_client.lock()) {
             _client->disconnected(nullptr);
             ++client;
@@ -208,11 +208,11 @@ class ProcessBus
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         std::function<void(_Params ...)> _safeReply =
-            [=](_Params ... params) {
-              invoke([=] {
-                _reply(params...);
-              });
-            };
+        [=](_Params ... params) {
+          invoke([=] {
+            _reply(params...);
+          });
+        };
         service->invoke([=]() mutable {
           (service.get()->*_callback)(_safeReply, _values...);
         });
