@@ -14,7 +14,7 @@ namespace icc {
 namespace command {
 
 void CommandLoop::startCommand() {
-  send([=]{
+  invoke([=] {
     if (LoopState::INACTIVE == state_) {
       state_ = LoopState::ACTIVE;
       nextCommand();
@@ -23,11 +23,11 @@ void CommandLoop::startCommand() {
 }
 
 void CommandLoop::resumeCommand() {
-  send([=]{
+  invoke([=] {
     if (LoopState::SUSPENDED == state_) {
       state_ = LoopState::ACTIVE;
       if (!commands_.empty()) {
-        auto & command = commands_.front();
+        auto &command = commands_.front();
         command->resumeCommand();
       }
     }
@@ -35,20 +35,20 @@ void CommandLoop::resumeCommand() {
 }
 
 void CommandLoop::suspendCommand() {
-  send([=]{
+  invoke([=] {
     state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
-      auto & command = commands_.front();
+      auto &command = commands_.front();
       command->suspendCommand();
     }
   });
 }
 
 void CommandLoop::stopCommand() {
-  send([=]{
+  invoke([=] {
     state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
-      auto & command = commands_.front();
+      auto &command = commands_.front();
       command->stopCommand();
       commands_.pop();
     }
@@ -57,7 +57,7 @@ void CommandLoop::stopCommand() {
 }
 
 void CommandLoop::setMode(LoopMode _mode) {
-  send([=]{
+  invoke([=] {
     if (LoopState::INACTIVE == state_) {
       mode_ = _mode;
     }
@@ -65,7 +65,7 @@ void CommandLoop::setMode(LoopMode _mode) {
 }
 
 void CommandLoop::push_back(std::shared_ptr<ICommand> _command) {
-  send([=] {
+  invoke([=] {
     commands_.push(_command);
     if (1 == commands_.size()) {
       nextCommand();
@@ -78,7 +78,7 @@ CommandLoop::getState() {
   std::shared_ptr<std::promise<LoopState>> promise =
     std::make_shared<std::promise<LoopState>>();
   std::future<LoopState> result = promise->get_future();
-  send([=]() mutable {
+  invoke([=]() mutable {
     promise->set_value(state_);
   });
   return result;
@@ -98,7 +98,7 @@ void CommandLoop::nextCommand() {
 }
 
 void CommandLoop::processEvent(const CommandData & _data) {
-  send([=]{
+  invoke([=] {
     CommandResult result = _data.result_;
     if (!commands_.empty()) {
       commands_.pop();
