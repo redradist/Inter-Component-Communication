@@ -175,7 +175,7 @@ class ProcessBus
             void(_Interface::*_callback)(_Args...), _Values ... _values) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([this, _serviceName, _callback, _values...]() mutable {
+    push([this, _serviceName, _callback, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         service->invoke([=]() mutable {
@@ -204,12 +204,12 @@ class ProcessBus
             _Values ... _values) {
     static_assert(std::is_abstract<_Interface>::value,
                   "_Interface is not an abstract class");
-    this->invoke([this, _serviceName, _callback, _reply, _values...]() mutable {
+    push([this, _serviceName, _callback, _reply, _values...]() mutable {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
         std::function<void(_Params ...)> _safeReply =
         [=](_Params ... params) {
-          invoke([=] {
+          push([=] {
             _reply(params...);
           });
         };
