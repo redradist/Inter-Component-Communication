@@ -94,7 +94,7 @@ class WeatherObserver
     call(&Forecast::enable);
     subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
     subscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
-    // NOTE(redra): The following lines only for testing purposes
+    // NOTE(redra): The following line added only for testing purposes
     //unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
     //unsubscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
   }

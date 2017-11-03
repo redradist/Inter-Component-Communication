@@ -32,8 +32,9 @@ class ConnectionBTProfiles
  public:
   using icc::IComponent::IComponent;
 
-  void processEvent(const icc::command::CommandResult & _result) override {
-    switch (_result) {
+  void processEvent(const CommandData & _data) override {
+    icc::command::CommandLoop::processEvent(_data);
+    switch (_data.result_) {
       case icc::command::CommandResult::SUCCESS:
         std::cout << "ConnectionBTProfiles::CommandEvent::SUCCESS" << std::endl;
         break;
@@ -44,7 +45,6 @@ class ConnectionBTProfiles
         std::cout << "ConnectionBTProfiles::CommandEvent::ABORTED" << std::endl;
         break;
     }
-    icc::command::CommandLoop::processEvent(_result);
   }
 };
 
@@ -53,9 +53,9 @@ class Connect
  public:
   using icc::IComponent::IComponent;
 
-  void processEvent(const icc::command::CommandResult & _result) override {
-    icc::command::CommandLoop::processEvent(_result);
-    switch (_result) {
+  void processEvent(const CommandData & _data) override {
+    icc::command::CommandLoop::processEvent(_data);
+    switch (_data.result_) {
       case icc::command::CommandResult::SUCCESS:
         std::cout << "Connect::CommandEvent::SUCCESS" << std::endl;
         break;
@@ -77,7 +77,7 @@ int main() {
   mainLoop->startCommand();
   std::shared_ptr<ConnectionBTProfiles> loop =
       std::make_shared<ConnectionBTProfiles>(&service_);
-  loop->setMode(icc::command::CommandLoop::Finite);
+  loop->setMode(icc::command::LoopMode::Finite);
   loop->push_back(std::make_shared<ConnectionHFP>());
   loop->push_back(std::make_shared<ConnectionA2DP>());
   mainLoop->push_back(loop);
