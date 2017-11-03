@@ -11,7 +11,7 @@
 class Forecast {
  public:
   virtual void enable() = 0;
-  virtual void setIntervalForUpdate(int &) = 0;
+  virtual void setIntervalForUpdate(const int &) = 0;
 
  public:
   icc::Event<void(const double &, int)> temperature_;

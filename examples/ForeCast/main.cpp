@@ -36,7 +36,7 @@ class WeatherStation
     timer_.start();
   }
 
-  void setIntervalForUpdate(int & _seconds) override {
+  void setIntervalForUpdate(const int & _seconds) override {
     std::cout << "setIntervalForUpdate: seconds = " << _seconds << std::endl;
     timer_.setInterval(boost::posix_time::seconds(_seconds));
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
