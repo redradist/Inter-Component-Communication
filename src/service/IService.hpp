@@ -29,11 +29,15 @@ class IService
                 "_Interface is not an abstract class");
  public:
   /**
+   * Default constructor
+   */
+  IService() = default;
+  /**
    * Constructor which register the service
    * @param _serviceName Service name, should be unique in the process
    */
-  IService(const std::string & _serviceName)
-      : service_name_(_serviceName) {
+  IService(const std::string & _serviceName) {
+    registerService(_serviceName);
   }
 
   /**
@@ -45,19 +49,29 @@ class IService
   /**
    * Used to register IService<_Interface>
    */
-  void registerService() {
-    ProcessBus::getBus().registerService(this->shared_from_this(), service_name_);
+  void registerService(const std::string & _serviceName) {
+    invoke([=] {
+      if (service_name_.empty() && !_serviceName.empty()) {
+        service_name_ = _serviceName;
+        ProcessBus::getBus().registerService(this->shared_from_this(), service_name_);
+      }
+    });
   }
 
   /**
    * Used to unregister IService<_Interface>
    */
   void unregisterService() {
-    ProcessBus::getBus().unregisterService(this->shared_from_this(), service_name_);
+    invoke([=] {
+      if (!service_name_.empty()) {
+        ProcessBus::getBus().unregisterService(this->shared_from_this(), service_name_);
+        service_name_.clear();
+      }
+    });
   }
 
  private:
-  const std::string service_name_;
+  std::string service_name_;
 };
 
 /**
