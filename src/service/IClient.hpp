@@ -34,10 +34,9 @@ class IClient
    */
   IClient(const std::string &_serviceName)
       : service_name_(_serviceName) {
-  }
-
-  void buildClient() {
-    ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
+    push([=] {
+      ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
+    });
   }
 
   /**
