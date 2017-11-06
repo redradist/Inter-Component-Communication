@@ -346,7 +346,7 @@ class ProcessBus
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
-   * @param _event Event for subscription
+   * @param _attribute Attribute for subscription
    * @param _callback Callback for subscription
    */
   template<typename _Interface,
@@ -376,7 +376,7 @@ class ProcessBus
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
-   * @param _event Event for subscription
+   * @param _attribute Attribute for subscription
    * @param _callback Callback for subscription
    */
   template<typename _Interface,
@@ -407,7 +407,7 @@ class ProcessBus
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
-   * @param _event Event for unsubscription
+   * @param _attribute Attribute for unsubscription
    * @param _callback Callback for unsubscription
    */
   template<typename _Interface,
@@ -437,7 +437,7 @@ class ProcessBus
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
-   * @param _event Event for unsubscription
+   * @param _attribute Attribute for unsubscription
    * @param _callback Callback for unsubscription
    */
   template<typename _Interface,
