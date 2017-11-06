@@ -342,7 +342,7 @@ class ProcessBus
   };
 
   /**
-   * This method is used to subscribe on event from IService<>
+   * This method is used to subscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
@@ -372,7 +372,7 @@ class ProcessBus
   };
 
   /**
-   * This method is used to subscribe on event from IService<>
+   * This method is used to subscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
@@ -403,7 +403,7 @@ class ProcessBus
   };
 
   /**
-   * This method is used to unsubscribe on event from IService<>
+   * This method is used to unsubscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
@@ -433,7 +433,7 @@ class ProcessBus
   };
 
   /**
-   * This method is used to unsubscribe on event from IService<>
+   * This method is used to unsubscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
    * @tparam _R Return value of Event<>
    * @tparam _Args Arguments of Event<>
