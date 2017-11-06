@@ -38,6 +38,10 @@ class WeatherStation
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
     timer_.addListener(this);
     timer_.start();
+
+    // Experimentation
+    temperature2_ = 2;
+    double temperature2 = temperature2_;
   }
 
  protected:

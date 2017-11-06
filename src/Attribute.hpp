@@ -19,9 +19,13 @@ namespace icc {
  * notify when it is changed
  * @tparam _Field
  */
-template<typename _Field>
+template<typename _FieldType,
+         typename _Field = typename std::remove_reference<
+                             typename std::remove_cv<_FieldType>::type>::type>
 class Attribute
     : public Event<void(const _Field &)> {
+  static_assert(std::is_copy_constructible<_Field>::value,
+                "_Field is not copy constructable !!");
  public:
   /**
    * Method is used to set attribute value
@@ -30,7 +34,7 @@ class Attribute
   void setAttribute(const _Field &_field) {
     if (!isEqual(_field)) {
       field_ = _field;
-      operator()(field_);
+      this->operator()(field_);
     }
   }
 
@@ -41,7 +45,7 @@ class Attribute
   void setAttribute(_Field && _field) {
     if (!isEqual(_field)) {
       field_ = std::move(_field);
-      operator()(field_);
+      this->operator()(field_);
     }
   }
 
@@ -50,6 +54,35 @@ class Attribute
    * @return Attribute value
    */
   _Field getAttribute() {
+    return field_;
+  }
+
+  /**
+   * Helper method is used for simplification of set attribute
+   * @param _field Value of attribute to set
+   * @return
+   */
+  Attribute & operator=(const _Field &_field) {
+    setAttribute(_field);
+    return *this;
+  }
+
+  /**
+   * Helper method is used for simplification of
+   * move new value into attribute
+   * @param _field Value of attribute to set
+   * @return
+   */
+  Attribute & operator=(_Field && _field) {
+    setAttribute(std::move(_field));
+    return *this;
+  }
+
+  /**
+   *
+   * @return
+   */
+  operator _Field() const {
     return field_;
   }
 
