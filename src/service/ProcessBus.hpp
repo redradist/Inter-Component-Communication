@@ -344,20 +344,18 @@ class ProcessBus
   /**
    * This method is used to subscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
-   * @tparam _R Return value of Event<>
-   * @tparam _Args Arguments of Event<>
+   * @tparam _Arg Argument of Event<>
    * @param _attribute Attribute for subscription
    * @param _callback Callback for subscription
    */
   template<typename _Interface,
       typename _Client,
-      typename _R,
       typename ... _Values,
-      typename ... _Args>
+      typename _Arg>
   void subscribe(std::shared_ptr<_Client> _client,
                  const std::string & _serviceName,
                  Attribute<_Values...> _Interface::*_attribute,
-                 _R(_Client::*_callback)(_Args...)) {
+                 void(_Client::*_callback)(_Arg)) {
     static_assert(std::is_base_of<IComponent, _Client>::value,
                   "IComponent is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
@@ -374,20 +372,18 @@ class ProcessBus
   /**
    * This method is used to subscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
-   * @tparam _R Return value of Event<>
-   * @tparam _Args Arguments of Event<>
+   * @tparam _Arg Argument of Event<>
    * @param _attribute Attribute for subscription
    * @param _callback Callback for subscription
    */
   template<typename _Interface,
       typename _Client,
-      typename _R,
       typename ... _Values,
-      typename ... _Args>
+      typename _Arg>
   void subscribe(std::shared_ptr<IClient<_Interface>> _client,
                  const std::string & _serviceName,
                  Attribute<_Values...> _Interface::*_attribute,
-                 _R(_Client::*_callback)(_Args...)) {
+                 void(_Client::*_callback)(_Arg)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
@@ -405,20 +401,18 @@ class ProcessBus
   /**
    * This method is used to unsubscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
-   * @tparam _R Return value of Event<>
-   * @tparam _Args Arguments of Event<>
+   * @tparam _Arg Argument of Event<>
    * @param _attribute Attribute for unsubscription
    * @param _callback Callback for unsubscription
    */
   template<typename _Interface,
            typename _Client,
-           typename _R,
            typename ... _Values,
-           typename ... _Args>
+           typename _Arg>
   void unsubscribe(std::shared_ptr<_Client> _client,
                    const std::string & _serviceName,
                    Attribute<_Values...> _Interface::*_attribute,
-                   _R(_Client::*_callback)(_Args...)) {
+                   void(_Client::*_callback)(_Arg)) {
     static_assert(std::is_base_of<IComponent, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
@@ -435,20 +429,18 @@ class ProcessBus
   /**
    * This method is used to unsubscribe on attribute from IService<>
    * @tparam _Client Client type in which located callback
-   * @tparam _R Return value of Event<>
-   * @tparam _Args Arguments of Event<>
+   * @tparam _Arg Argument of Event<>
    * @param _attribute Attribute for unsubscription
    * @param _callback Callback for unsubscription
    */
   template<typename _Interface,
            typename _Client,
-           typename _R,
            typename ... _Values,
-           typename ... _Args>
+           typename _Arg>
   void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
                    const std::string & _serviceName,
                    Attribute<_Values...> _Interface::*_attribute,
-                   _R(_Client::*_callback)(_Args...)) {
+                   void(_Client::*_callback)(_Arg)) {
     static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
