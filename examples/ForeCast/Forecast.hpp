@@ -7,6 +7,7 @@
 
 #include <functional>
 #include "Event.hpp"
+#include "Attribute.hpp"
 
 class Forecast {
  public:
@@ -14,6 +15,7 @@ class Forecast {
 
  public:
   icc::Event<void(const double &)> temperature_;
+  icc::Attribute<double> temperature2_;
 };
 
 #endif //ICC_FORECAST_HPP
