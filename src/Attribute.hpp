@@ -31,7 +31,7 @@ class Attribute
    * Method is used to set attribute value
    * @param _field Value to set
    */
-  void setAttribute(const _Field &_field) {
+  void setValue(const _Field &_field) {
     if (!isEqual(_field)) {
       field_ = _field;
       this->operator()(field_);
@@ -42,7 +42,7 @@ class Attribute
    * Method is used to move attribute value
    * @param _field Value to move
    */
-  void setAttribute(_Field && _field) {
+  void setValue(_Field && _field) {
     if (!isEqual(_field)) {
       field_ = std::move(_field);
       this->operator()(field_);
@@ -53,7 +53,7 @@ class Attribute
    * Method is used to get attribute value
    * @return Attribute value
    */
-  _Field getAttribute() {
+  _Field getValue() {
     return field_;
   }
 
@@ -63,7 +63,7 @@ class Attribute
    * @return
    */
   Attribute & operator=(const _Field &_field) {
-    setAttribute(_field);
+    setValue(_field);
     return *this;
   }
 
@@ -74,7 +74,7 @@ class Attribute
    * @return
    */
   Attribute & operator=(_Field && _field) {
-    setAttribute(std::move(_field));
+    setValue(std::move(_field));
     return *this;
   }
 
