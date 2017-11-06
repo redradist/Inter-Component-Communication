@@ -22,6 +22,9 @@ namespace icc {
 template<typename _T>
 class Event;
 
+template<typename _U, typename _T>
+class Attribute;
+
 namespace service {
 
 template<typename _Interface>
@@ -1263,6 +1266,136 @@ class ProcessBus
       if (service) {
         service->invoke([=] {
           (service.get()->*_event).disconnect(
+              _callback,
+              std::static_pointer_cast<_Client>(_client));
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on attribute from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _Value Underlying type of Attribute class
+   * @tparam _Arg Argument type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+      typename _Client,
+      typename ... _Value,
+      typename _Arg>
+  void subscribe(std::shared_ptr<_Client> _client,
+                 const std::string & _serviceName,
+                 Attribute<_Value...> _Interface::*_attribute,
+                 void(_Client::*_callback)(_Arg)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    invoke([this, _client, _serviceName, _attribute, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->invoke([=] {
+          (service.get()->*_attribute).connect(_callback,
+                                               _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to subscribe on attribute from IService<>
+   * @tparam _Interface Interface for subscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _Value Underlying type of Attribute class
+   * @tparam _Arg Argument type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+      typename _Client,
+      typename ... _Value,
+      typename _Arg>
+  void subscribe(std::shared_ptr<IClient<_Interface>> _client,
+                 const std::string & _serviceName,
+                 Attribute<_Value...> _Interface::*_attribute,
+                 void(_Client::*_callback)(_Arg)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
+    invoke([this, _client, _serviceName, _attribute, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->invoke([=] {
+          (service.get()->*_attribute).connect(
+              _callback,
+              std::static_pointer_cast<_Client>(_client));
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on attribute from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _Value Underlying type of Attribute class
+   * @tparam _Arg Argument type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+      typename _Client,
+      typename ... _Value,
+      typename _Arg>
+  void unsubscribe(std::shared_ptr<_Client> _client,
+                   const std::string & _serviceName,
+                   Attribute<_Value...> _Interface::*_attribute,
+                   void(_Client::*_callback)(_Arg)) {
+    static_assert(std::is_base_of<IComponent, _Client>::value,
+                  "IComponent is not a base class of _Client");
+    invoke([this, _client, _serviceName, _attribute, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->invoke([=] {
+          (service.get()->*_attribute).disconnect(_callback,
+                                                  _client);
+        });
+      }
+    });
+  };
+
+  /**
+   * This method is used to unsubscribe on attribute from IService<>
+   * @tparam _Interface Interface for unsubscribing on _event
+   * @tparam _Client Client type in which located callback
+   * @tparam _Value Underlying type of Attribute class
+   * @tparam _Arg Argument type those will appear in _callback method
+   * @param _client Client object that tries to subscribe on _event
+   * @param _serviceName Service name to send request
+   * @param _event Event for subscription
+   * @param _callback Callback for subscription
+   */
+  template<typename _Interface,
+      typename _Client,
+      typename ... _Value,
+      typename _Arg>
+  void unsubscribe(std::shared_ptr<IClient<_Interface>> _client,
+                   const std::string & _serviceName,
+                   Attribute<_Value...> _Interface::*_attribute,
+                   void(_Client::*_callback)(_Arg)) {
+    static_assert(std::is_base_of<IClient<_Interface>, _Client>::value,
+                  "IClient<_Interface> is not a base class of _Client");
+    invoke([this, _client, _serviceName, _attribute, _callback] {
+      auto service = this->getService<_Interface>(_serviceName);
+      if (service) {
+        service->invoke([=] {
+          (service.get()->*_attribute).disconnect(
               _callback,
               std::static_pointer_cast<_Client>(_client));
         });

@@ -29,6 +29,7 @@ class WeatherStation
     if (icc::TimerEvents::EXPIRED == _event) {
       std::cout << "processEvent icc::TimerEvents::EXPIRED" << std::endl;
       temperature_(28.3,1);
+      temperature22_ = 3;
     }
   }
 
@@ -66,6 +67,9 @@ class TestObserver
   void onTemperature(const double & _temperature, int) {
     std::cout << "TestObserver::Temperature is " << _temperature << std::endl;
   }
+  void onTemperature2(const double & _temperature) {
+    std::cout << "TestObserver::Temperature is " << _temperature << std::endl;
+  }
 };
 
 class WeatherObserver
@@ -83,6 +87,9 @@ class WeatherObserver
   void onTemperature(const double & _temperature, int) {
     std::cout << "WeatherObserver::Temperature is " << _temperature << std::endl;
   }
+  void onTemperature2(const double & _temperature) {
+    std::cout << "WeatherObserver::Temperature is " << _temperature << std::endl;
+  }
 
  protected:
   std::shared_ptr<TestObserver> p_test_ = std::make_shared<TestObserver>(this);
@@ -93,10 +100,14 @@ class WeatherObserver
     call(&Forecast::setIntervalForUpdate, 7);
     call(&Forecast::enable);
     subscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    subscribe(&Forecast::temperature22_, &WeatherObserver::onTemperature2);
     subscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
+    subscribe(&Forecast::temperature22_, p_test_, &TestObserver::onTemperature2);
     // NOTE(redra): The following line added only for testing purposes
     //unsubscribe(&Forecast::temperature_, &WeatherObserver::onTemperature);
+    //unsubscribe(&Forecast::temperature22_, &WeatherObserver::onTemperature2);
     //unsubscribe(&Forecast::temperature_, p_test_, &TestObserver::onTemperature);
+    //unsubscribe(&Forecast::temperature22_, p_test_, &TestObserver::onTemperature2);
   }
 
   void disconnected(Forecast*) override {
