@@ -14,6 +14,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "IComponent.hpp"
 #include "ITimerListener.hpp"
+#include "Event.hpp"
 
 namespace icc {
 
