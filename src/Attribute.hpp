@@ -79,7 +79,7 @@ class Attribute
   }
 
   /**
-   *
+   * Cast Attribute to underlying type
    * @return
    */
   operator _Field() const {
