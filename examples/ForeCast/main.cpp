@@ -19,6 +19,8 @@ class WeatherStation
         icc::service::IService<Forecast>("WeatherStation"),
         timer_(service_) {
     std::cout << "WeatherStation" << std::endl;
+    // Experimentation
+    temperature2_ = 22;
   }
 
   ~WeatherStation() {
@@ -38,10 +40,6 @@ class WeatherStation
     timer_.setNumberOfRepetition(icc::Timer::Infinite);
     timer_.addListener(this);
     timer_.start();
-
-    // Experimentation
-    temperature2_ = 2;
-    double temperature2 = temperature2_;
   }
 
  protected:
