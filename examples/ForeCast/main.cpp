@@ -19,6 +19,7 @@ class WeatherStation
         icc::service::IService<Forecast>("WeatherStation"),
         timer_(service_) {
     std::cout << "WeatherStation" << std::endl;
+    temperature22_ = 22;
   }
 
   ~WeatherStation() {
@@ -29,7 +30,6 @@ class WeatherStation
     if (icc::TimerEvents::EXPIRED == _event) {
       std::cout << "processEvent icc::TimerEvents::EXPIRED" << std::endl;
       temperature_(28.3,1);
-      temperature22_ = 3;
     }
   }
 

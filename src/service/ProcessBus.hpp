@@ -1301,6 +1301,9 @@ class ProcessBus
           (service.get()->*_attribute).connect(_callback,
                                                _client);
         });
+        _client->push([=] {
+          (_client.get()->*_callback)((service.get()->*_attribute).getValue());
+        });
       }
     });
   };
@@ -1333,6 +1336,9 @@ class ProcessBus
           (service.get()->*_attribute).connect(
               _callback,
               std::static_pointer_cast<_Client>(_client));
+        });
+        _client->push([=] {
+          (_client.get()->*static_cast<void(IClient<_Interface>::*)(_Arg)>(_callback))((service.get()->*_attribute).getValue());
         });
       }
     });
