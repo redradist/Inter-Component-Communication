@@ -44,6 +44,8 @@ class CommonAPIClient
   CommonAPIClient(CommonAPIClient &&) = default;
   CommonAPIClient & operator=(CommonAPIClient &&) = default;
 
+  virtual ~CommonAPIClient() = default;
+
   virtual void connected(Proxy<> &) = 0;
   virtual void disconnected(Proxy<> &) = 0;
 };

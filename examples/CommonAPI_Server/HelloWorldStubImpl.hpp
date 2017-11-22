@@ -7,11 +7,10 @@
 
 #include <CommonAPI/DBus/CommonAPIDBus.hpp>
 #include <CommonAPI/CommonAPI.hpp>
-#include <v1/commonapi/HelloWorldStubDefault.hpp>
-#include <commonapi/CommonAPIService.hpp>
+#include "HelloWorldService.hpp"
 
 class HelloWorldStubImpl
-    : public icc::commonapi::CommonAPIService< v1::commonapi::HelloWorldStubDefault > {
+    : public HelloWorldService {
  public:
   HelloWorldStubImpl();
   virtual ~HelloWorldStubImpl();
