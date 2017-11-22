@@ -1,0 +1,103 @@
+{%- set service_version = interface.major -%}
+{%- set service_name = interface.name -%}
+{%- set package_fs = interface.package_name.replace('.', '/') -%}
+{%- set package_ns = interface.package_name.replace('.', '::') -%}
+{%- set methods = interface.methods -%}
+{%- set broadcasts = interface.broadcasts -%}
+{%- set attributes = interface.attributes -%}
+{%- set class_name = service_name+'Service' -%}
+/**
+ * @file {{class_name}}.hpp
+ * @date {{date}}
+ * @brief It is an auto-generated file.
+ * It contains wrappers on receiving requests
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
+
+#ifndef _{{class_name.upper()}}_HPP_
+#define _{{class_name.upper()}}_HPP_
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <functional>
+#include <IComponent.hpp>
+#include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
+#include <commonapi/CommonAPIService.hpp>
+
+class {{class_name}}
+  : public virtual icc::IComponent,
+    public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault > {
+ public:
+  using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault >::CommonAPIService;
+
+ public:
+  {%- if methods is not none and methods|length > 0 %}
+  /***************************************
+   * Below methods for receiving requests
+   **************************************/
+  {%- for method in methods %}
+  void {{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
+  {%- if method.inputs is not none -%}
+  {{- ", " -}}{%- for input in method.inputs -%}
+    {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- endif -%}
+  {%- if method.outputs is not none -%}
+  {{- ", " -}}{{method.name}}Reply_t _reply
+  {%- endif -%}
+  ) override;
+  {%- endfor %}
+  {% endif %}
+ protected:
+  {%- if methods is not none and methods|length > 0 %}
+  /***************************************
+   * Below methods for receiving requests in IComponent thread
+   **************************************/
+  {%- for method in methods %}
+  virtual void request{{method}}(const std::shared_ptr<CommonAPI::ClientId> _client,
+  {%- for input in method.inputs -%}
+    {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- if method.outputs is not none -%}
+  {{- ", " -}}{{method.name}}Reply_t _reply) {
+  {%- else -%}
+  ) {
+  {%- endif %}
+    // Default implementation.
+    // If you need you may override request{{method}}
+    // This method will be called in thread of IComponent
+  }
+  {%- endfor %}
+  {%- endif %}
+};
+{% if methods is not none and methods|length > 0 %}
+{%- for method in methods %}
+inline
+void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
+{%- if method.inputs is not none %}
+{{- ", " -}}{%- for input in method.inputs -%}
+    {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
+{%- endfor -%}
+{%- endif -%}
+{%- if method.outputs is not none -%}
+{{ ", "}}{{method.name}}Reply_t _reply
+{%- endif -%}
+) {
+  invoke([=] {
+    request{{method}}(_client
+    {%- if method.inputs is not none -%}
+    {{ ", " }}{%- for input in method.inputs -%}
+      _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%}
+    {%- if method.outputs is not none %}
+    {{- ", " -}} _reply
+    {%- endif -%}
+    );
+  });
+}
+{% endfor %}
+{%- endif %}
+#endif  // _{{class_name.upper()}}_HPP_
