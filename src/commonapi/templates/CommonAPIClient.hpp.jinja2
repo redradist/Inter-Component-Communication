@@ -26,6 +26,10 @@
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
 #include <commonapi/CommonAPIClient.hpp>
 
+namespace icc {
+
+namespace commonapi {
+
 class {{class_name}}
   : public virtual icc::IComponent,
     public icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy > {
@@ -252,4 +256,9 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
 }
 {% endfor %}
 {%- endif %}
+
+}
+
+}
+
 #endif  // _{{class_name.upper()}}_HPP_

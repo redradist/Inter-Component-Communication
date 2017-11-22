@@ -26,6 +26,10 @@
 #include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
 #include <commonapi/CommonAPIService.hpp>
 
+namespace icc {
+
+namespace commonapi {
+
 class {{class_name}}
   : public virtual icc::IComponent,
     public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault > {
@@ -100,4 +104,9 @@ void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> 
 }
 {% endfor %}
 {%- endif %}
+
+}
+
+}
+
 #endif  // _{{class_name.upper()}}_HPP_

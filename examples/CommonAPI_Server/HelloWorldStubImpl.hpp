@@ -10,7 +10,7 @@
 #include "HelloWorldService.hpp"
 
 class HelloWorldStubImpl
-    : public HelloWorldService {
+    : public icc::commonapi::HelloWorldService {
  public:
   HelloWorldStubImpl();
   virtual ~HelloWorldStubImpl();
