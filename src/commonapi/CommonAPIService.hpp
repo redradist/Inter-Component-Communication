@@ -33,7 +33,7 @@ class CommonAPIService
   CommonAPIService(CommonAPIService const &_service) = delete;
   CommonAPIService(const Service &_service) = delete;
 
-  ~CommonAPIService() {
+  virtual ~CommonAPIService() {
     unregisterService();
   }
 

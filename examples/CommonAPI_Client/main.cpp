@@ -10,11 +10,12 @@ int main() {
   helloWorldClient.getProxyStatusEvent().subscribe(
   [&helloWorldClient](const CommonAPI::AvailabilityStatus & _status) mutable {
     if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-      helloWorldClient.sayHelloAsync("Denis");
+      helloWorldClient.requestSayHello("Denis");
     }
   });
   while (true) {
     std::cout << "Waiting for calls... (Abort with CTRL+C)" << std::endl;
+    helloWorldClient.exec();
     std::this_thread::sleep_for(std::chrono::seconds(30));
   }
   return 0;

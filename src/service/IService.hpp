@@ -29,6 +29,10 @@ class IService
                 "_Interface is not an abstract class");
  public:
   /**
+   * Default constructor
+   */
+  IService() = default;
+  /**
    * Constructor which register the service
    * @param _serviceName Service name, should be unique in the process
    */
