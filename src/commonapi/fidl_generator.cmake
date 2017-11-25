@@ -7,11 +7,13 @@ function(add_fidl_dependencies target fidl_files generators_path)
         get_filename_component(FIDL_NAME_WITH_EXTENTION ${FIDL} NAME)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
+        message(STATUS "COMMONAPI_GENERATOR is ${COMMONAPI_GENERATOR}")
+        message(STATUS "COMMONAPI_DBUS_GENERATOR is ${COMMONAPI_DBUS_GENERATOR}")
         add_custom_command(OUTPUT ${FIDL_NAME}
                            DEPENDS ${FIDL}
                            COMMAND touch ${FIDL_NAME}
-                           COMMAND ${generators_path}/commonapi-generator/commonapi-generator-linux-x86_64 -sk ${FIDL}
-                           COMMAND ${generators_path}/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64 ${FIDL}
+                           COMMAND ${COMMONAPI_GENERATOR} --dest ${generators_path} -sk ${FIDL}
+                           COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${generators_path} ${FIDL}
                           )
         set(GEN_FIDL_FILES ${GEN_FIDL_FILES} ${FIDL_NAME})
     endforeach()

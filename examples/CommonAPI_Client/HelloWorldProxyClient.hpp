@@ -9,9 +9,10 @@
 #include <CommonAPI/CommonAPI.hpp>
 #include <v1/commonapi/HelloWorldProxy.hpp>
 #include <commonapi/CommonAPIClient.hpp>
+#include <HelloWorldClient.hpp>
 
 class HelloWorldProxyClient
-  : public icc::commonapi::CommonAPIClient<v1::commonapi::HelloWorldProxy> {
+  : public icc::commonapi::HelloWorldClient {
  public:
   HelloWorldProxyClient(const std::string &_domain,
                         const std::string &_instance);
