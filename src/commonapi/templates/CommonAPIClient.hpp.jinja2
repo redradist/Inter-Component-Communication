@@ -55,6 +55,24 @@ class {{class_name}}
   {%- endfor %}
   {% endif %}
 
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /************************************************
+   * Below methods for subscribing on broadcasts
+   ***********************************************/
+  {%- for broadcast in broadcasts %}
+  void notifyOn{{broadcast}}Update(const bool isNotify);
+  {%- endfor %}
+  {% endif %}
+
+  {%- if attributes is not none and attributes|length > 0 %}
+  /************************************************
+   * Below methods for subscribing on attributes
+   ***********************************************/
+  {%- for attribute in attributes %}
+  void notifyOn{{attribute}}Changed(const bool isNotify);
+  {%- endfor %}
+  {% endif %}
+ protected:
   {%- if methods is not none and methods|length > 0 %}
   /*******************************************************************
    * Below methods for receiving responses on corresponding request
@@ -62,26 +80,17 @@ class {{class_name}}
   {%- for method in methods %}
   {%- if method.outputs is not none %}
   virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
-      {%- if method.outputs is not none -%}
-          {%- for output in method.outputs -%}
-              {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
-          {%- endfor -%}
-      {%- endif -%}
+  {%- if method.outputs is not none -%}
+  {%- for output in method.outputs -%}
+  {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- endif -%}
   ) {
-    // Default implementation.
-    // If you need you may override response{{method}}
-    // This method will be called in thread of IComponent
+  // Default implementation.
+  // If you need you may override response{{method}}
+  // This method will be called in thread of IComponent
   }
   {%- endif %}
-  {%- endfor %}
-  {% endif %}
-
-  {%- if broadcasts is not none and broadcasts|length > 0 %}
-  /************************************************
-   * Below methods for subscribing on broadcasts
-   ***********************************************/
-  {%- for broadcast in broadcasts %}
-  void notifyOn{{broadcast}}Update(const bool isNotify);
   {%- endfor %}
   {% endif %}
 
@@ -101,15 +110,6 @@ class {{class_name}}
     // If you need you may override informationOn{{broadcast}}
     // This method will be called in thread of IComponent
   }
-  {%- endfor %}
-  {% endif %}
-
-  {%- if attributes is not none and attributes|length > 0 %}
-  /************************************************
-   * Below methods for subscribing on attributes
-   ***********************************************/
-  {%- for attribute in attributes %}
-  void notifyOn{{attribute}}Changed(const bool isNotify);
   {%- endfor %}
   {% endif %}
 

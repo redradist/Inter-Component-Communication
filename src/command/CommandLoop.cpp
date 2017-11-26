@@ -113,8 +113,8 @@ void CommandLoop::processEvent(const CommandData & _data) {
 }
 
 void CommandLoop::finished(const CommandResult & _result) {
+  ICommand::finished(_result);
   invoke([=] {
-    ICommand::finished(_result);
     exit();
   });
 }
