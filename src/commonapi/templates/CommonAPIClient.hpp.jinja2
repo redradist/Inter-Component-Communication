@@ -48,31 +48,10 @@ class {{class_name}}
   CommonAPI::CallStatus{{" "}}
   {%- endif -%}
   request{{method}}(
-      {%- for input in method.inputs -%}
-        {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
-      {%- endfor -%}
+    {%- for input in method.inputs -%}
+      {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
   );
-  {%- endfor %}
-  {% endif %}
-
-  {%- if methods is not none and methods|length > 0 %}
-  /*******************************************************************
-   * Below methods for receiving responses on corresponding request
-   ******************************************************************/
-  {%- for method in methods %}
-  {%- if method.outputs is not none %}
-  virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
-      {%- if method.outputs is not none -%}
-          {%- for output in method.outputs -%}
-              {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
-          {%- endfor -%}
-      {%- endif -%}
-  ) {
-    // Default implementation.
-    // If you need you may override response{{method}}
-    // This method will be called in thread of IComponent
-  }
-  {%- endif %}
   {%- endfor %}
   {% endif %}
 
@@ -85,31 +64,52 @@ class {{class_name}}
   {%- endfor %}
   {% endif %}
 
-  {%- if broadcasts is not none and broadcasts|length > 0 %}
-  /*******************************************
-   * Below methods for receiving broadcasts
-   ******************************************/
-  {%- for broadcast in broadcasts %}
-  virtual void informationOn{{broadcast}}(
-      {%- if broadcast.parameters is not none -%}
-          {%- for parameter in broadcast.parameters -%}
-              {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
-          {%- endfor -%}
-      {%- endif -%}
-  ) {
-    // Default implementation.
-    // If you need you may override informationOn{{broadcast}}
-    // This method will be called in thread of IComponent
-  }
-  {%- endfor %}
-  {% endif %}
-
   {%- if attributes is not none and attributes|length > 0 %}
   /************************************************
    * Below methods for subscribing on attributes
    ***********************************************/
   {%- for attribute in attributes %}
   void notifyOn{{attribute}}Changed(const bool isNotify);
+  {%- endfor %}
+  {% endif %}
+ protected:
+  {%- if methods is not none and methods|length > 0 %}
+  /*******************************************************************
+   * Below methods for receiving responses on corresponding request
+   ******************************************************************/
+  {%- for method in methods %}
+  {%- if method.outputs is not none %}
+  virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
+    {%- if method.outputs is not none -%}
+      {%- for output in method.outputs -%}
+        {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+  ) {
+    // Default implementation.
+    // If you need you may override response{{method}}
+    // This method will be called in thread of IComponent
+  }
+  {%- endif %}
+  {%- endfor %}
+  {% endif %}
+
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /*******************************************
+   * Below methods for receiving broadcasts
+   ******************************************/
+  {%- for broadcast in broadcasts %}
+  virtual void informationOn{{broadcast}}(
+    {%- if broadcast.parameters is not none -%}
+      {%- for parameter in broadcast.parameters -%}
+          {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+  ) {
+    // Default implementation.
+    // If you need you may override informationOn{{broadcast}}
+    // This method will be called in thread of IComponent
+  }
   {%- endfor %}
   {% endif %}
 
