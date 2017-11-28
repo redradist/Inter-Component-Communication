@@ -1,3 +1,6 @@
+execute_process(COMMAND "pip3 install jinja2")
+execute_process(COMMAND "pip3 install regex")
+
 function(add_fidl_dependencies target fidl_files generators_path)
     message(STATUS "target is ${target}")
     message(STATUS "fidl_files is ${fidl_files}")
@@ -18,7 +21,7 @@ function(add_fidl_dependencies target fidl_files generators_path)
         set(GEN_FIDL_FILES ${GEN_FIDL_FILES} ${FIDL_NAME})
     endforeach()
     message(STATUS "GEN_FIDL_FILES is ${GEN_FIDL_FILES}")
-    add_custom_target(fidl_files_gen
+    add_custom_target(${target}_fidl_files_gen
                       DEPENDS ${GEN_FIDL_FILES}
                       COMMAND echo "Do it ...")
     foreach(FIDL ${fidl_files})
@@ -30,7 +33,7 @@ function(add_fidl_dependencies target fidl_files generators_path)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
         add_custom_command(OUTPUT ${FIDL_NAME}CommonAPIWrappers
-                           DEPENDS fidl_files_gen
+                           DEPENDS ${target}_fidl_files_gen
                            COMMAND touch ${FIDL_NAME}CommonAPIWrappers
                            COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/commonapi_tools.py
                                            ${FIDL}
@@ -41,9 +44,9 @@ function(add_fidl_dependencies target fidl_files generators_path)
         set(GEN_FIDL_COMMONAPI_WRAPPER_FILES ${GEN_FIDL_COMMONAPI_WRAPPER_FILES} ${FIDL_NAME}CommonAPIWrappers)
     endforeach()
     message(STATUS "GEN_FIDL_COMMONAPI_WRAPPER_FILES is ${GEN_FIDL_COMMONAPI_WRAPPER_FILES}")
-    add_custom_target(fidl_commonapi_wrappers_gen
+    add_custom_target(${target}_fidl_commonapi_wrappers_gen
                       DEPENDS ${GEN_FIDL_COMMONAPI_WRAPPER_FILES}
                       COMMAND echo "Do it ...")
-    add_dependencies(${target} fidl_files_gen fidl_commonapi_wrappers_gen)
+    add_dependencies(${target} ${target}_fidl_files_gen ${target}_fidl_commonapi_wrappers_gen)
 
 endfunction(add_fidl_dependencies)
