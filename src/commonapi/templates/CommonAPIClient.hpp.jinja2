@@ -42,15 +42,20 @@ class {{class_name}}
    * Below methods for sending requests
    **************************************/
   {%- for method in methods %}
+  {%- if method.description is not none %}
+  /**{% for description in method.description.splitlines() %}
+    * {{description}}
+   {% endfor %}*/
+  {%- endif %}
   {% if method.outputs is not none -%}
   std::future<CommonAPI::CallStatus>{{" "}}
   {%- else -%}
   CommonAPI::CallStatus{{" "}}
   {%- endif -%}
   request{{method}}(
-      {%- for input in method.inputs -%}
-        {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
-      {%- endfor -%}
+    {%- for input in method.inputs -%}
+      {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
   );
   {%- endfor %}
   {% endif %}
@@ -80,15 +85,15 @@ class {{class_name}}
   {%- for method in methods %}
   {%- if method.outputs is not none %}
   virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
-  {%- if method.outputs is not none -%}
-  {%- for output in method.outputs -%}
-  {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
-  {%- endfor -%}
-  {%- endif -%}
+    {%- if method.outputs is not none -%}
+      {%- for output in method.outputs -%}
+        {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
   ) {
-  // Default implementation.
-  // If you need you may override response{{method}}
-  // This method will be called in thread of IComponent
+    // Default implementation.
+    // If you need you may override response{{method}}
+    // This method will be called in thread of IComponent
   }
   {%- endif %}
   {%- endfor %}
@@ -99,12 +104,17 @@ class {{class_name}}
    * Below methods for receiving broadcasts
    ******************************************/
   {%- for broadcast in broadcasts %}
+  {%- if broadcast.description is not none %}
+  /**{% for description in broadcast.description.splitlines() %}
+    * {{description}}
+   {% endfor %}*/
+  {%- endif %}
   virtual void informationOn{{broadcast}}(
-      {%- if broadcast.parameters is not none -%}
-          {%- for parameter in broadcast.parameters -%}
-              {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
-          {%- endfor -%}
-      {%- endif -%}
+    {%- if broadcast.parameters is not none -%}
+      {%- for parameter in broadcast.parameters -%}
+          {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
   ) {
     // Default implementation.
     // If you need you may override informationOn{{broadcast}}
@@ -118,6 +128,11 @@ class {{class_name}}
    * Below methods for receiving attributes changes
    **************************************************/
   {%- for attribute in attributes %}
+  {%- if attribute.description is not none %}
+  /**{% for description in attribute.description.splitlines() %}
+    * {{description}}
+   {% endfor %}*/
+  {%- endif %}
   virtual void on{{attribute}}Changed({{attribute.type}} const & _{{attribute.name}}) {
     // Default implementation.
     // If you need you may override on{{attribute}}
@@ -156,7 +171,7 @@ inline std::future<CommonAPI::CallStatus>
 {%- endif -%}
 ) {
   return {{method.name}}Async(
-    {%- if method.inputs is not none -%}
+    {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{ ", " if not loop.last }}
     {%- endfor -%},

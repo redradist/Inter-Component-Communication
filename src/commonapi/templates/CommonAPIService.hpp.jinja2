@@ -43,7 +43,7 @@ class {{class_name}}
    **************************************/
   {%- for method in methods %}
   void {{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
-  {%- if method.inputs is not none -%}
+  {%- if method.inputs is not none and method.inputs|length > 0 -%}
   {{- ", " -}}{%- for input in method.inputs -%}
     {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
   {%- endfor -%}
@@ -60,10 +60,12 @@ class {{class_name}}
    * Below methods for receiving requests in IComponent thread
    **************************************/
   {%- for method in methods %}
-  virtual void request{{method}}(const std::shared_ptr<CommonAPI::ClientId> _client,
-  {%- for input in method.inputs -%}
+  virtual void request{{method}}(const std::shared_ptr<CommonAPI::ClientId> _client
+  {%- if method.inputs is not none and method.inputs|length > 0 -%}
+  {{- ", " -}}{%- for input in method.inputs -%}
     {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
   {%- endfor -%}
+  {%- endif -%}
   {%- if method.outputs is not none -%}
   {{- ", " -}}{{method.name}}Reply_t _reply) {
   {%- else -%}
@@ -80,7 +82,7 @@ class {{class_name}}
 {%- for method in methods %}
 inline
 void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
-{%- if method.inputs is not none %}
+{%- if method.inputs is not none and method.inputs|length > 0 %}
 {{- ", " -}}{%- for input in method.inputs -%}
     {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
 {%- endfor -%}
@@ -91,7 +93,7 @@ void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> 
 ) {
   invoke([=] {
     request{{method}}(_client
-    {%- if method.inputs is not none -%}
+    {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {{ ", " }}{%- for input in method.inputs -%}
       _{{input.name}}{{ ", " if not loop.last }}
     {%- endfor -%}
