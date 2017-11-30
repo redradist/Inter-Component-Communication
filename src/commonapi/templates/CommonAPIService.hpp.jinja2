@@ -42,6 +42,11 @@ class {{class_name}}
    * Below methods for receiving requests
    **************************************/
   {%- for method in methods %}
+  {%- if method.description is not none %}
+  /**{% for description in method.description.splitlines() %}
+    * {{description}}
+   {% endfor %}*/
+  {%- endif %}
   void {{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
   {%- if method.inputs is not none and method.inputs|length > 0 -%}
   {{- ", " -}}{%- for input in method.inputs -%}
