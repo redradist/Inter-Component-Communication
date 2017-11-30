@@ -30,6 +30,8 @@ namespace icc {
 
 namespace commonapi {
 
+using v{{service_version}}::{{package_ns}}::{{service_name}};
+
 class {{class_name}}
   : public virtual icc::IComponent,
     public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault > {
