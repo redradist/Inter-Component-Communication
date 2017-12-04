@@ -44,7 +44,7 @@ class {{class_name}}
   {%- for method in methods %}
   {%- if method.description is not none %}
   /**{% for description in method.description.splitlines() %}
-    * {{description}}
+   * {{description}}
    {% endfor %}*/
   {%- endif %}
   {% if method.outputs is not none -%}
@@ -106,7 +106,7 @@ class {{class_name}}
   {%- for broadcast in broadcasts %}
   {%- if broadcast.description is not none %}
   /**{% for description in broadcast.description.splitlines() %}
-    * {{description}}
+   * {{description}}
    {% endfor %}*/
   {%- endif %}
   virtual void informationOn{{broadcast}}(
@@ -130,7 +130,7 @@ class {{class_name}}
   {%- for attribute in attributes %}
   {%- if attribute.description is not none %}
   /**{% for description in attribute.description.splitlines() %}
-    * {{description}}
+   * {{description}}
    {% endfor %}*/
   {%- endif %}
   virtual void on{{attribute}}Changed({{attribute.type}} const & _{{attribute.name}}) {

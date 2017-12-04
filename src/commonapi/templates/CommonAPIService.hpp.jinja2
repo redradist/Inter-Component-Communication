@@ -46,7 +46,7 @@ class {{class_name}}
   {%- for method in methods %}
   {%- if method.description is not none %}
   /**{% for description in method.description.splitlines() %}
-    * {{description}}
+   * {{description}}
    {% endfor %}*/
   {%- endif %}
   void {{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
