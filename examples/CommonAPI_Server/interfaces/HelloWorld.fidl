@@ -13,6 +13,7 @@ interface HelloWorld {
 
   method setSettings {
     in {
+      <** @description : the  phone book itself **>
       Int32[] setting
     }
     out {
@@ -40,6 +41,7 @@ interface HelloWorld2 {
 
   method setSettings {
     in {
+      <** @description : the phone book itself **>
       Int32[] setting
     }
     out {
