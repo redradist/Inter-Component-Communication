@@ -13,6 +13,35 @@ interface HelloWorld {
 
   method setSettings {
     in {
+      <** @description : the  phone book itself **>
+      Int32[] setting
+    }
+    out {
+      Int32 result
+    }
+  }
+
+  broadcast NewName {
+  out {
+    String name
+    }
+  }
+}
+
+interface HelloWorld2 {
+  version {major 1 minor 0}
+  method sayHello {
+    in {
+      String name
+    }
+    out {
+      String message
+    }
+  }
+
+  method setSettings {
+    in {
+      <** @description : the phone book itself **>
       Int32[] setting
     }
     out {
