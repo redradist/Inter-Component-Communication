@@ -1,47 +1,75 @@
-execute_process(COMMAND "pip3 install jinja2")
-execute_process(COMMAND "pip3 install regex")
-
-function(add_fidl_dependencies target fidl_files generators_path)
-    message(STATUS "target is ${target}")
-    message(STATUS "fidl_files is ${fidl_files}")
-    message(STATUS "generators_path is ${generators_path}")
-    foreach(FIDL ${fidl_files})
+function(add_fidl_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT GENERATOR_PATH)
+    message(STATUS "COMMONAPI_GENERATOR is ${COMMONAPI_GENERATOR}")
+    message(STATUS "COMMONAPI_DBUS_GENERATOR is ${COMMONAPI_DBUS_GENERATOR}")
+    message(STATUS "TARGET is ${TARGET}")
+    message(STATUS "FIDL_FILES is ${FIDL_FILES}")
+    message(STATUS "GENERATOR_PATH is ${GENERATOR_PATH}")
+    set(COMMONAPI_GENERATED_FILES "")
+    set(COMMONAPI_WRAPPER_GENERATED_FILES "")
+    foreach(FIDL ${FIDL_FILES})
         message(STATUS "FIDL is ${FIDL}")
         get_filename_component(FIDL_NAME_WITH_EXTENTION ${FIDL} NAME)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
-        message(STATUS "COMMONAPI_GENERATOR is ${COMMONAPI_GENERATOR}")
-        message(STATUS "COMMONAPI_DBUS_GENERATOR is ${COMMONAPI_DBUS_GENERATOR}")
-        add_custom_command(
-                OUTPUT ${FIDL_NAME}
+        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/interface_hierarchical_path.py
+                                ${FIDL}
+                        OUTPUT_VARIABLE HIERARCHIC_PATHS)
+        string(REGEX MATCHALL "([^;]*);"
+               INTERFACE_HIERARCHIC_PATHS "${HIERARCHIC_PATHS}")
+        foreach(INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATHS})
+            string(REPLACE "\r" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
+            string(REPLACE "\n" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
+            message(STATUS "INTERFACE_HIERARCHIC_PATH is ${INTERFACE_HIERARCHIC_PATH}")
+            string(REGEX MATCH "/([^/]*)$"
+                   INTERFACE_NAME "${INTERFACE_HIERARCHIC_PATH}")
+            string(REPLACE "/" "" INTERFACE_NAME ${INTERFACE_NAME})
+            message(STATUS "INTERFACE_NAME is ${INTERFACE_NAME}")
+            if(${SERVICE_OR_CLIENT} EQUAL "Service")
+                set(COMMONAPI_GENERATED_FILES
+                    ${COMMONAPI_GENERATED_FILES}
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+            else(${SERVICE_OR_CLIENT} EQUAL "Service")
+                set(COMMONAPI_GENERATED_FILES
+                    ${COMMONAPI_GENERATED_FILES}
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+            endif(${SERVICE_OR_CLIENT} EQUAL "Service")
+            set(COMMONAPI_WRAPPER_GENERATED_FILES
+                ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+            add_custom_command(
+                OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
                 DEPENDS ${FIDL}
-                COMMAND ${COMMONAPI_GENERATOR} --dest ${generators_path} -sk ${FIDL}
-                COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${generators_path} ${FIDL}
-                COMMAND touch ${FIDL_NAME}
-        )
-        set(GEN_FIDL_FILES ${GEN_FIDL_FILES} ${FIDL_NAME})
-        add_custom_command(
-                OUTPUT ${FIDL_NAME}CommonAPIWrappers
-                DEPENDS ${FIDL_NAME}
-                COMMAND touch ${FIDL_NAME}CommonAPIWrappers
-                COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/commonapi_tools.py
+                COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
+                COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/wrapper_generator.py
                 ${FIDL}
-                ${CMAKE_BINARY_DIR}
+                ${GENERATOR_PATH}
                 --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClient.hpp.jinja2
                 --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIService.hpp.jinja2
-        )
-        set(GEN_COMMONAPI_WRAPPER_FILES ${GEN_COMMONAPI_WRAPPER_FILES} ${FIDL_NAME}CommonAPIWrappers)
+            )
+        endforeach()
     endforeach()
-    message(STATUS "GEN_FIDL_FILES is ${GEN_FIDL_FILES}")
+    set_source_files_properties(${COMMONAPI_GENERATED_FILES} PROPERTIES GENERATED TRUE)
+    set_source_files_properties(${COMMONAPI_WRAPPER_GENERATED_FILES} PROPERTIES GENERATED TRUE)
+    message(STATUS "COMMONAPI_GENERATED_FILES is ${COMMONAPI_GENERATED_FILES}")
+    message(STATUS "COMMONAPI_WRAPPER_GENERATED_FILES is ${COMMONAPI_WRAPPER_GENERATED_FILES}")
+    target_sources(${TARGET} PRIVATE ${COMMONAPI_GENERATED_FILES})
+    target_sources(${TARGET} PRIVATE ${COMMONAPI_WRAPPER_GENERATED_FILES})
+    add_custom_command(
+        OUTPUT ${COMMONAPI_GENERATED_FILES}
+        DEPENDS ${FIDL_FILES}
+        COMMAND ${COMMONAPI_GENERATOR} --dest ${GENERATOR_PATH} -sk ${FIDL_FILES}
+        COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${GENERATOR_PATH} ${FIDL_FILES}
+    )
     add_custom_target(
-            ${target}_fidl_files_gen
-            DEPENDS ${GEN_FIDL_FILES}
-            COMMAND echo "Generation of CommonAPI files is finished")
-    message(STATUS "GEN_COMMONAPI_WRAPPER_FILES is ${GEN_COMMONAPI_WRAPPER_FILES}")
-    add_custom_target(
-            ${target}_commonapi_wrappers_gen
-            DEPENDS ${GEN_COMMONAPI_WRAPPER_FILES}
-            COMMAND echo "Generation of CommonAPI wrappers is finished")
-    add_dependencies(${target} ${target}_fidl_files_gen ${target}_commonapi_wrappers_gen)
+        ${TARGET}_commonapi_wrappers_gen
+        DEPENDS ${COMMONAPI_GENERATED_FILES}
+        DEPENDS ${COMMONAPI_WRAPPER_GENERATED_FILES}
+        COMMAND echo "Generation of CommonAPI wrappers is finished")
+    add_dependencies(${TARGET} ${TARGET}_commonapi_wrappers_gen)
 
 endfunction(add_fidl_dependencies)
