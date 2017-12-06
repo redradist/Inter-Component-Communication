@@ -11,39 +11,47 @@ function(add_fidl_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT GENERATOR_PAT
         get_filename_component(FIDL_NAME_WITH_EXTENTION ${FIDL} NAME)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
-        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/commonapi_hierarchy_name.py
+        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/interface_hierarchical_path.py
                                 ${FIDL}
-                        OUTPUT_VARIABLE HIERARCHIC_PATH)
-        string(REPLACE "\r" "" HIERARCHIC_PATH ${HIERARCHIC_PATH})
-        string(REPLACE "\n" "" HIERARCHIC_PATH ${HIERARCHIC_PATH})
-        message(STATUS "HIERARCHIC_PATH is ${HIERARCHIC_PATH}")
-        if(${SERVICE_OR_CLIENT} EQUAL "Service")
-            set(COMMONAPI_GENERATED_FILES
-                ${COMMONAPI_GENERATED_FILES}
-                "${CMAKE_BINARY_DIR}/${HIERARCHIC_PATH}/${FIDL_NAME}DBusStubAdapter.cpp"
-                "${CMAKE_BINARY_DIR}/${HIERARCHIC_PATH}/${FIDL_NAME}StubDefault.cpp"
-                "${CMAKE_BINARY_DIR}/${HIERARCHIC_PATH}/${FIDL_NAME}DBusDeployment.cpp")
-        else(${SERVICE_OR_CLIENT} EQUAL "Service")
-            set(COMMONAPI_GENERATED_FILES
-                ${COMMONAPI_GENERATED_FILES}
-                "${CMAKE_BINARY_DIR}/${HIERARCHIC_PATH}/${FIDL_NAME}DBusProxy.cpp"
-                "${CMAKE_BINARY_DIR}/${HIERARCHIC_PATH}/${FIDL_NAME}DBusDeployment.cpp")
-        endif(${SERVICE_OR_CLIENT} EQUAL "Service")
-        set(COMMONAPI_WRAPPER_GENERATED_FILES
-            ${COMMONAPI_WRAPPER_GENERATED_FILES}
-            ${GENERATOR_PATH}/${FIDL_NAME}Client.hpp
-            ${GENERATOR_PATH}/${FIDL_NAME}Service.hpp)
-        add_custom_command(
-            OUTPUT ${GENERATOR_PATH}/${FIDL_NAME}Client.hpp
-            OUTPUT ${GENERATOR_PATH}/${FIDL_NAME}Service.hpp
-            DEPENDS ${FIDL}
-            COMMAND touch ${FIDL_NAME}CommonAPIWrappers
-            COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/commonapi_tools.py
-            ${FIDL}
-            ${GENERATOR_PATH}
-            --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClient.hpp.jinja2
-            --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIService.hpp.jinja2
-        )
+                        OUTPUT_VARIABLE HIERARCHIC_PATHS)
+        string(REGEX MATCHALL "([^;]*);"
+               INTERFACE_HIERARCHIC_PATHS "${HIERARCHIC_PATHS}")
+        foreach(INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATHS})
+            string(REPLACE "\r" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
+            string(REPLACE "\n" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
+            message(STATUS "INTERFACE_HIERARCHIC_PATH is ${INTERFACE_HIERARCHIC_PATH}")
+            string(REGEX MATCH "/([^/]*)$"
+                   INTERFACE_NAME "${INTERFACE_HIERARCHIC_PATH}")
+            string(REPLACE "/" "" INTERFACE_NAME ${INTERFACE_NAME})
+            message(STATUS "INTERFACE_NAME is ${INTERFACE_NAME}")
+            if(${SERVICE_OR_CLIENT} EQUAL "Service")
+                set(COMMONAPI_GENERATED_FILES
+                    ${COMMONAPI_GENERATED_FILES}
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+            else(${SERVICE_OR_CLIENT} EQUAL "Service")
+                set(COMMONAPI_GENERATED_FILES
+                    ${COMMONAPI_GENERATED_FILES}
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
+                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+            endif(${SERVICE_OR_CLIENT} EQUAL "Service")
+            set(COMMONAPI_WRAPPER_GENERATED_FILES
+                ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+            add_custom_command(
+                OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
+                DEPENDS ${FIDL}
+                COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
+                COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/wrapper_generator.py
+                ${FIDL}
+                ${GENERATOR_PATH}
+                --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClient.hpp.jinja2
+                --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIService.hpp.jinja2
+            )
+        endforeach()
     endforeach()
     set_source_files_properties(${COMMONAPI_GENERATED_FILES} PROPERTIES GENERATED TRUE)
     set_source_files_properties(${COMMONAPI_WRAPPER_GENERATED_FILES} PROPERTIES GENERATED TRUE)
