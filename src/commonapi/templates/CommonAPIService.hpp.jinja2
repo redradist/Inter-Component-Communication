@@ -2,6 +2,7 @@
 {%- set service_name = interface.name -%}
 {%- set package_fs = interface.package_name.replace('.', '/') -%}
 {%- set package_ns = interface.package_name.replace('.', '::') -%}
+{%- set type_collections = interface.type_collections -%}
 {%- set methods = interface.methods -%}
 {%- set broadcasts = interface.broadcasts -%}
 {%- set attributes = interface.attributes -%}
@@ -24,6 +25,11 @@
 #include <functional>
 #include <IComponent.hpp>
 #include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+#include <v{{service_version}}/{{type_collection.path}}.hpp>
+{%- endfor %}
+{%- endif %}
 #include <commonapi/CommonAPIService.hpp>
 
 namespace icc {
@@ -31,6 +37,11 @@ namespace icc {
 namespace commonapi {
 
 using v{{service_version}}::{{package_ns}}::{{service_name}};
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+using v{{service_version}}::{{type_collection.type}};
+{%- endfor %}
+{%- endif %}
 
 class {{class_name}}
   : public virtual icc::IComponent,
