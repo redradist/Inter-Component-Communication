@@ -238,10 +238,10 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
             );
           });
         });
-      } else if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
-        on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
+    } else if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
+      get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+      on_{{broadcast.lower()}}_update_ = kEmptySubscription;
     }
   });
 }
@@ -261,10 +261,10 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
             on{{attribute}}Changed(_{{attribute.name}});
           });
         });
-      } else if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
-        get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
-        on_{{attribute.lower()}}_changed_ = kEmptySubscription;
       }
+    } else if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
+      get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
+      on_{{attribute.lower()}}_changed_ = kEmptySubscription;
     }
   });
 }
