@@ -115,6 +115,7 @@ void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::
 {%- endif -%}
 ) {
   invoke([=] {
+    Logger::debug("request{{method}} is called");
     request{{method}}(_client
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {{ ", " }}{%- for input in method.inputs -%}
