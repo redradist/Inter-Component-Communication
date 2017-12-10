@@ -98,7 +98,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
     target_sources(${TARGET} PRIVATE ${COMMONAPI_WRAPPER_GENERATED_FILES})
     add_custom_target(
         ${TARGET}_commonapi_wrappers_gen
-        #DEPENDS ${COMMONAPI_GENERATED_FILES}
+        DEPENDS ${COMMONAPI_GENERATED_FILES}
         DEPENDS ${COMMONAPI_WRAPPER_GENERATED_FILES}
         COMMAND echo "Generation of CommonAPI wrappers is finished")
     add_dependencies(${TARGET} ${TARGET}_commonapi_wrappers_gen)
