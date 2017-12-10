@@ -43,12 +43,15 @@ using v{{service_version}}::{{type_collection.type}};
 {%- endfor %}
 {%- endif %}
 
+template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault > {
+  , public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault,
+                                             Logger > {
  public:
-  using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault >::CommonAPIService;
-
+  using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault,
+                                          Logger >::CommonAPIService;
+  using {{service_name}}StubReplies = v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
  public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
@@ -67,7 +70,7 @@ class {{class_name}}
   {%- endfor -%}
   {%- endif -%}
   {%- if method.outputs is not none -%}
-  {{- ", " -}}{{method.name}}Reply_t _reply
+  {{- ", " -}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply
   {%- endif -%}
   ) override;
   {%- endfor %}
@@ -85,31 +88,34 @@ class {{class_name}}
   {%- endfor -%}
   {%- endif -%}
   {%- if method.outputs is not none -%}
-  {{- ", " -}}{{method.name}}Reply_t _reply) {
+  {{- ", " -}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply) {
   {%- else -%}
   ) {
   {%- endif %}
     // Default implementation.
     // If you need you may override request{{method}}
     // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of request{{method}}");
   }
   {%- endfor %}
   {%- endif %}
 };
 {% if methods is not none and methods|length > 0 %}
 {%- for method in methods %}
+template< typename Logger >
 inline
-void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
+void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
 {%- if method.inputs is not none and method.inputs|length > 0 %}
 {{- ", " -}}{%- for input in method.inputs -%}
     {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
 {%- endfor -%}
 {%- endif -%}
 {%- if method.outputs is not none -%}
-{{ ", "}}{{method.name}}Reply_t _reply
+{{ ", "}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply
 {%- endif -%}
 ) {
   invoke([=] {
+    Logger::debug("request{{method}} is called");
     request{{method}}(_client
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {{ ", " }}{%- for input in method.inputs -%}
