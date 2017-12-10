@@ -1,9 +1,13 @@
-//
-// Created by redra on 17.07.17.
-//
+/**
+ * @file DummyLogger.hpp
+ * @author Denis Kotov
+ * @date 17 Jul 2017
+ * @brief Contains DummyLogger for using in templates.
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
-#ifndef FORECAST_ILOGGER_HPP
-#define FORECAST_ILOGGER_HPP
+#ifndef ICC_DUMMYLOGGER_HPP
+#define ICC_DUMMYLOGGER_HPP
 
 #include <string>
 
@@ -34,4 +38,4 @@ class DummyLogger {
 
 }
 
-#endif //FORECAST_ILOGGER_HPP
+#endif //ICC_DUMMYLOGGER_HPP
