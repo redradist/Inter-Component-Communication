@@ -11,32 +11,44 @@
 
 #include <CommonAPI/CommonAPI.hpp>
 #include <type_traits>
+#include <logger/DummyLogger.hpp>
 
 namespace icc {
 
 namespace commonapi {
 
-template<template<typename ... _AttributeExtensions> class Proxy>
+template< template< typename ... _AttributeExtensions > class Proxy,
+          typename Logger = icc::logger::DummyLogger >
 class CommonAPIClient
-    : public Proxy<> {
+    : public Proxy<>
+    , public virtual Logger {
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
  public:
   CommonAPIClient(const std::string &_domain,
                   const std::string &_instance) :
       Proxy<>([=]() {
+        Logger::debug("Building CommonAPIClient ...");
         std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
         auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
-        proxy->getProxyStatusEvent().subscribe(
-        [=](const CommonAPI::AvailabilityStatus & _status) mutable {
-          if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-            connected(*this);
-          } else {
-            disconnected(*this);
-          }
-        });
+        if (!proxy) {
+          Logger::error("proxy is nullptr");
+        } else {
+          Logger::debug("CommonAPIClient is built successfully !!");
+          proxy->getProxyStatusEvent().subscribe(
+          [=](const CommonAPI::AvailabilityStatus & _status) mutable {
+            if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
+              Logger::debug("CommonAPIClient is connected");
+              connected(*this);
+            } else {
+              Logger::debug("CommonAPIClient is disconnected");
+              disconnected(*this);
+            }
+          });
+        }
         return proxy;
       }()) {
+    Logger::debug("Constructor CommonAPIClient");
   }
 
   CommonAPIClient(CommonAPIClient const &) = default;

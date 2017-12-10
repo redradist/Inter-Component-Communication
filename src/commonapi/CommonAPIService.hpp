@@ -11,14 +11,17 @@
 
 #include <CommonAPI/CommonAPI.hpp>
 #include <helpers/concept_base_of_template.hpp>
+#include <logger/DummyLogger.hpp>
 
 namespace icc {
 
 namespace commonapi {
 
-template<typename Service>
+template< typename Service,
+          typename Logger = icc::logger::DummyLogger >
 class CommonAPIService
-    : public Service {
+    : public Service
+    , public virtual Logger {
   static_assert(icc::helpers::is_base_of_template<Service, CommonAPI::Stub>::value,
                 "Service does not derived from CommonAPI::Stub");
  public:
@@ -27,6 +30,7 @@ class CommonAPIService
                    const std::string &_instance)
       : domain_(_domain),
         instance_(_instance) {
+    Logger::debug("Constructor CommonAPIService");
     registerService(domain_, instance_);
   }
 
@@ -34,13 +38,18 @@ class CommonAPIService
   CommonAPIService(const Service &_service) = delete;
 
   virtual ~CommonAPIService() {
+    Logger::debug("Destructor CommonAPIService");
     unregisterService();
   }
 
  public:
   bool registerService(const std::string &_domain,
                        const std::string &_instance) {
-    if (!is_registered) {
+    if (is_registered) {
+      Logger::warning("CommonAPIService is already registered !!!");
+      Logger::warning("Unregister CommonAPIService first !?");
+    } else {
+      Logger::debug("Registering CommonAPIService ...");
       std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
       service_ = std::shared_ptr<Service>(this, [](Service *) {
         // Do nothing to prevent double deletion
@@ -48,9 +57,11 @@ class CommonAPIService
       if (service_) {
         is_registered = runtime->registerService(_domain, _instance, service_);
         if (is_registered) {
+          Logger::debug("CommonAPIService registered successfully !!");
           domain_ = _domain;
           instance_ = _instance;
         } else {
+          Logger::error("Failed to register CommonAPIService !!");
           service_ = nullptr;
         }
       }
@@ -59,10 +70,18 @@ class CommonAPIService
   }
 
   bool unregisterService() {
-    if (is_registered) {
+    if (!is_registered) {
+      Logger::warning("CommonAPIService is not registered !!!");
+      Logger::warning("Register CommonAPIService before unregistering !?");
+    } else {
+      Logger::debug("Unregistering CommonAPIService ...");
       std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
-      if (!(is_registered = !runtime->unregisterService(domain_, this->getStubAdapter()->getInterface(), instance_))) {
+      is_registered = !runtime->unregisterService(domain_, this->getStubAdapter()->getInterface(), instance_);
+      if (!is_registered) {
+        Logger::debug("CommonAPIService unregistered successfully !!");
         service_ = nullptr;
+      } else {
+        Logger::error("Failed to unregister CommonAPIService !!");
       }
     }
     return !is_registered;
