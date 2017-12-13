@@ -101,7 +101,7 @@ class {{class_name}}
   {%- endif %}
   {%- if broadcasts is not none and broadcasts|length > 0 %}
   /***************************************
-   * Below fire broadcasts for debugging
+   * Below fire broadcasts for debugging purposes
    **************************************/
   {%- for broadcast in broadcasts %}
   void fire{{broadcast}}Event(
@@ -125,7 +125,7 @@ class {{class_name}}
   {%- endif %}
   {%- if attributes is not none and attributes|length > 0 %}
   /***************************************
-   * Below setters of attributes for debugging
+   * Below setters of attributes for debugging purposes
    **************************************/
   {%- for attribute in attributes %}
   void set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) override {
