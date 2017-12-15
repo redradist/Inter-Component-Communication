@@ -38,7 +38,8 @@ class NewLogger {
 };
 
 class HelloWorldProxyClient
-  : public icc::commonapi::HelloWorldClient {
+  : public icc::commonapi::HelloWorldClient<>
+  , public virtual NewLogger {
  public:
   HelloWorldProxyClient(const std::string &_domain,
                         const std::string &_instance);

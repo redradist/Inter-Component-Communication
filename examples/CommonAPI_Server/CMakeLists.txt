@@ -48,5 +48,5 @@ message(STATUS "ICC_INCLUDE_DIR is ${ICC_INCLUDE_DIR}")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${GENERATED_FILES})
 add_dependencies(${PROJECT_NAME} ICC)
-add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Service FALSE ${CMAKE_BINARY_DIR})
+add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Service TRUE ${CMAKE_BINARY_DIR})
 target_link_libraries(${PROJECT_NAME} CommonAPI CommonAPI-DBus dbus-1 boost_system)

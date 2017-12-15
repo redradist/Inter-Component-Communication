@@ -73,5 +73,5 @@ add_executable(
         ${SOURCE_FILES}
         ${GENERATED_FILES})
 add_dependencies(CommonAPI_Client ICC afdsaasdadsdas_commonapi_gen)
-add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client FALSE ${CMAKE_BINARY_DIR})
+add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client TRUE ${CMAKE_BINARY_DIR})
 target_link_libraries(CommonAPI_Client CommonAPI CommonAPI-DBus dbus-1 boost_system)
