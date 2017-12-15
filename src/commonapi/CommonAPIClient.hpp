@@ -53,8 +53,8 @@ class CommonAPIClient
 
   CommonAPIClient(CommonAPIClient const &) = default;
   CommonAPIClient & operator=(CommonAPIClient const &) = default;
-  CommonAPIClient(CommonAPIClient &&) = default;
-  CommonAPIClient & operator=(CommonAPIClient &&) = default;
+  CommonAPIClient(CommonAPIClient &&) = delete;
+  CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 
   virtual ~CommonAPIClient() = default;
 
