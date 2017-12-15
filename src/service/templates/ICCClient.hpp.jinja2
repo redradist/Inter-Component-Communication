@@ -1,0 +1,281 @@
+{%- set client_version = interface.major -%}
+{%- set client_name = interface.name -%}
+{%- set package_fs = interface.package_name.replace('.', '/') -%}
+{%- set package_ns = interface.package_name.replace('.', '::') -%}
+{%- set methods = interface.methods -%}
+{%- set broadcasts = interface.broadcasts -%}
+{%- set attributes = interface.attributes -%}
+{%- set class_name = client_name+'Client' -%}
+/**
+ * @file {{class_name}}.hpp
+ * @date {{date}}
+ * @brief It is an auto-generated file.
+ * It contains wrappers on requests and receiving notification for broadcasts and attribute changes
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
+
+#ifndef _{{class_name.upper()}}_HPP_
+#define _{{class_name.upper()}}_HPP_
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <functional>
+#include <IComponent.hpp>
+#include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
+#include <commonapi/CommonAPIClient.hpp>
+
+namespace icc {
+
+namespace commonapi {
+
+class {{class_name}}
+  : public virtual icc::IComponent
+  , public icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy > {
+ public:
+  using icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy >::CommonAPIClient;
+
+ public:
+  {%- if methods is not none and methods|length > 0 %}
+  /***************************************
+   * Below methods for sending requests
+   **************************************/
+  {%- for method in methods %}
+  {%- if method.description is not none %}
+  /**{% for description in method.description.splitlines() %}
+   * {{description}}
+   {% endfor %}*/
+  {%- endif %}
+  {% if method.outputs is not none -%}
+  std::future<CommonAPI::CallStatus>{{" "}}
+  {%- else -%}
+  CommonAPI::CallStatus{{" "}}
+  {%- endif -%}
+  request{{method}}(
+    {%- for input in method.inputs -%}
+      {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+  );
+  {%- endfor %}
+  {% endif %}
+
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /************************************************
+   * Below methods for subscribing on broadcasts
+   ***********************************************/
+  {%- for broadcast in broadcasts %}
+  void notifyOn{{broadcast}}Update(const bool isNotify);
+  {%- endfor %}
+  {% endif %}
+
+  {%- if attributes is not none and attributes|length > 0 %}
+  /************************************************
+   * Below methods for subscribing on attributes
+   ***********************************************/
+  {%- for attribute in attributes %}
+  void notifyOn{{attribute}}Changed(const bool isNotify);
+  {%- endfor %}
+  {% endif %}
+ protected:
+  {%- if methods is not none and methods|length > 0 %}
+  /*******************************************************************
+   * Below methods for receiving responses on corresponding request
+   ******************************************************************/
+  {%- for method in methods %}
+  {%- if method.outputs is not none %}
+  virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
+    {%- if method.outputs is not none -%}
+      {%- for output in method.outputs -%}
+        {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+  ) {
+    // Default implementation.
+    // If you need you may override response{{method}}
+    // This method will be called in thread of IComponent
+  }
+  {%- endif %}
+  {%- endfor %}
+  {% endif %}
+
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /*******************************************
+   * Below methods for receiving broadcasts
+   ******************************************/
+  {%- for broadcast in broadcasts %}
+  {%- if broadcast.description is not none %}
+  /**{% for description in broadcast.description.splitlines() %}
+   * {{description}}
+   {% endfor %}*/
+  {%- endif %}
+  virtual void informationOn{{broadcast}}(
+    {%- if broadcast.parameters is not none -%}
+      {%- for parameter in broadcast.parameters -%}
+          {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+  ) {
+    // Default implementation.
+    // If you need you may override informationOn{{broadcast}}
+    // This method will be called in thread of IComponent
+  }
+  {%- endfor %}
+  {% endif %}
+
+  {%- if attributes is not none and attributes|length > 0 %}
+  /***************************************************
+   * Below methods for receiving attributes changes
+   **************************************************/
+  {%- for attribute in attributes %}
+  {%- if attribute.description is not none %}
+  /**{% for description in attribute.description.splitlines() %}
+   * {{description}}
+   {% endfor %}*/
+  {%- endif %}
+  virtual void on{{attribute}}Changed({{attribute.type}} const & _{{attribute.name}}) {
+    // Default implementation.
+    // If you need you may override on{{attribute}}
+    // This method will be called in thread of IComponent
+  }
+  {%- endfor %}
+  {% endif %}
+ private:
+  const CommonAPI::Event<>::Subscription kEmptySubscription = 0;
+  {% if broadcasts is not none and broadcasts|length > 0 %}
+  /************************************************************
+   * Below variables for storing subscriptions on broadcasts
+   ***********************************************************/
+  {%- for broadcast in broadcasts %}
+  CommonAPI::Event<>::Subscription on_{{broadcast.lower()}}_update_ = kEmptySubscription;
+  {%- endfor %}
+  {%- endif %}
+  {% if attributes is not none and attributes|length > 0 %}
+  /************************************************************
+   * Below variables for storing subscriptions on attributes
+   ***********************************************************/
+  {%- for attribute in attributes %}
+  CommonAPI::Event<>::Subscription on_{{attribute.lower()}}_changed_ = kEmptySubscription;
+  {%- endfor %}
+  {%- endif %}
+};
+{% if methods is not none and methods|length > 0 %}
+{%- for method in methods %}
+{%- if method.outputs is not none %}
+inline std::future<CommonAPI::CallStatus>
+{{class_name}}::request{{method}}(
+{%- if method.inputs is not none -%}
+{%- for input in method.inputs -%}
+    {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+{%- endfor -%}
+{%- endif -%}
+) {
+  return {{method.name}}Async(
+    {%- if method.inputs is not none and method.inputs|length > 0 -%}
+    {%- for input in method.inputs -%}
+        _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%},
+    {%- endif %}
+  [=] (const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
+  {%- for output in method.outputs -%}
+      {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  ) {
+    push([=] {
+      response{{method}}(_callStatus{{ ", " if method.outputs }}
+      {%- for output in method.outputs -%}
+          _{{output.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+      );
+    });
+  });
+}
+{%- else %}
+inline CommonAPI::CallStatus
+{{class_name}}::request{{method}}(
+{%- if method.inputs is not none -%}
+{%- for input in method.inputs -%}
+    {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+{%- endfor -%}
+{%- endif -%}
+) {
+  CommonAPI::CallStatus callStatus;
+  {{method.name}}(
+    {%- if method.inputs is not none -%}
+    {%- for input in method.inputs -%}
+        _{{input.name}}{{", "}}
+    {%- endfor -%}
+    {%- endif -%}
+    callStatus);
+  return callStatus;
+}
+{%- endif %}
+{% endfor %}
+{%- endif %}
+
+{%- if broadcasts is not none and broadcasts|length > 0 %}
+{%- for broadcast in broadcasts %}
+inline
+void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
+  invoke([=] {
+    if (isNotify) {
+      if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
+        on_{{broadcast.lower()}}_update_ = get{{broadcast}}Event().subscribe(
+        [=] (
+        {%- if broadcast.parameters is not none -%}
+        {%- for parameter in broadcast.parameters -%}
+            {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+        {%- endfor -%}
+        {%- endif -%}
+        ) {
+          push([=] {
+            informationOn{{broadcast}}(
+            {%- if broadcast.parameters is not none -%}
+            {%- for parameter in broadcast.parameters -%}
+                _{{parameter.name}}{{ ", " if not loop.last }}
+            {%- endfor -%}
+            {%- endif -%}
+            );
+          });
+        });
+      }
+    } else {
+      if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
+        get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+        on_{{broadcast.lower()}}_update_ = kEmptySubscription;
+      }
+    }
+  });
+}
+{% endfor %}
+{%- endif %}
+
+{%- if attributes is not none and attributes|length > 0 %}
+{%- for attribute in attributes %}
+inline
+void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
+  invoke([=] {
+    if (isNotify) {
+      if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
+        on_{{attribute.lower()}}_changed_ = get{{attribute}}Attribute().getChangedEvent().subscribe(
+        [=] ({{attribute.type}} const & _{{attribute.name}}) {
+          push([=] {
+            on{{attribute}}Changed(_{{attribute.name}});
+          });
+        });
+      }
+    } else {
+      if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
+        get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
+        on_{{attribute.lower()}}_changed_ = kEmptySubscription;
+      }
+    }
+  });
+}
+{% endfor %}
+{%- endif %}
+}
+
+}
+
+#endif  // _{{class_name.upper()}}_HPP_

@@ -13,15 +13,26 @@
 
 class NewLogger {
  public:
+  std::string sadsdasf;
   NewLogger() {
-
+    std::cout << "NewLogger()" << std::endl;
   }
   NewLogger(const std::string & _str) {
+    std::cout << "NewLogger(const std::string & _str)" << std::endl;
+  }
 
+  NewLogger(NewLogger && _str) {
+    std::cout << "NewLogger(NewLogger && _str)" << std::endl;
+  }
+
+ protected:
+  virtual void myFunction() {
+    std::cout << sadsdasf << std::endl;
   }
 
   inline void debug(const std::string & _str) {
     std::cout << _str << std::endl;
+    myFunction();
   }
 
   inline void info(const std::string & _str) {
@@ -38,7 +49,7 @@ class NewLogger {
 };
 
 class HelloWorldProxyClient
-  : public icc::commonapi::HelloWorldClient<>
+  : public icc::commonapi::HelloWorldClient<NewLogger>
   , public virtual NewLogger {
  public:
   HelloWorldProxyClient(const std::string &_domain,
