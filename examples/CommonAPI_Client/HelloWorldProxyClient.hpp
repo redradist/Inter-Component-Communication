@@ -11,6 +11,32 @@
 #include <commonapi/CommonAPIClient.hpp>
 #include <HelloWorldClient.hpp>
 
+class NewLogger {
+ public:
+  NewLogger() {
+
+  }
+  NewLogger(const std::string & _str) {
+
+  }
+
+  inline void debug(const std::string & _str) {
+    std::cout << _str << std::endl;
+  }
+
+  inline void info(const std::string & _str) {
+    std::cout << _str << std::endl;
+  }
+
+  inline void warning(const std::string & _str) {
+    std::cout << _str << std::endl;
+  }
+
+  inline void error(const std::string & _str) {
+    std::cout << _str << std::endl;
+  }
+};
+
 class HelloWorldProxyClient
   : public icc::commonapi::HelloWorldClient {
  public:

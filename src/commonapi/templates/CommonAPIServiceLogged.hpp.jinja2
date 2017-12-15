@@ -7,6 +7,7 @@
 {%- set broadcasts = interface.broadcasts -%}
 {%- set attributes = interface.attributes -%}
 {%- set class_name = service_name+'Service' -%}
+
 /**
  * @file {{class_name}}.hpp
  * @date {{date}}
@@ -37,6 +38,8 @@ namespace icc {
 namespace commonapi {
 
 using v{{service_version}}::{{package_ns}}::{{service_name}};
+using v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
+using v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
 using v{{service_version}}::{{type_collection.type}};
@@ -46,12 +49,11 @@ using v{{service_version}}::{{type_collection.type}};
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault,
+  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                              Logger > {
  public:
-  using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault,
+  using icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                           Logger >::CommonAPIService;
-  using {{service_name}}StubReplies = v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
  public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
@@ -70,11 +72,36 @@ class {{class_name}}
   {%- endfor -%}
   {%- endif -%}
   {%- if method.outputs is not none -%}
-  {{- ", " -}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply
+  {{- ", " -}}{{service_name}}Stub::{{method.name}}Reply_t _reply
   {%- endif -%}
   ) override;
   {%- endfor %}
   {% endif %}
+  {%- if attributes is not none and attributes|length > 0 %}
+  /***************************************
+   * Below setters of attributes
+   **************************************/
+  {%- for attribute in attributes %}
+  void set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) override;
+  {%- if not attribute.is_read_only %}
+  void set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) override;
+  {%- endif %}
+  {% endfor %}
+  {%- endif %}
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /***************************************
+   * Below fire of broadcasts
+   **************************************/
+  {%- for broadcast in broadcasts %}
+  void fire{{broadcast}}Event(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+      {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%}
+  ) override;
+  {% endfor %}
+  {%- endif %}
  protected:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
@@ -88,7 +115,7 @@ class {{class_name}}
   {%- endfor -%}
   {%- endif -%}
   {%- if method.outputs is not none -%}
-  {{- ", " -}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply) {
+  {{- ", " -}}{{service_name}}Stub::{{method.name}}Reply_t _reply) {
   {%- else -%}
   ) {
   {%- endif %}
@@ -99,47 +126,20 @@ class {{class_name}}
   }
   {%- endfor %}
   {%- endif %}
-  {%- if broadcasts is not none and broadcasts|length > 0 %}
-  /***************************************
-   * Below fire broadcasts for debugging purposes
-   **************************************/
-  {%- for broadcast in broadcasts %}
-  void fire{{broadcast}}Event(
-  {%- if broadcast.parameters is not none -%}
-  {%- for parameter in broadcast.parameters -%}
-  {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
-  {%- endfor -%}
-  {%- endif -%}
-  ) override {
-    // Default implementation.
-    // Interesting only for debugging purposes
-    Logger::debug("fire{{broadcast}}Event is called");
-    v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault::fire{{broadcast}}Event(
-    {%- if broadcast.parameters is not none -%}
-    {%- for parameter in broadcast.parameters -%}
-    _{{parameter.name}}{{ ", " if not loop.last }}
-    {%- endfor -%}
-    {%- endif -%});
-  }
-  {% endfor %}
-  {%- endif %}
   {%- if attributes is not none and attributes|length > 0 %}
   /***************************************
-   * Below setters of attributes for debugging purposes
+   * Below queries for setters of attributes
    **************************************/
   {%- for attribute in attributes %}
-  void set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) override {
+  {%- if not attribute.is_read_only %}
+  virtual void querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
     // Default implementation.
-    // Interesting only for debugging purposes
-    Logger::debug("set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) is called");
-    v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
+    // If you need you may override querySet{{attribute}}Attribute
+    // This method will be called in thread of IComponent
+    Logger::warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
   }
-  void set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) override {
-    // Default implementation.
-    // Interesting only for debugging
-    Logger::debug("set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
-    v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
-  }
+  {%- endif %}
   {% endfor %}
   {%- endif %}
 };
@@ -154,7 +154,7 @@ void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::
 {%- endfor -%}
 {%- endif -%}
 {%- if method.outputs is not none -%}
-{{ ", "}}{{service_name}}StubReplies::{{method.name}}Reply_t _reply
+{{ ", "}}{{service_name}}Stub::{{method.name}}Reply_t _reply
 {%- endif -%}
 ) {
   invoke([=] {
@@ -169,6 +169,55 @@ void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::
     {{- ", " -}} _reply
     {%- endif -%}
     );
+  });
+}
+{% endfor %}
+{%- endif %}
+{%- if attributes is not none and attributes|length > 0 %}
+{%- for attribute in attributes %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) {
+  // Default implementation.
+  // Interesting only for debugging purposes
+  invoke([=] {
+    Logger::debug("set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
+  });
+}
+{%- if not attribute.is_read_only %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
+  invoke([=] {
+    Logger::debug("querySet{{attribute}}Attribute is called");
+    querySet{{attribute}}Attribute(_client, _{{attribute.name}});
+  });
+}
+{%- endif %}
+{% endfor %}
+{%- endif %}
+{%- if broadcasts is not none and broadcasts|length > 0 %}
+{%- for broadcast in broadcasts %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::fire{{broadcast}}Event(
+  {%- if broadcast.parameters is not none -%}
+  {%- for parameter in broadcast.parameters -%}
+    {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- endif -%}
+  ) {
+  // Default implementation.
+  // Interesting only for debugging purposes
+  invoke([=] {
+    Logger::debug("fire{{broadcast}}Event is called");
+    {{service_name}}StubDefault::fire{{broadcast}}Event(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+      _{{parameter.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%});
   });
 }
 {% endfor %}

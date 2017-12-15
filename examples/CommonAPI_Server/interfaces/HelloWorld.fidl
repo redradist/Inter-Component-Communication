@@ -26,6 +26,8 @@ interface HelloWorld {
     String name
     }
   }
+
+  attribute Int32 myName readonly
 }
 
 interface HelloWorld2 {

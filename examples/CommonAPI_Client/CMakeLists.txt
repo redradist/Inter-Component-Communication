@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++11")
 set(COMMONAPI_GENERATOR $ENV{HOME}/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
 set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
 
-include(../../src/commonapi/fidl_generator.cmake)
+include(../../src/commonapi/wrapper_generator.cmake)
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(/home/redra/Projects/Automotive/capicxx-dbus-runtime/include/CommonAPI/DBus)
@@ -73,5 +73,5 @@ add_executable(
         ${SOURCE_FILES}
         ${GENERATED_FILES})
 add_dependencies(CommonAPI_Client ICC afdsaasdadsdas_commonapi_gen)
-add_fidl_dependencies(CommonAPI_Client ${FIDL_FILES} Client ${CMAKE_BINARY_DIR})
+add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client FALSE ${CMAKE_BINARY_DIR})
 target_link_libraries(CommonAPI_Client CommonAPI CommonAPI-DBus dbus-1 boost_system)
