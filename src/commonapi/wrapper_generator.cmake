@@ -13,34 +13,34 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
         execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/interface_hierarchical_path.py
-                                ${FIDL}
-                        OUTPUT_VARIABLE HIERARCHIC_PATHS)
+                ${FIDL}
+                OUTPUT_VARIABLE HIERARCHIC_PATHS)
         string(REGEX MATCHALL "([^;]*);"
-               INTERFACE_HIERARCHIC_PATHS "${HIERARCHIC_PATHS}")
+                INTERFACE_HIERARCHIC_PATHS "${HIERARCHIC_PATHS}")
         foreach(INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATHS})
             string(REPLACE "\r" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
             string(REPLACE "\n" "" INTERFACE_HIERARCHIC_PATH ${INTERFACE_HIERARCHIC_PATH})
             message(STATUS "INTERFACE_HIERARCHIC_PATH is ${INTERFACE_HIERARCHIC_PATH}")
             string(REGEX MATCH "/([^/]*)$"
-                   INTERFACE_NAME "${INTERFACE_HIERARCHIC_PATH}")
+                    INTERFACE_NAME "${INTERFACE_HIERARCHIC_PATH}")
             string(REPLACE "/" "" INTERFACE_NAME ${INTERFACE_NAME})
             message(STATUS "INTERFACE_NAME is ${INTERFACE_NAME}")
             if(${SERVICE_OR_CLIENT} STREQUAL "Service")
                 set(COMMONAPI_GENERATED_FILES
-                    ${COMMONAPI_GENERATED_FILES}
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+                        ${COMMONAPI_GENERATED_FILES}
+                        "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
+                        "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
+                        "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
             else(${SERVICE_OR_CLIENT} STREQUAL "Service")
                 set(COMMONAPI_GENERATED_FILES
-                    ${COMMONAPI_GENERATED_FILES}
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+                        ${COMMONAPI_GENERATED_FILES}
+                        "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
+                        "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
             endif(${SERVICE_OR_CLIENT} STREQUAL "Service")
             set(COMMONAPI_WRAPPER_GENERATED_FILES
-                ${COMMONAPI_WRAPPER_GENERATED_FILES}
-                ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
-                ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+                    ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                    ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                    ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
             if (${IS_LOGGED})
                 message(STATUS "Logged wrappers was choosed")
                 add_custom_command(
@@ -97,10 +97,10 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
     target_sources(${TARGET} PRIVATE ${FILTERED_COMMONAPI_GENERATED_FILES})
     target_sources(${TARGET} PRIVATE ${COMMONAPI_WRAPPER_GENERATED_FILES})
     add_custom_target(
-        ${TARGET}_commonapi_wrappers_gen
-        DEPENDS ${COMMONAPI_GENERATED_FILES}
-        DEPENDS ${COMMONAPI_WRAPPER_GENERATED_FILES}
-        COMMAND echo "Generation of CommonAPI wrappers is finished")
+            ${TARGET}_commonapi_wrappers_gen
+            DEPENDS ${COMMONAPI_GENERATED_FILES}
+            DEPENDS ${COMMONAPI_WRAPPER_GENERATED_FILES}
+            COMMAND echo "Generation of CommonAPI wrappers is finished")
     add_dependencies(${TARGET} ${TARGET}_commonapi_wrappers_gen)
 
 endfunction(add_wrapper_dependencies)

@@ -11,6 +11,8 @@ int main() {
   [&helloWorldClient](const CommonAPI::AvailabilityStatus & _status) mutable {
     if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
       helloWorldClient.requestSayHello("Denis");
+      helloWorldClient.requestSetSettings(std::vector<int32_t>{});
+      helloWorldClient.notifyOnNewNameUpdate(true);
     }
   });
   while (true) {

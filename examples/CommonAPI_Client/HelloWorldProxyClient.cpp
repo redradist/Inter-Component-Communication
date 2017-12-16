@@ -6,7 +6,7 @@
 
 HelloWorldProxyClient::HelloWorldProxyClient(const std::string &_domain,
                                              const std::string &_instance)
-    : HelloWorldClient(_domain, _instance) { }
+    : icc::commonapi::HelloWorldClient<NewLogger>(_domain, _instance) { }
 HelloWorldProxyClient::~HelloWorldProxyClient() { }
 
 void HelloWorldProxyClient::connected(v1::commonapi::HelloWorldProxy<> &) {

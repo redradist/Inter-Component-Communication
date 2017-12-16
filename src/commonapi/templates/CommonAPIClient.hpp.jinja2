@@ -228,7 +228,7 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
         {%- endfor -%}
         {%- endif -%}
         ) {
-          push([=] {
+          this->push([=] {
             informationOn{{broadcast}}(
             {%- if broadcast.parameters is not none -%}
             {%- for parameter in broadcast.parameters -%}
@@ -259,7 +259,7 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
       if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
         on_{{attribute.lower()}}_changed_ = get{{attribute}}Attribute().getChangedEvent().subscribe(
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
-          push([=] {
+          this->push([=] {
             on{{attribute}}Changed(_{{attribute.name}});
           });
         });
@@ -274,7 +274,6 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
 }
 {% endfor %}
 {%- endif %}
-
 }
 
 }
