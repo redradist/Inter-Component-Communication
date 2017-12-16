@@ -11,7 +11,7 @@ include(../../src/commonapi/wrapper_generator.cmake)
 include_directories(../../src)
 
 include_directories(${CMAKE_BINARY_DIR})
-include_directories(/home/redra/Projects/Automotive/capicxx-dbus-runtime/include/CommonAPI/DBus)
+include_directories($ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/include/CommonAPI/DBus)
 include_directories(/usr/local/lib/boost/include)
 include_directories(../../src)
 include_directories(/usr/local/include/CommonAPI-3.1)
@@ -19,16 +19,16 @@ include_directories(/usr/local/lib/dbus-1.0/include)
 include_directories(/usr/include/dbus-1.0)
 include_directories(${CMAKE_SOURCE_DIR}/cmake-build-debug/src-gen)
 include_directories(
-        /home/redra/Projects/Automotive/capicxx-core-runtime/include
-        /home/redra/Projects/Automotive/capicxx-dbus-runtime/include
-        /home/redra/Projects/Automotive/dbus-1.11.12
+        $ENV{HOME}/Projects/Automotive/capicxx-core-runtime/include
+        $ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/include
+        $ENV{HOME}/Projects/Automotive/dbus-1.11.12
         /usr/lib/x86_64-linux-gnu/dbus-1.0/include/
 )
 
 link_directories(
-        /home/redra/Projects/Automotive/capicxx-core-runtime/build
-        /home/redra/Projects/Automotive/capicxx-dbus-runtime/build
-        /home/redra/Projects/Automotive/dbus-1.11.12/build/dbus/.libs
+        $ENV{HOME}/Projects/Automotive/capicxx-core-runtime/build
+        $ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/build
+        $ENV{HOME}/Projects/Automotive/dbus-1.11.12/build/dbus/.libs
 )
 link_directories(/usr/local/lib/boost/lib)
 link_directories(/usr/local/lib)
