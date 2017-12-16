@@ -47,10 +47,9 @@ using v{{service_version}}::{{type_collection.type}};
 {%- endif %}
 
 class {{class_name}}
-  : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
+  : public icc::service::IService<Forecast> {
  public:
-  using icc::commonapi::CommonAPIService< {{service_name}}StubDefault >::CommonAPIService;
+  using icc::service::IService<Forecast>::IService;
 
  public:
   {%- if methods is not none and methods|length > 0 %}
