@@ -6,6 +6,7 @@
 {%- set methods = interface.methods -%}
 {%- set broadcasts = interface.broadcasts -%}
 {%- set attributes = interface.attributes -%}
+{%- set is_settable_attribute = interface.is_settable_attribute -%}
 {%- set class_name = service_name+'Service' -%}
 /**
  * @file {{class_name}}.hpp
@@ -37,6 +38,8 @@ namespace icc {
 namespace commonapi {
 
 using v{{service_version}}::{{package_ns}}::{{service_name}};
+using v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
+using v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
 using v{{service_version}}::{{type_collection.type}};
@@ -45,9 +48,9 @@ using v{{service_version}}::{{type_collection.type}};
 
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault > {
+  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
  public:
-  using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault >::CommonAPIService;
+  using icc::commonapi::CommonAPIService< {{service_name}}StubDefault >::CommonAPIService;
 
  public:
   {%- if methods is not none and methods|length > 0 %}
@@ -72,6 +75,31 @@ class {{class_name}}
   ) override;
   {%- endfor %}
   {% endif %}
+  {%- if attributes is not none and attributes|length > 0 %}
+  /***************************************
+   * Below setters of attributes
+   **************************************/
+  {%- for attribute in attributes %}
+  void set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) override;
+  {%- if not attribute.is_read_only %}
+  void set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) override;
+  {%- endif %}
+  {% endfor %}
+  {%- endif %}
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /***************************************
+   * Below fire of broadcasts
+   **************************************/
+  {%- for broadcast in broadcasts %}
+  void fire{{broadcast}}Event(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+      {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%}
+  ) override;
+  {% endfor %}
+  {%- endif %}
  protected:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
@@ -93,6 +121,21 @@ class {{class_name}}
     // If you need you may override request{{method}}
     // This method will be called in thread of IComponent
   }
+  {%- endfor %}
+  {%- endif %}
+  {%- if attributes is not none and attributes|length > 0 and is_settable_attribute %}
+  /***************************************
+   * Below queries for setters of attributes
+   **************************************/
+  {%- for attribute in attributes %}
+  {%- if not attribute.is_read_only %}
+  virtual void querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
+    // Default implementation.
+    // If you need you may override querySet{{attribute}}Attribute
+    // This method will be called in thread of IComponent
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
+  }
+  {%- endif %}
   {%- endfor %}
   {%- endif %}
 };
@@ -124,7 +167,45 @@ void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> 
 }
 {% endfor %}
 {%- endif %}
-
+{%- if attributes is not none and attributes|length > 0 %}
+{%- for attribute in attributes %}
+inline
+void {{class_name}}::set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) {
+  invoke([=] {
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
+  });
+}
+{% if not attribute.is_read_only %}
+inline
+void {{class_name}}::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
+  invoke([=] {
+    querySet{{attribute}}Attribute(_client, _{{attribute.name}});
+  });
+}
+{%- endif %}
+{% endfor %}
+{%- endif %}
+{%- if broadcasts is not none and broadcasts|length > 0 %}
+{%- for broadcast in broadcasts %}
+inline
+void {{class_name}}::fire{{broadcast}}Event(
+{%- if broadcast.parameters is not none -%}
+{%- for parameter in broadcast.parameters -%}
+{{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+{%- endfor -%}
+{%- endif -%}
+) {
+  invoke([=] {
+    {{service_name}}StubDefault::fire{{broadcast}}Event(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+    _{{parameter.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%});
+  });
+}
+{% endfor %}
+{%- endif %}
 }
 
 }

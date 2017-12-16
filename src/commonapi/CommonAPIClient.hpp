@@ -28,20 +28,20 @@ class CommonAPIClient
   CommonAPIClient(const std::string &_domain,
                   const std::string &_instance) :
       Proxy<>([=]() {
-        Logger::debug("Building CommonAPIClient ...");
+        this->debug("Building CommonAPIClient ...");
         std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
         auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
         if (!proxy) {
-          Logger::error("proxy is nullptr");
+          this->error("proxy is nullptr");
         } else {
-          Logger::debug("CommonAPIClient is built successfully !!");
+          this->debug("CommonAPIClient is built successfully !!");
           proxy->getProxyStatusEvent().subscribe(
           [=](const CommonAPI::AvailabilityStatus & _status) mutable {
             if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-              Logger::debug("CommonAPIClient is connected");
+              this->debug("CommonAPIClient is connected");
               connected(*this);
             } else {
-              Logger::debug("CommonAPIClient is disconnected");
+              this->debug("CommonAPIClient is disconnected");
               disconnected(*this);
             }
           });
@@ -53,8 +53,8 @@ class CommonAPIClient
 
   CommonAPIClient(CommonAPIClient const &) = default;
   CommonAPIClient & operator=(CommonAPIClient const &) = default;
-  CommonAPIClient(CommonAPIClient &&) = default;
-  CommonAPIClient & operator=(CommonAPIClient &&) = default;
+  CommonAPIClient(CommonAPIClient &&) = delete;
+  CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 
   virtual ~CommonAPIClient() = default;
 
