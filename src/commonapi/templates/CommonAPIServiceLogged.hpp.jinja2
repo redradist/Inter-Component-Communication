@@ -122,7 +122,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override request{{method}}
     // This method will be called in thread of IComponent
-    Logger::warning("Default implementation of request{{method}}");
+    this->warning("Default implementation of request{{method}}");
   }
   {%- endfor %}
   {%- endif %}
@@ -136,7 +136,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override querySet{{attribute}}Attribute
     // This method will be called in thread of IComponent
-    Logger::warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
+    this->warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
     {{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
   }
   {%- endif %}
