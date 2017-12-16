@@ -13,8 +13,12 @@
 
 class NewLogger {
  public:
-  void debug(const std::string & str) {
+  virtual void debugB(const std::string & str) {
+    std::cout << str << std::endl;
+  }
 
+  void debug(const std::string & str) {
+    debugB(str);
   }
   void warning(const std::string & str) {
 

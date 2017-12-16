@@ -56,7 +56,9 @@ class CommonAPIClient
   CommonAPIClient(CommonAPIClient &&) = delete;
   CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 
-  virtual ~CommonAPIClient() = default;
+  virtual ~CommonAPIClient() {
+    Logger::debug("Destructor CommonAPIClient");
+  }
 
   virtual void connected(Proxy<> &) = 0;
   virtual void disconnected(Proxy<> &) = 0;
