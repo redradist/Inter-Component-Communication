@@ -45,7 +45,7 @@ class CommonAPIService
  public:
   bool registerService(const std::string &_domain,
                        const std::string &_instance) {
-    if (is_registered) {
+    if (is_registered_) {
       Logger::warning("CommonAPIService is already registered !!!");
       Logger::warning("Unregister CommonAPIService first !?");
     } else {
@@ -55,8 +55,8 @@ class CommonAPIService
         // Do nothing to prevent double deletion
       });
       if (service_) {
-        is_registered = runtime->registerService(_domain, _instance, service_);
-        if (is_registered) {
+        is_registered_ = runtime->registerService(_domain, _instance, service_);
+        if (is_registered_) {
           Logger::debug("CommonAPIService registered successfully !!");
           domain_ = _domain;
           instance_ = _instance;
@@ -66,29 +66,29 @@ class CommonAPIService
         }
       }
     }
-    return is_registered;
+    return is_registered_;
   }
 
   bool unregisterService() {
-    if (!is_registered) {
+    if (!is_registered_) {
       Logger::warning("CommonAPIService is not registered !!!");
       Logger::warning("Register CommonAPIService before unregistering !?");
     } else {
       Logger::debug("Unregistering CommonAPIService ...");
       std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
-      is_registered = !runtime->unregisterService(domain_, this->getStubAdapter()->getInterface(), instance_);
-      if (!is_registered) {
+      is_registered_ = !runtime->unregisterService(domain_, this->getStubAdapter()->getInterface(), instance_);
+      if (!is_registered_) {
         Logger::debug("CommonAPIService unregistered successfully !!");
         service_ = nullptr;
       } else {
         Logger::error("Failed to unregister CommonAPIService !!");
       }
     }
-    return !is_registered;
+    return !is_registered_;
   }
 
  private:
-  bool is_registered = false;
+  bool is_registered_ = false;
   std::string domain_;
   std::string instance_;
   std::shared_ptr<Service> service_ = nullptr;

@@ -15,7 +15,8 @@ if __name__ == '__main__':
         interfaces = parse_interfaces(args.capi_interface)
         sys.stdout = sys.__stdout__
         for interface in interfaces:
-            print("v{0}/{1}/{2};".format(interface.major, interface.package_name, interface.name))
+            package_name = interface.package_name.replace(".", "\/")
+            print("v{0}/{1}/{2};".format(interface.major, package_name, interface.name))
     except Exception as ex:
         print("ex is " + str(ex))
         exit(1)
