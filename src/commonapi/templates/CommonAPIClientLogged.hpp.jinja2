@@ -24,12 +24,24 @@
 #include <functional>
 #include <IComponent.hpp>
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+#include <v{{client_version}}/{{type_collection.path}}.hpp>
+{%- endfor %}
+{%- endif %}
 #include <commonapi/CommonAPIClient.hpp>
 #include <logger/DummyLogger.hpp>
 
 namespace icc {
 
 namespace commonapi {
+
+using v{{client_version}}::{{package_ns}}::{{client_name}};
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+using v{{client_version}}::{{type_collection.type}};
+{%- endfor %}
+{%- endif %}
 
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
