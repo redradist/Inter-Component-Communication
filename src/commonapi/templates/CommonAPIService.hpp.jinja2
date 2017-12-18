@@ -91,12 +91,13 @@ class {{class_name}}
    * Below fire of broadcasts
    **************************************/
   {%- for broadcast in broadcasts %}
-  void fire{{broadcast}}Event(
+  void fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}
-      {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
     {%- endfor -%}
     {%- endif -%}
+    {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers = nullptr' if broadcast.is_selective else '' -}}
   ) override;
   {% endfor %}
   {%- endif %}
@@ -188,20 +189,22 @@ void {{class_name}}::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::
 {%- if broadcasts is not none and broadcasts|length > 0 %}
 {%- for broadcast in broadcasts %}
 inline
-void {{class_name}}::fire{{broadcast}}Event(
-{%- if broadcast.parameters is not none -%}
-{%- for parameter in broadcast.parameters -%}
-{{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
-{%- endfor -%}
-{%- endif -%}
+void {{class_name}}::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+  {%- if broadcast.parameters is not none -%}
+  {%- for parameter in broadcast.parameters -%}
+  {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+  {%- endfor -%}
+  {%- endif -%}
+  {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
   invoke([=] {
-    {{service_name}}StubDefault::fire{{broadcast}}Event(
+    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} is called");
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}
-    _{{parameter.name}}{{ ", " if not loop.last }}
+    _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
     {%- endfor -%}
-    {%- endif -%});
+    {%- endif -%}
+    {{- '_receivers' if broadcast.is_selective else '' -}});
   });
 }
 {% endfor %}

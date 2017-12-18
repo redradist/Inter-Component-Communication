@@ -207,7 +207,7 @@ void {{class_name}}< Logger >::fire{{broadcast}}{{ 'Selective' if broadcast.is_s
   {%- endfor -%}
   {%- endif -%}
   {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
-  ) {
+) {
   invoke([=] {
     Logger::debug("fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} is called");
     {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(

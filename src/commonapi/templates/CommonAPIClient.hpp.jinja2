@@ -36,6 +36,8 @@ namespace icc {
 namespace commonapi {
 
 using v{{client_version}}::{{package_ns}}::{{client_name}};
+using v{{client_version}}::{{package_ns}}::{{client_name}}Proxy;
+using v{{client_version}}::{{package_ns}}::{{client_name}}ProxyDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
 using v{{client_version}}::{{type_collection.type}};
@@ -44,9 +46,9 @@ using v{{client_version}}::{{type_collection.type}};
 
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy > {
+  , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy > {
  public:
-  using icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy >::CommonAPIClient;
+  using icc::commonapi::CommonAPIClient< {{client_name}}Proxy >::CommonAPIClient;
 
  public:
   {%- if methods is not none and methods|length > 0 %}
@@ -232,7 +234,7 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
   invoke([=] {
     if (isNotify) {
       if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
-        on_{{broadcast.lower()}}_update_ = get{{broadcast}}Event().subscribe(
+        on_{{broadcast.lower()}}_update_ = get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
@@ -253,7 +255,7 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
       }
     } else {
       if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+        get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
         on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
     }
