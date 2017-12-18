@@ -95,10 +95,10 @@ class {{class_name}}
   {% endif %}
  protected:
   void connected(v{{client_version}}::{{package_ns}}::{{client_name}}Proxy<> &) override {
-    this->debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is connected !!");
+    this->Logger::debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is connected !!");
   }
   void disconnected(v{{client_version}}::{{package_ns}}::{{client_name}}Proxy<> &) override {
-    this->debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is disconnected !!");
+    this->Logger::debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is disconnected !!");
   }
 
   {%- if methods is not none and methods|length > 0 %}
@@ -117,7 +117,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override response{{method}}
     // This method will be called in thread of IComponent
-    this->warning("Default implementation of response{{method}}");
+    this->Logger::warning("Default implementation of response{{method}}");
   }
   {%- endif %}
   {%- endfor %}
@@ -143,7 +143,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override informationOn{{broadcast}}
     // This method will be called in thread of IComponent
-    this->warning("Default implementation of informationOn{{broadcast}}");
+    this->Logger::warning("Default implementation of informationOn{{broadcast}}");
   }
   {%- endfor %}
   {% endif %}
@@ -162,7 +162,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override on{{attribute}}
     // This method will be called in thread of IComponent
-    this->warning("Default implementation of on{{attribute}}");
+    this->Logger::warning("Default implementation of on{{attribute}}");
   }
   {%- endfor %}
   {% endif %}
@@ -197,7 +197,7 @@ inline std::future<CommonAPI::CallStatus>
 {%- endfor -%}
 {%- endif -%}
 ) {
-  this->debug("request{{method}} is called");
+  this->Logger::debug("request{{method}} is called");
   return this->{{method.name}}Async(
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {%- for input in method.inputs -%}
@@ -228,7 +228,7 @@ inline CommonAPI::CallStatus
 {%- endfor -%}
 {%- endif -%}
 ) {
-  this->debug("request{{method}} is called");
+  this->Logger::debug("request{{method}} is called");
   CommonAPI::CallStatus callStatus;
   this->{{method.name}}(
     {%- if method.inputs is not none -%}
@@ -249,12 +249,12 @@ template< typename Logger >
 inline
 void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) {
   this->invoke([=] {
-    this->debug("notifyOn{{broadcast}}Update is called");
+    this->Logger::debug("notifyOn{{broadcast}}Update is called");
     if (isNotify) {
       if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        this->warning("{{broadcast}} is already subscribed !!");
+        this->Logger::warning("{{broadcast}} is already subscribed !!");
       } else {
-        this->debug("Subscribing on {{broadcast}} ...");
+        this->Logger::debug("Subscribing on {{broadcast}} ...");
         on_{{broadcast.lower()}}_update_ = this->get{{broadcast}}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
@@ -276,9 +276,9 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
       }
     } else {
       if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
-        this->warning("{{broadcast}} is not subscribed !!");
+        this->Logger::warning("{{broadcast}} is not subscribed !!");
       } else {
-        this->debug("Unsubscribing on {{broadcast}} ...");
+        this->Logger::debug("Unsubscribing on {{broadcast}} ...");
         this->get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
         on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
@@ -294,12 +294,12 @@ template< typename Logger >
 inline
 void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify) {
   this->invoke([=] {
-    this->debug("notifyOn{{attribute}}Update is called");
+    this->Logger::debug("notifyOn{{attribute}}Update is called");
     if (isNotify) {
       if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
-        this->warning("{{attribute}} is already subscribed !!");
+        this->Logger::warning("{{attribute}} is already subscribed !!");
       } else {
-        this->debug("Subscribing on {{attribute}} ...");
+        this->Logger::debug("Subscribing on {{attribute}} ...");
         on_{{attribute.lower()}}_changed_ = this->get{{attribute}}Attribute().getChangedEvent().subscribe(
             [=] ({{attribute.type}} const & _{{attribute.name}}) {
           this->push([=] {
@@ -309,9 +309,9 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
       }
     } else {
       if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
-        this->warning("{{attribute}} is not subscribed !!");
+        this->Logger::warning("{{attribute}} is not subscribed !!");
       } else {
-        this->debug("Unsubscribing on {{attribute}} ...");
+        this->Logger::debug("Unsubscribing on {{attribute}} ...");
         this->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
         on_{{attribute.lower()}}_changed_ = kEmptySubscription;
       }
