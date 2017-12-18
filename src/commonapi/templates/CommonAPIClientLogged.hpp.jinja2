@@ -37,6 +37,8 @@ namespace icc {
 namespace commonapi {
 
 using v{{client_version}}::{{package_ns}}::{{client_name}};
+using v{{client_version}}::{{package_ns}}::{{client_name}}Proxy;
+using v{{client_version}}::{{package_ns}}::{{client_name}}ProxyDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
 using v{{client_version}}::{{type_collection.type}};
@@ -46,10 +48,10 @@ using v{{client_version}}::{{type_collection.type}};
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy,
+  , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                             Logger > {
  public:
-  using icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy,
+  using icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                          Logger >::CommonAPIClient;
 
  public:
@@ -94,11 +96,11 @@ class {{class_name}}
   {%- endfor %}
   {% endif %}
  protected:
-  void connected(v{{client_version}}::{{package_ns}}::{{client_name}}Proxy<> &) override {
-    this->Logger::debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is connected !!");
+  void connected({{client_name}}Proxy<> &) override {
+    this->Logger::debug("{{client_name}}Proxy is connected !!");
   }
-  void disconnected(v{{client_version}}::{{package_ns}}::{{client_name}}Proxy<> &) override {
-    this->Logger::debug("v{{client_version}}::{{package_ns}}::{{client_name}}Proxy is disconnected !!");
+  void disconnected({{client_name}}Proxy<> &) override {
+    this->Logger::debug("{{client_name}}Proxy is disconnected !!");
   }
 
   {%- if methods is not none and methods|length > 0 %}
@@ -255,7 +257,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
         this->Logger::warning("{{broadcast}} is already subscribed !!");
       } else {
         this->Logger::debug("Subscribing on {{broadcast}} ...");
-        on_{{broadcast.lower()}}_update_ = this->get{{broadcast}}Event().subscribe(
+        on_{{broadcast.lower()}}_update_ = this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
@@ -279,7 +281,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
         this->Logger::warning("{{broadcast}} is not subscribed !!");
       } else {
         this->Logger::debug("Unsubscribing on {{broadcast}} ...");
-        this->get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+        this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
         on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
     }
