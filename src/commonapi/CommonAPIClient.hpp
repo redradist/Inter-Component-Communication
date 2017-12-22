@@ -11,6 +11,7 @@
 
 #include <CommonAPI/CommonAPI.hpp>
 #include <type_traits>
+#include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>
 
 namespace icc {
@@ -21,7 +22,8 @@ template< template< typename ... _AttributeExtensions > class Proxy,
           typename Logger = icc::logger::DummyLogger >
 class CommonAPIClient
     : public Proxy<>
-    , public virtual Logger {
+    , public virtual Logger
+    , public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient< Proxy, Logger > > {
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
  public:
@@ -35,16 +37,6 @@ class CommonAPIClient
           this->error("proxy is nullptr");
         } else {
           this->debug("CommonAPIClient is built successfully !!");
-          proxy->getProxyStatusEvent().subscribe(
-          [=](const CommonAPI::AvailabilityStatus & _status) mutable {
-            if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-              this->debug("CommonAPIClient is connected");
-              connected(*this);
-            } else {
-              this->debug("CommonAPIClient is disconnected");
-              disconnected(*this);
-            }
-          });
         }
         return proxy;
       }()) {
@@ -58,6 +50,27 @@ class CommonAPIClient
 
   virtual ~CommonAPIClient() {
     Logger::debug("Destructor CommonAPIClient");
+  }
+
+  /**
+   * This method is used to subscribe on availability of Service.
+   * When service is available will be received connected(Proxy<> &),
+   * otherwise disconnected(Proxy<> &)
+   */
+  void subscribeOnAvailability() {
+    std::weak_ptr<CommonAPIClient<Proxy, Logger>> weakClient = this->shared_from_this();
+    this->getProxyStatusEvent().subscribe(
+    [=](const CommonAPI::AvailabilityStatus & _status) mutable {
+      if (auto client = weakClient.lock()) {
+        if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
+          this->debug("CommonAPIClient is connected");
+          connected(*this);
+        } else {
+          this->debug("CommonAPIClient is disconnected");
+          disconnected(*this);
+        }
+      }
+    });
   }
 
   virtual void connected(Proxy<> &) = 0;
