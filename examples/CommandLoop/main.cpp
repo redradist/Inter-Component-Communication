@@ -31,6 +31,12 @@ class ConnectionBTProfiles
   : public icc::command::CommandLoop {
  public:
   using icc::IComponent::IComponent;
+  ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
+  : icc::IComponent(_eventLoop) {
+    setMode(icc::command::LoopMode::Finite);
+    push_back(std::make_shared<ConnectionHFP>());
+    push_back(std::make_shared<ConnectionA2DP>());
+  }
 
   void processEvent(const CommandData & _data) override {
     icc::command::CommandLoop::processEvent(_data);
@@ -67,7 +73,6 @@ class Connect
         break;
     }
     std::cout << "Connect::Command is finished" << std::endl;
-    exit();
   }
 };
 
@@ -75,12 +80,7 @@ int main() {
   boost::asio::io_service service_;
   std::shared_ptr<Connect> mainLoop = std::make_shared<Connect>(&service_);
   mainLoop->startCommand();
-  std::shared_ptr<ConnectionBTProfiles> loop =
-      std::make_shared<ConnectionBTProfiles>(&service_);
-  loop->setMode(icc::command::LoopMode::Finite);
-  loop->push_back(std::make_shared<ConnectionHFP>());
-  loop->push_back(std::make_shared<ConnectionA2DP>());
-  mainLoop->push_back(loop);
+  mainLoop->push_back(std::make_shared<ConnectionBTProfiles>(&service_));
   // Start event loop
   service_.run();
   return 0;
