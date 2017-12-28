@@ -44,6 +44,11 @@ class CommandLoop
       public ICommand,
       public ICommand::IListener {
  public:
+  /**
+   * Delegate constructors from IComponent
+   */
+  using IComponent::IComponent;
+
   CommandLoop() = default;
   virtual ~CommandLoop() = default;
 
@@ -87,6 +92,7 @@ class CommandLoop
   std::future<LoopState> getState();
 
  protected:
+  void helperFinished(const CommandResult & _result);
   virtual void processEvent(const CommandData & _result) override;
   virtual void nextCommand();
 

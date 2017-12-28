@@ -107,7 +107,7 @@ class IComponent {
    * Called to exit from execution in main loop
    */
   virtual void exit() {
-    push([=] {
+    invoke([=] {
       if (worker_) {
         for (auto &child : childern_) {
           child->exit();
@@ -154,7 +154,7 @@ class IComponent {
    */
   virtual void addChild(IComponent *_child) {
     if (_child) {
-      push([=] {
+      invoke([=] {
         childern_.push_back(_child);
       });
     }
@@ -166,7 +166,7 @@ class IComponent {
    */
   virtual void removeChild(IComponent *_child) {
     if (_child) {
-      push([=] {
+      invoke([=] {
         auto childIter = std::find(childern_.begin(),
                                    childern_.end(),
                                    _child);

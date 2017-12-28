@@ -96,7 +96,7 @@ class IClient
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
                               std::forward<_Value0>(_value0),
-                              std::forward<_Value0>(_value1));
+                              std::forward<_Value1>(_value1));
   };
 
   /**
@@ -118,8 +118,8 @@ class IClient
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
                               std::forward<_Value0>(_value0),
-                              std::forward<_Value0>(_value1),
-                              std::forward<_Value0>(_value2));
+                              std::forward<_Value1>(_value1),
+                              std::forward<_Value2>(_value2));
   };
 
   /**
@@ -144,9 +144,9 @@ class IClient
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
                               std::forward<_Value0>(_value0),
-                              std::forward<_Value0>(_value1),
-                              std::forward<_Value0>(_value2),
-                              std::forward<_Value0>(_value3));
+                              std::forward<_Value1>(_value1),
+                              std::forward<_Value2>(_value2),
+                              std::forward<_Value3>(_value3));
   };
 
   /**
@@ -174,10 +174,10 @@ class IClient
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
                               std::forward<_Value0>(_value0),
-                              std::forward<_Value0>(_value1),
-                              std::forward<_Value0>(_value2),
-                              std::forward<_Value0>(_value3),
-                              std::forward<_Value0>(_value4));
+                              std::forward<_Value1>(_value1),
+                              std::forward<_Value2>(_value2),
+                              std::forward<_Value3>(_value3),
+                              std::forward<_Value4>(_value4));
   };
 
   /**
@@ -208,11 +208,11 @@ class IClient
     ProcessBus::getBus().call(service_name_,
                               std::forward<_Callback>(_callback),
                               std::forward<_Value0>(_value0),
-                              std::forward<_Value0>(_value1),
-                              std::forward<_Value0>(_value2),
-                              std::forward<_Value0>(_value3),
-                              std::forward<_Value0>(_value4),
-                              std::forward<_Value0>(_value5));
+                              std::forward<_Value1>(_value1),
+                              std::forward<_Value2>(_value2),
+                              std::forward<_Value3>(_value3),
+                              std::forward<_Value4>(_value4),
+                              std::forward<_Value5>(_value5));
   };
 
   /**

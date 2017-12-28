@@ -178,7 +178,9 @@ class Event<_R(void)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback();
+          if (auto _observer = client.lock()) {
+            callback();
+          }
         });
       }
     }
@@ -201,7 +203,9 @@ class Event<_R(void)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback();
+          if (auto _observer = client.lock()) {
+            callback();
+          }
         });
       }
     }
@@ -411,7 +415,9 @@ class Event<_R(_Arg0)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0);
+          if (auto _observer = client.lock()) {
+            callback(_arg0);
+          }
         });
       }
     }
@@ -434,7 +440,9 @@ class Event<_R(_Arg0)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0);
+          if (auto _observer = client.lock()) {
+            callback(_arg0);
+          }
         });
       }
     }
@@ -646,7 +654,9 @@ class Event<_R(_Arg0, _Arg1)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1);
+          }
         });
       }
     }
@@ -670,7 +680,9 @@ class Event<_R(_Arg0, _Arg1)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1);
+          }
         });
       }
     }
@@ -884,7 +896,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2);
+          }
         });
         ++listener;
       } else {
@@ -913,7 +927,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2);
+          }
         });
       }
     }
@@ -1129,7 +1145,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2, _arg3);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2, _arg3);
+          }
         });
         ++listener;
       } else {
@@ -1159,7 +1177,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2, _arg3);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2, _arg3);
+          }
         });
       }
     }
@@ -1377,7 +1397,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2, _arg3, _arg4);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2, _arg3, _arg4);
+          }
         });
         ++listener;
       } else {
@@ -1408,7 +1430,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_arg0, _arg1, _arg2, _arg3, _arg4);
+          if (auto _observer = client.lock()) {
+            callback(_arg0, _arg1, _arg2, _arg3, _arg4);
+          }
         });
       }
     }

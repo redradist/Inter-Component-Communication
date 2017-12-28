@@ -112,10 +112,19 @@ void CommandLoop::processEvent(const CommandData & _data) {
   });
 }
 
-void CommandLoop::finished(const CommandResult & _result) {
+/**
+ * This is WORKAROUND for gcc-4.8 due to bug with
+ * analyzing of context in this compiler
+ * @param _result
+ */
+void CommandLoop::helperFinished(const CommandResult & _result) {
   ICommand::finished(_result);
+}
+
+void CommandLoop::finished(const CommandResult & _result) {
   invoke([=] {
     exit();
+    helperFinished(_result);
   });
 }
 
@@ -124,7 +133,7 @@ int CommandLoop::getCommandType() {
 }
 
 void CommandLoop::exit() {
-  push([=]{
+  invoke([=]{
     while (!commands_.empty()) {
       commands_.pop();
     }
