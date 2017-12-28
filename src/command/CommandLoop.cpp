@@ -114,8 +114,8 @@ void CommandLoop::processEvent(const CommandData & _data) {
 
 void CommandLoop::finished(const CommandResult & _result) {
   invoke([=] {
-    ICommand::finished(_result);
     exit();
+    ICommand::finished(_result);
   });
 }
 
@@ -124,7 +124,7 @@ int CommandLoop::getCommandType() {
 }
 
 void CommandLoop::exit() {
-  push([=]{
+  invoke([=]{
     while (!commands_.empty()) {
       commands_.pop();
     }
