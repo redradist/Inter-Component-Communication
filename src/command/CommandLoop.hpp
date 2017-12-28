@@ -44,7 +44,11 @@ class CommandLoop
       public ICommand,
       public ICommand::IListener {
  public:
+  /**
+   * Delegate constructors from IComponent
+   */
   using IComponent::IComponent;
+
   CommandLoop() = default;
   virtual ~CommandLoop() = default;
 
