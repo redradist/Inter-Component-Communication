@@ -179,7 +179,9 @@ class Event<_R(_Args...)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_args...);
+          if (auto _observer = client.lock()) {
+            callback(_args...);
+          }
         });
       }
     }
@@ -203,7 +205,9 @@ class Event<_R(_Args...)> {
       if (auto _observer = client.lock()) {
         auto callback = std::get<2>(listener);
         _observer->push([=]() mutable {
-          callback(_args...);
+          if (auto _observer = client.lock()) {
+            callback(_args...);
+          }
         });
       }
     }
@@ -226,7 +230,9 @@ class Event<_R(_Args...)> {
         if (auto _observer = client.lock()) {
           auto callback = std::get<2>(listener);
           _observer->push([=]() mutable {
-            callback(_args...);
+            if (auto _observer = client.lock()) {
+              callback(_args...);
+            }
           });
         }
       }
