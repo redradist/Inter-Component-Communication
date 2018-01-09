@@ -73,6 +73,7 @@ class Connect
         break;
     }
     std::cout << "Connect::Command is finished" << std::endl;
+    exit();
   }
 };
 
