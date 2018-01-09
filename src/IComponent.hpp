@@ -98,7 +98,7 @@ class IComponent {
    * Used to start event loop
    */
   virtual void exec() {
-    if (owner_of_service_) {
+    if (worker_ && owner_of_service_) {
       service_->run();
     }
   }
@@ -109,13 +109,13 @@ class IComponent {
   virtual void exit() {
     invoke([=] {
       if (worker_) {
+        worker_.reset(nullptr);
         for (auto &child : childern_) {
           child->exit();
         }
         if (parent_) {
-          parent_->exit();
+          parent_->removeChild(this);
         }
-        worker_.reset(nullptr);
       }
     });
   }
@@ -125,7 +125,9 @@ class IComponent {
    * @param _task Task that will be executed
    */
   virtual void push(std::function<void(void)> _task) {
-    service_->post(_task);
+    if (worker_) {
+      service_->post(_task);
+    }
   }
 
   /**
@@ -135,10 +137,16 @@ class IComponent {
    * @param _task Task that will be executed
    */
   virtual void invoke(std::function<void(void)> _task) {
-    service_->dispatch(_task);
+    if (worker_) {
+      service_->dispatch(_task);
+    }
   }
 
  protected:
+  virtual void onChildExit(IComponent * _child) {
+    // NOTE(redra): Default implementation doing nothing
+  }
+
   /**
    * Method return used io_service
    * @return IO Service
@@ -155,7 +163,9 @@ class IComponent {
   virtual void addChild(IComponent *_child) {
     if (_child) {
       invoke([=] {
-        childern_.push_back(_child);
+        if (worker_) {
+          childern_.push_back(_child);
+        }
       });
     }
   }
@@ -167,11 +177,14 @@ class IComponent {
   virtual void removeChild(IComponent *_child) {
     if (_child) {
       invoke([=] {
-        auto childIter = std::find(childern_.begin(),
-                                   childern_.end(),
-                                   _child);
-        if (childIter != childern_.end()) {
-          childern_.erase(childIter);
+        if (worker_) {
+          auto childIter = std::find(childern_.begin(),
+                                     childern_.end(),
+                                     _child);
+          if (childIter != childern_.end()) {
+            childern_.erase(childIter);
+            onChildExit(_child);
+          }
         }
       });
     }
@@ -192,9 +205,6 @@ class IComponent {
  */
 inline
 IComponent::~IComponent() {
-  if (parent_) {
-    parent_->removeChild(this);
-  }
 }
 
 }
