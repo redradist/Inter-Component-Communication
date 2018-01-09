@@ -110,7 +110,7 @@ class IComponent {
     invoke([=] {
       if (worker_) {
         worker_.reset(nullptr);
-        for (auto &child : childern_) {
+        for (auto &child : children_) {
           child->exit();
         }
         if (parent_) {
@@ -164,7 +164,7 @@ class IComponent {
     if (_child) {
       invoke([=] {
         if (worker_) {
-          childern_.push_back(_child);
+          children_.push_back(_child);
         }
       });
     }
@@ -178,11 +178,11 @@ class IComponent {
     if (_child) {
       invoke([=] {
         if (worker_) {
-          auto childIter = std::find(childern_.begin(),
-                                     childern_.end(),
+          auto childIter = std::find(children_.begin(),
+                                     children_.end(),
                                      _child);
-          if (childIter != childern_.end()) {
-            childern_.erase(childIter);
+          if (childIter != children_.end()) {
+            children_.erase(childIter);
             onChildExit(_child);
           }
         }
@@ -197,7 +197,7 @@ class IComponent {
 
  private:
   IComponent *parent_ = nullptr;
-  std::vector<IComponent *> childern_;
+  std::vector<IComponent *> children_;
 };
 
 /**
