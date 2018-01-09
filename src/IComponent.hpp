@@ -143,6 +143,10 @@ class IComponent {
   }
 
  protected:
+  /**
+   * Override this method if you need to track finishing of child classes
+   * @param _child Child that was removed
+   */
   virtual void onChildExit(IComponent * _child) {
     // NOTE(redra): Default implementation doing nothing
   }
