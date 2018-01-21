@@ -58,7 +58,7 @@ class ConnectionBTProfiles
 class Connect
     : public icc::command::CommandLoop {
  private:
-  using icc::command::CommandLoop::CommandLoop;
+  using icc::IComponent::IComponent;
 
  public:
   void processEvent(const CommandData & _data) override {
@@ -82,10 +82,9 @@ class Connect
 int main() {
   using icc::command::Builder;
   boost::asio::io_service service_;
-  auto loop = Builder::buildCommandLoop<icc::command::CommandLoop>(&service_);
   auto mainLoop = Builder::buildCommandLoop<Connect>(&service_);
   mainLoop->startCommand();
-  mainLoop->pushBack(std::make_shared<ConnectionBTProfiles>(&service_));
+  mainLoop->pushBack(Builder::buildCommandLoop<ConnectionBTProfiles>(&service_));
   // Start event loop
   service_.run();
   return 0;

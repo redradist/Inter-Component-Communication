@@ -2,12 +2,12 @@
  * @file Builder.hpp
  * @author Denis Kotov
  * @date 11 Jan 2018
- * @brief Default Command class which just stub virtual methods
+ * @brief Implementation of builders for Command-s and CommandLoop-s
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef COMMANDLOOP_BUILDER_HPP
-#define COMMANDLOOP_BUILDER_HPP
+#ifndef COMMAND_BUILDER_HPP
+#define COMMAND_BUILDER_HPP
 
 #include <memory>
 #include <type_traits>
@@ -41,4 +41,4 @@ class Builder {
 
 }
 
-#endif //COMMANDLOOP_BUILDER_HPP
+#endif //COMMAND_BUILDER_HPP

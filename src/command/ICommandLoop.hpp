@@ -1,6 +1,10 @@
-//
-// Created by redra on 12.01.18.
-//
+/**
+ * @file CommandLoop.hpp
+ * @author Denis Kotov
+ * @date 12 Jan 2018
+ * @brief Contains interface ICommandLoop
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef COMMANDLOOP_ICOMMANDLOOP_HPP
 #define COMMANDLOOP_ICOMMANDLOOP_HPP
