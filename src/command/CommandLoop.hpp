@@ -15,41 +15,27 @@
 #include <IComponent.hpp>
 #include <Event.hpp>
 #include <helpers/memory_helpers.hpp>
-#include "ICommand.hpp"
+#include "ICommandLoop.hpp"
 
 namespace icc {
 
 namespace command {
 
-enum class LoopState {
-  INACTIVE,
-  ACTIVE,
-  SUSPENDED,
-};
-
-enum class LoopMode {
-  /**
-   * Should be used for setting continuous mode
-   */
-  Finite,
-  /**
-   * Should be used for setting one time mode
-   */
-  Continuous,
-};
-
 class CommandLoop
     : public icc::helpers::virtual_enable_shared_from_this<CommandLoop>,
       public virtual IComponent,
-      public ICommand,
+      public ICommandLoop,
       public ICommand::IListener {
- public:
+  friend class Builder;
+
+ protected:
   /**
    * Delegate constructors from IComponent
    */
   using IComponent::IComponent;
-
   CommandLoop() = default;
+
+ public:
   virtual ~CommandLoop() = default;
 
  public:
@@ -87,8 +73,7 @@ class CommandLoop
 
  public:
   virtual void setMode(LoopMode _mode);
-  virtual void push_back(std::shared_ptr<ICommand> _command);
-
+  virtual void pushBack(std::shared_ptr<ICommand> _command);
   std::future<LoopState> getState();
 
  protected:
