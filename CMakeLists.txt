@@ -16,7 +16,7 @@ set(ICC_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
 
 include_directories(${ICC_INCLUDE_DIR})
 set(SOURCE_FILES    src/service/ProcessBus.cpp
-                    src/command/CommandLoop.cpp src/command/Builder.hpp src/command/ICommandLoop.hpp)
+                    src/command/CommandLoop.cpp)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
