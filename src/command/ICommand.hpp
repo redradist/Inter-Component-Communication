@@ -44,8 +44,10 @@ class ICommand
     virtual void processEvent(const CommandData &) = 0;
   };
 
- public:
+ protected:
   ICommand() = default;
+
+ public:
   virtual ~ICommand() = 0;
 
  public:

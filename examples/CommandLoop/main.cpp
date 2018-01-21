@@ -6,6 +6,7 @@
 #include <IComponent.hpp>
 #include <Event.hpp>
 #include <Timer.hpp>
+#include <command/Builder.hpp>
 #include <command/Command.hpp>
 #include <command/CommandLoop.hpp>
 
@@ -14,7 +15,7 @@ class ConnectionHFP
  public:
   virtual void startCommand() override {
     std::cout << "ConnectionHFP is started" << std::endl;
-    finished(icc::command::CommandResult::FAILED);
+    finished(icc::command::CommandResult::SUCCESS);
   }
 };
 
@@ -31,6 +32,12 @@ class ConnectionBTProfiles
   : public icc::command::CommandLoop {
  public:
   using icc::IComponent::IComponent;
+  ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
+    : icc::IComponent(_eventLoop) {
+    setMode(icc::command::LoopMode::Finite);
+    pushBack(std::make_shared<ConnectionHFP>());
+    pushBack(std::make_shared<ConnectionA2DP>());
+  }
 
   void processEvent(const CommandData & _data) override {
     icc::command::CommandLoop::processEvent(_data);
@@ -50,9 +57,10 @@ class ConnectionBTProfiles
 
 class Connect
     : public icc::command::CommandLoop {
- public:
+ private:
   using icc::IComponent::IComponent;
 
+ public:
   void processEvent(const CommandData & _data) override {
     icc::command::CommandLoop::processEvent(_data);
     switch (_data.result_) {
@@ -72,15 +80,11 @@ class Connect
 };
 
 int main() {
+  using icc::command::Builder;
   boost::asio::io_service service_;
-  std::shared_ptr<Connect> mainLoop = std::make_shared<Connect>(&service_);
+  auto mainLoop = Builder::buildCommandLoop<Connect>(&service_);
   mainLoop->startCommand();
-  std::shared_ptr<ConnectionBTProfiles> loop =
-      std::make_shared<ConnectionBTProfiles>(&service_);
-  loop->setMode(icc::command::LoopMode::Finite);
-  loop->push_back(std::make_shared<ConnectionHFP>());
-  loop->push_back(std::make_shared<ConnectionA2DP>());
-  mainLoop->push_back(loop);
+  mainLoop->pushBack(Builder::buildCommandLoop<ConnectionBTProfiles>(&service_));
   // Start event loop
   service_.run();
   return 0;

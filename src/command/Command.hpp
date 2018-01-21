@@ -17,6 +17,11 @@ namespace command {
 
 class Command
   : public ICommand {
+  friend class Builder;
+
+ protected:
+  using ICommand::ICommand;
+
  public:
   /**
    * Default implementation of start()
