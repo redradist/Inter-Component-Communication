@@ -13,6 +13,7 @@ HelloWorldProxyClient::~HelloWorldProxyClient() { }
 void HelloWorldProxyClient::connected(v1::commonapi::HelloWorldProxy<> &) {
   std::cout << "v1::commonapi::HelloWorldProxy is connected" << std::endl;
   NewLogger::debug("v1::commonapi::HelloWorldProxy is connected");
+  requestSayHello("Denis");
 }
 
 void HelloWorldProxyClient::disconnected(v1::commonapi::HelloWorldProxy<> &) {

@@ -195,13 +195,15 @@ inline std::future<CommonAPI::CallStatus>
       {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
   {%- endfor -%}
   ) {
-    push([=] {
-      response{{method}}(_callStatus{{ ", " if method.outputs }}
-      {%- for output in method.outputs -%}
-          _{{output.name}}{{ ", " if not loop.last }}
-      {%- endfor -%}
-      );
-    });
+    if (auto client = weakClient.lock()) {
+      push([=] {
+        response{{method}}(_callStatus{{ ", " if method.outputs }}
+        {%- for output in method.outputs -%}
+            _{{output.name}}{{ ", " if not loop.last }}
+        {%- endfor -%}
+        );
+      });
+    }
   });
 }
 {%- else %}
@@ -234,7 +236,7 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
   invoke([=] {
     if (isNotify) {
       if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
-        on_{{broadcast.lower()}}_update_ = get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
+        on_{{broadcast.lower()}}_update_ = getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
@@ -242,20 +244,22 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
         {%- endfor -%}
         {%- endif -%}
         ) {
-          push([=] {
-            informationOn{{broadcast}}(
-            {%- if broadcast.parameters is not none -%}
-            {%- for parameter in broadcast.parameters -%}
-                _{{parameter.name}}{{ ", " if not loop.last }}
-            {%- endfor -%}
-            {%- endif -%}
-            );
-          });
+          if (auto client = weakClient.lock()) {
+            push([=] {
+              informationOn{{broadcast}}(
+              {%- if broadcast.parameters is not none -%}
+              {%- for parameter in broadcast.parameters -%}
+                  _{{parameter.name}}{{ ", " if not loop.last }}
+              {%- endfor -%}
+              {%- endif -%}
+              );
+            });
+          }
         });
       }
     } else {
       if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+        getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
         on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
     }
@@ -271,16 +275,18 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
   invoke([=] {
     if (isNotify) {
       if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
-        on_{{attribute.lower()}}_changed_ = get{{attribute}}Attribute().getChangedEvent().subscribe(
+        on_{{attribute.lower()}}_changed_ = getProxy()->get{{attribute}}Attribute().getChangedEvent().subscribe(
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
-          push([=] {
-            on{{attribute}}Changed(_{{attribute.name}});
-          });
+          if (auto client = weakClient.lock()) {
+            push([=] {
+              on{{attribute}}Changed(_{{attribute.name}});
+            });
+          }
         });
       }
     } else {
       if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
-        get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
+        getProxy()->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
         on_{{attribute.lower()}}_changed_ = kEmptySubscription;
       }
     }
