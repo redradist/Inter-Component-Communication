@@ -11,6 +11,7 @@
 
 #include <CommonAPI/CommonAPI.hpp>
 #include <type_traits>
+#include <IComponent.hpp>
 #include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>
 
@@ -21,8 +22,9 @@ namespace commonapi {
 template< template< typename ... _AttributeExtensions > class Proxy,
           typename Logger = icc::logger::DummyLogger >
 class CommonAPIClient
-    : public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> >
-    , public virtual Logger {
+    : public virtual IComponent
+    , public virtual Logger
+    , public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> > {
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
  public:
@@ -34,7 +36,10 @@ class CommonAPIClient
                   const std::string &_instance)
     : domain_(_domain)
     , instance_(_instance) {
-    Logger::debug("Constructor CommonAPIClient(const std::string &_domain, const std::string &_instance)");
+    push([=] {
+      Logger::debug("Constructor CommonAPIClient(const std::string &_domain, const std::string &_instance)");
+      initClient(domain_, instance_);
+    });
   }
 
   CommonAPIClient(CommonAPIClient const &) = default;
@@ -48,60 +53,76 @@ class CommonAPIClient
 
  public:
   /**
-   *
+   * Method for initialization of client
+   * @param _domain Domain name
+   * @param _instance Instance string
    */
-  void initClient(const std::string & _domain = std::string(),
-                  const std::string & _instance = std::string()) {
-    if (not proxy_ptr_ && !domain_.empty() && !instance_.empty()) {
-      proxy_ptr_ = std::unique_ptr< Proxy<> >(new Proxy<>([=]() {
-        Logger::debug("Building CommonAPIClient ...");
-        std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
-        auto proxy = runtime->buildProxy<Proxy>(domain_, instance_);
-        if (!proxy) {
-          Logger::error("proxy is nullptr");
-        } else {
-          Logger::debug("CommonAPIClient is built successfully !!");
-          std::weak_ptr<CommonAPIClient> weakClient = this->shared_from_this();
-          proxy->getProxyStatusEvent().subscribe(
-          [=](const CommonAPI::AvailabilityStatus & _status) mutable {
-            if (auto client = weakClient.lock()) {
-              if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-                Logger::debug("CommonAPIClient is connected");
-                connected(*proxy);
-              } else {
-                Logger::debug("CommonAPIClient is disconnected");
-                disconnected(*proxy);
+  void initClient(const std::string & _domain,
+                  const std::string & _instance) {
+    invoke([=] {
+      if (not proxy_ptr_ && !domain_.empty() && !instance_.empty()) {
+        proxy_ptr_ = std::unique_ptr<Proxy<> >(new Proxy<>([=]() {
+          Logger::debug("Building CommonAPIClient ...");
+          std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
+          auto proxy = runtime->buildProxy<Proxy>(domain_, instance_);
+          if (!proxy) {
+            Logger::error("proxy is nullptr");
+          } else {
+            Logger::debug("CommonAPIClient is built successfully !!");
+            std::weak_ptr<CommonAPIClient> weakClient = this->shared_from_this();
+            proxy->getProxyStatusEvent().subscribe(
+            [=](const CommonAPI::AvailabilityStatus &_status) mutable {
+              if (auto client = weakClient.lock()) {
+                client->push([=] {
+                  if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
+                    Logger::debug("CommonAPIClient is connected");
+                    connected(*proxy);
+                  } else {
+                    Logger::debug("CommonAPIClient is disconnected");
+                    disconnected(*proxy);
+                  }
+                });
               }
-            }
-          });
-        }
-        return proxy;
-      }()));
-    }
+            });
+          }
+          return proxy;
+        }()));
+      }
+    });
   }
 
   /**
-   *
+   * Method for reinitialization of client
+   * @param _domain Domain name
+   * @param _instance Instance string
    */
-  void reinitClient() {
-    proxy_ptr_.reset();
-    initClient();
+  void reinitClient(const std::string & _domain,
+                    const std::string & _instance) {
+    invoke([=] {
+      proxy_ptr_.reset();
+      initClient(_domain, _instance);
+    });
   }
 
   /**
-   *
+   * Method for deinitialization of client
    */
   void deinitClient() {
-    proxy_ptr_.reset();
+    invoke([=] {
+      proxy_ptr_.reset();
+    });
   }
 
   virtual void connected(Proxy<> &) = 0;
   virtual void disconnected(Proxy<> &) = 0;
 
  protected:
-  std::unique_ptr< Proxy<> > proxy_ptr_;
+  Proxy<> * getProxy() const {
+    return proxy_ptr_.get();
+  }
 
  private:
+  std::unique_ptr< Proxy<> > proxy_ptr_;
   std::string domain_;
   std::string instance_;
 };

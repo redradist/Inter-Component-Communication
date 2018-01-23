@@ -13,7 +13,6 @@ int main() {
 //      helloWorldClient.requestSayHello("Denis");
 //    }
 //  });
-  helloWorldClient->initClient();
   while (true) {
     std::cout << "Waiting for calls... (Abort with CTRL+C)" << std::endl;
     helloWorldClient->exec();
