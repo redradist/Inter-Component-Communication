@@ -116,7 +116,6 @@ class CommonAPIClient
   virtual void connected(Proxy<> &) = 0;
   virtual void disconnected(Proxy<> &) = 0;
 
- protected:
   Proxy<> * getProxy() const {
     return proxy_ptr_.get();
   }
