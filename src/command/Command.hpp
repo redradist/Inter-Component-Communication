@@ -27,6 +27,7 @@ class Command
    * Default implementation of start()
    */
   virtual void startCommand() override {
+    is_started = true;
     finished(CommandResult::SUCCESS);
   }
 
@@ -34,6 +35,7 @@ class Command
    * Default implementation of resume()
    */
   virtual void resumeCommand() override {
+    is_suspened = false;
     finished(CommandResult::FAILED);
   }
 
@@ -41,6 +43,7 @@ class Command
    * Default implementation of suspend()
    */
   virtual void suspendCommand() override {
+    is_suspened = true;
     finished(CommandResult::FAILED);
   }
 
@@ -48,6 +51,7 @@ class Command
    * Default implementation of stop()
    */
   virtual void stopCommand() override {
+    is_finished = true;
     finished(CommandResult::ABORTED);
   }
 
@@ -55,6 +59,22 @@ class Command
     return static_cast<int>(CommandTypes::COMMAND);
   }
 
+//  virtual bool isStarted() const override {
+//    return is_started;
+//  }
+//
+//  virtual bool isSuspended() const override {
+//    return is_suspened;
+//  }
+//
+//  virtual bool isFinished() const override {
+//    return is_finished;
+//  }
+
+ private:
+  bool is_started = false;
+  bool is_suspened = false;
+  bool is_finished = false;
 };
 
 }

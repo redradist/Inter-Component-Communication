@@ -22,18 +22,59 @@ namespace icc {
 namespace command {
 
 class CommandLoop
-    : public icc::helpers::virtual_enable_shared_from_this<CommandLoop>,
-      public virtual IComponent,
-      public ICommandLoop,
-      public ICommand::IListener {
-  friend class Builder;
-
+    : public virtual IComponent
+    , public ICommandLoop
+    , public ICommand::IListener
+    , public icc::helpers::virtual_enable_shared_from_this<CommandLoop> {
  protected:
   /**
-   * Delegate constructors from IComponent
+   * Delegate constructor. Needed for inheritance
    */
-  using IComponent::IComponent;
-  CommandLoop() = default;
+  CommandLoop()
+      : IComponent(nullptr) {
+  }
+
+ private:
+  friend class Builder;
+  /**
+   * Delegate constructor
+   */
+  CommandLoop(std::nullptr_t)
+      : IComponent(nullptr) {
+  }
+
+  /**
+   * Constructor for initializing within event loop created outside.
+   * Owner of this pointer is not we
+   * @param _eventLoop Event loop that will be used
+   */
+  CommandLoop(boost::asio::io_service *_eventLoop)
+      : IComponent(_eventLoop) {
+  }
+
+  /**
+   * Constructor for initializing within event loop created outside
+   * @param _eventLoop Event loop that will be used
+   */
+  CommandLoop(std::shared_ptr<boost::asio::io_service> _eventLoop)
+      : IComponent(_eventLoop) {
+  }
+
+  /**
+   * Used to share event loop of parent object
+   * @param _parent Parent compenent that will share event loop
+   */
+  CommandLoop(IComponent *_parent)
+      : IComponent(_parent) {
+  }
+
+  /**
+   * Used to share event loop of parent object
+   * @param _parent Parent compenent that will share event loop
+   */
+  CommandLoop(std::shared_ptr<IComponent> _parent)
+      : IComponent(_parent) {
+  }
 
  public:
   virtual ~CommandLoop() = default;

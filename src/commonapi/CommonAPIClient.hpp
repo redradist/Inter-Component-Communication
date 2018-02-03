@@ -28,17 +28,17 @@ class CommonAPIClient
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
  public:
-  CommonAPIClient() {
+  CommonAPIClient()
+    : IComponent(nullptr) {
     Logger::debug("Constructor CommonAPIClient()");
   }
 
   CommonAPIClient(const std::string &_domain,
                   const std::string &_instance)
-    : domain_(_domain)
-    , instance_(_instance) {
+    : IComponent(nullptr) {
     push([=] {
       Logger::debug("Constructor CommonAPIClient(const std::string &_domain, const std::string &_instance)");
-      initClient(domain_, instance_);
+      initClient(_domain, _instance);
     });
   }
 
@@ -60,11 +60,11 @@ class CommonAPIClient
   void initClient(const std::string & _domain,
                   const std::string & _instance) {
     invoke([=] {
-      if (not proxy_ptr_ && !domain_.empty() && !instance_.empty()) {
+      if (not proxy_ptr_ && !_domain.empty() && !_instance.empty()) {
         proxy_ptr_ = std::unique_ptr<Proxy<> >(new Proxy<>([=]() {
           Logger::debug("Building CommonAPIClient ...");
           std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
-          auto proxy = runtime->buildProxy<Proxy>(domain_, instance_);
+          auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
           if (!proxy) {
             Logger::error("proxy is nullptr");
           } else {
@@ -122,8 +122,6 @@ class CommonAPIClient
 
  private:
   std::unique_ptr< Proxy<> > proxy_ptr_;
-  std::string domain_;
-  std::string instance_;
 };
 
 }
