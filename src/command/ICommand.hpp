@@ -73,13 +73,7 @@ class ICommand
   /**
    * Sections that described Command Meta Data
    */
-  virtual int getCommandType() = 0;
-//
-//  virtual bool isStarted() const = 0;
-//
-//  virtual bool isSuspended() const = 0;
-//
-//  virtual bool isFinished() const = 0;
+  virtual int getCommandType() const = 0;
 
  public:
   /**

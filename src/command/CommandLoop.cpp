@@ -119,7 +119,7 @@ void CommandLoop::finished(const CommandResult & _result) {
   });
 }
 
-int CommandLoop::getCommandType() {
+int CommandLoop::getCommandType() const {
   return static_cast<int>(CommandTypes::LOOP);
 }
 

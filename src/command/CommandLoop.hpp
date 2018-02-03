@@ -105,7 +105,7 @@ class CommandLoop
   /**
    * Overridden getting command type method
    */
-  virtual int getCommandType() override;
+  virtual int getCommandType() const override;
 
   /**
    * Overridden exit method from IComponent
