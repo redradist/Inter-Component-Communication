@@ -38,6 +38,7 @@ class ICommand
 
   class IListener : public virtual IComponent {
    public:
+    IListener() : IComponent(nullptr) {}
     /**
      * Method proved by derived class to listen results of command
      */
@@ -72,7 +73,7 @@ class ICommand
   /**
    * Sections that described Command Meta Data
    */
-  virtual int getCommandType() = 0;
+  virtual int getCommandType() const = 0;
 
  public:
   /**

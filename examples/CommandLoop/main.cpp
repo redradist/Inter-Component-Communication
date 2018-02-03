@@ -30,8 +30,8 @@ class ConnectionA2DP
 
 class ConnectionBTProfiles
   : public icc::command::CommandLoop {
- public:
-  using icc::IComponent::IComponent;
+ private:
+  friend class icc::command::Builder;
   ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
     : icc::IComponent(_eventLoop) {
     setMode(icc::command::LoopMode::Finite);
@@ -39,6 +39,7 @@ class ConnectionBTProfiles
     pushBack(std::make_shared<ConnectionA2DP>());
   }
 
+ public:
   void processEvent(const CommandData & _data) override {
     icc::command::CommandLoop::processEvent(_data);
     switch (_data.result_) {
@@ -56,9 +57,12 @@ class ConnectionBTProfiles
 };
 
 class Connect
-    : public icc::command::CommandLoop {
+  : public icc::command::CommandLoop {
  private:
-  using icc::IComponent::IComponent;
+  friend class icc::command::Builder;
+  Connect(boost::asio::io_service *_eventLoop)
+    : icc::IComponent(_eventLoop) {
+  }
 
  public:
   void processEvent(const CommandData & _data) override {

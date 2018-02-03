@@ -29,14 +29,16 @@ class CommonAPIService
   static_assert(icc::helpers::is_base_of_template<Service, CommonAPI::Stub>::value,
                 "Service does not derived from CommonAPI::Stub");
  public:
-  CommonAPIService() {
+  CommonAPIService()
+    : IComponent(nullptr) {
     Logger::debug("Constructor CommonAPIService()");
   }
 
   CommonAPIService(const std::string &_domain,
                    const std::string &_instance)
-      : domain_(_domain),
-        instance_(_instance) {
+    : IComponent(nullptr)
+    , domain_(_domain)
+    , instance_(_instance) {
     Logger::debug("Constructor CommonAPIService(const std::string &_domain, const std::string &_instance)");
     registerService(domain_, instance_);
   }

@@ -53,6 +53,18 @@ class {{class_name}}
  public:
   using icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                          Logger >::CommonAPIClient;
+  {{class_name}}()
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >() {
+  }
+
+  {{class_name}}(const std::string &_domain,
+                 const std::string &_instance)
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(
+        _domain,
+        _instance) {
+  }
 
  public:
   {%- if methods is not none and methods|length > 0 %}

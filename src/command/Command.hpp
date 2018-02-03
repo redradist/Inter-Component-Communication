@@ -51,10 +51,9 @@ class Command
     finished(CommandResult::ABORTED);
   }
 
-  virtual int getCommandType() override {
+  virtual int getCommandType() const override {
     return static_cast<int>(CommandTypes::COMMAND);
   }
-
 };
 
 }
