@@ -48,7 +48,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
                         OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
                         DEPENDS ${FIDL}
                         COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
-                        COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/wrapper_generator.py
+                        COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                         ${FIDL}
                         ${GENERATOR_PATH}
                         --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClientLogged.hpp.jinja2
@@ -61,7 +61,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
                         OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
                         DEPENDS ${FIDL}
                         COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
-                        COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/commonapi_tools/wrapper_generator.py
+                        COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                         ${FIDL}
                         ${GENERATOR_PATH}
                         --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClient.hpp.jinja2
