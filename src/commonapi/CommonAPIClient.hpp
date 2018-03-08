@@ -42,16 +42,8 @@ class CommonAPIClient
     });
   }
 
-  CommonAPIClient(CommonAPIClient const & _client)
-    : IComponent(_client->getEventLoop())
-    , icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> >(_client)
-    , proxy_ptr_(_client.proxy_ptr_) {
-  }
-
-  CommonAPIClient & operator=(CommonAPIClient const & _client) {
-    proxy_ptr_ = _client.proxy_ptr_;
-  }
-
+  CommonAPIClient(CommonAPIClient const &) = default;
+  CommonAPIClient & operator=(CommonAPIClient const &) = default;
   CommonAPIClient(CommonAPIClient &&) = delete;
   CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 
