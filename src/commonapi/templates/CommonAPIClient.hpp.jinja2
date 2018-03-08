@@ -61,16 +61,6 @@ class {{class_name}}
         _instance) {
   }
 
-  {{class_name}}({{class_name}} * _client)
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(_client) {
-  }
-
-  {{class_name}}(std::shared_ptr<{{class_name}}> _client)
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(_client) {
-  }
-
  public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
