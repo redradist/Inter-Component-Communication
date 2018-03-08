@@ -18,6 +18,6 @@ set(SOURCE_FILES    src/service/ProcessBus.cpp
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
-                           PUBLIC ${ICC_INCLUDE_DIR})
+                           PUBLIC ${ICC_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} boost_system
                                       pthread)

@@ -28,7 +28,7 @@
 #include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
-#include <v{{service_version}}/{{type_collection.path}}.hpp>
+#include <v{{type_collection.major}}/{{type_collection.path}}.hpp>
 {%- endfor %}
 {%- endif %}
 #include <commonapi/CommonAPIService.hpp>
@@ -42,7 +42,7 @@ using v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
 using v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
-using v{{service_version}}::{{type_collection.type}};
+using v{{type_collection.major}}::{{type_collection.type}};
 {%- endfor %}
 {%- endif %}
 

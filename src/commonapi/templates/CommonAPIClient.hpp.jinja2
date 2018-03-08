@@ -26,7 +26,7 @@
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
-#include <v{{client_version}}/{{type_collection.path}}.hpp>
+#include <v{{type_collection.major}}/{{type_collection.path}}.hpp>
 {%- endfor %}
 {%- endif %}
 #include <commonapi/CommonAPIClient.hpp>
@@ -40,7 +40,7 @@ using v{{client_version}}::{{package_ns}}::{{client_name}}Proxy;
 using v{{client_version}}::{{package_ns}}::{{client_name}}ProxyDefault;
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
-using v{{client_version}}::{{type_collection.type}};
+using v{{type_collection.major}}::{{type_collection.type}};
 {%- endfor %}
 {%- endif %}
 
