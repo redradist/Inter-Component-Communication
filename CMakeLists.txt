@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION ${CMAKE_VERSION})
 # This comented lines only for testing purposes
 #set(CMAKE_C_COMPILER "clang" )
 #set(CMAKE_CXX_COMPILER "clang++" )
@@ -11,10 +11,8 @@ project(ICC)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src PARENT_SCOPE)
-set(ICC_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
+include(icc_envoriment.cmake)
 
-include_directories(${ICC_INCLUDE_DIR})
 set(SOURCE_FILES    src/service/ProcessBus.cpp
                     src/command/CommandLoop.cpp)
 
