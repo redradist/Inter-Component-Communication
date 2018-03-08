@@ -12,7 +12,6 @@ project(ICC)
 set(CMAKE_CXX_STANDARD 11)
 
 include(icc_envoriment.cmake)
-include_directories(/usr/local/lib/boost/include)
 
 set(SOURCE_FILES    src/service/ProcessBus.cpp
                     src/command/CommandLoop.cpp)
