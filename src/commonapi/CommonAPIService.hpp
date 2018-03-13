@@ -28,7 +28,7 @@ class CommonAPIService
     , public icc::helpers::virtual_enable_shared_from_this< CommonAPIService<Service, Logger> >{
   static_assert(icc::helpers::is_base_of_template<Service, CommonAPI::Stub>::value,
                 "Service does not derived from CommonAPI::Stub");
- public:
+ protected:
   CommonAPIService()
     : IComponent(nullptr) {
     Logger::debug("Constructor CommonAPIService()");

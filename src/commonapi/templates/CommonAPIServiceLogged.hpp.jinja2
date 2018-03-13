@@ -51,7 +51,7 @@ class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                              Logger > {
- public:
+ protected:
   {{class_name}}()
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >() {

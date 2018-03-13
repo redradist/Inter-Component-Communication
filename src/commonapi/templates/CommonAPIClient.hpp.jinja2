@@ -47,7 +47,7 @@ using v{{type_collection.major}}::{{type_collection.type}};
 class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy > {
- public:
+ protected:
   {{class_name}}()
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >() {
