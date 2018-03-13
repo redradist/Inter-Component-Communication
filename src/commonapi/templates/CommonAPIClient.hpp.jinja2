@@ -48,7 +48,18 @@ class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy > {
  protected:
-  using icc::commonapi::CommonAPIClient< {{client_name}}Proxy >::CommonAPIClient;
+  {{class_name}}()
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >() {
+  }
+
+  {{class_name}}(const std::string &_domain,
+                 const std::string &_instance)
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(
+      _domain,
+      _instance) {
+  }
 
  public:
   {%- if methods is not none and methods|length > 0 %}
