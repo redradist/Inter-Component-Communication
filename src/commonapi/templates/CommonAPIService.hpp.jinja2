@@ -49,19 +49,8 @@ using v{{type_collection.major}}::{{type_collection.type}};
 class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
- protected:
-  {{class_name}}()
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >() {
-  }
-
-  {{class_name}}(const std::string &_domain,
-                 const std::string &_instance)
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >(
-        _domain,
-        _instance) {
-  }
+ public:
+  using icc::commonapi::CommonAPIService< {{service_name}}StubDefault >::CommonAPIService;
 
  public:
   {%- if methods is not none and methods|length > 0 %}
@@ -201,15 +190,15 @@ void {{class_name}}::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::
 {%- for broadcast in broadcasts %}
 inline
 void {{class_name}}::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
-  {%- if broadcast.parameters is not none -%}
-  {%- for parameter in broadcast.parameters -%}
-  {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
-  {%- endfor -%}
-  {%- endif -%}
-  {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
+{%- if broadcast.parameters is not none -%}
+{%- for parameter in broadcast.parameters -%}
+{{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+{%- endfor -%}
+{%- endif -%}
+{{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
   invoke([=] {
-    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} is called");
+    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}
     _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
