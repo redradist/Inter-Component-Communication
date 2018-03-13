@@ -11,10 +11,8 @@
 
 #include <memory>
 #include <type_traits>
-#include "ICommand.hpp"
-#include "ICommandLoop.hpp"
-#include "Command.hpp"
-#include "CommandLoop.hpp"
+#include "command/Command.hpp"
+#include "command/CommandLoop.hpp"
 
 namespace icc {
 

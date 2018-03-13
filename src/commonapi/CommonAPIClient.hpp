@@ -27,7 +27,7 @@ class CommonAPIClient
     , public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> > {
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
- public:
+ protected:
   CommonAPIClient()
     : IComponent(nullptr) {
     Logger::debug("Constructor CommonAPIClient()");
@@ -42,8 +42,13 @@ class CommonAPIClient
     });
   }
 
-  CommonAPIClient(CommonAPIClient const &) = default;
-  CommonAPIClient & operator=(CommonAPIClient const &) = default;
+  CommonAPIClient(const std::shared_ptr<CommonAPIClient> _client)
+    : IComponent(_client->getEventLoop()) {
+    Logger::debug("Copy constructor CommonAPIClient()");
+  }
+
+  CommonAPIClient(CommonAPIClient const &) = delete;
+  CommonAPIClient & operator=(CommonAPIClient const &) = delete;
   CommonAPIClient(CommonAPIClient &&) = delete;
   CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 

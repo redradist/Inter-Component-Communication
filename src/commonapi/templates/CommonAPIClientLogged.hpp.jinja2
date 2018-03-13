@@ -50,9 +50,7 @@ class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                             Logger > {
- public:
-  using icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
-                                         Logger >::CommonAPIClient;
+ protected:
   {{class_name}}()
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >() {
