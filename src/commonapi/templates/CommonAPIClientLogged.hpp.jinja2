@@ -259,7 +259,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
     Logger::debug("notifyOn{{broadcast}}Update is called");
     if (isNotify) {
       if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        warning("{{broadcast}} is already subscribed !!");
+        Logger::warning("{{broadcast}} is already subscribed !!");
       } else {
         Logger::debug("Subscribing on {{broadcast}} ...");
         std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
@@ -288,7 +288,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
       }
     } else {
       if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
-        warning("{{broadcast}} is not subscribed !!");
+        Logger::warning("{{broadcast}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{broadcast}} ...");
         this->getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
@@ -309,7 +309,7 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
     Logger::debug("notifyOn{{attribute}}Update is called");
     if (isNotify) {
       if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
-        warning("{{attribute}} is already subscribed !!");
+        Logger::warning("{{attribute}} is already subscribed !!");
       } else {
         Logger::debug("Subscribing on {{attribute}} ...");
         std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
@@ -326,7 +326,7 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
       }
     } else {
       if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
-        warning("{{attribute}} is not subscribed !!");
+        Logger::warning("{{attribute}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{attribute}} ...");
         this->getProxy()->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
