@@ -51,7 +51,7 @@ class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                              Logger > {
- public:
+ protected:
   using icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                           Logger >::CommonAPIService;
  public:
@@ -209,7 +209,7 @@ void {{class_name}}< Logger >::fire{{broadcast}}{{ 'Selective' if broadcast.is_s
   {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
   invoke([=] {
-    Logger::debug("fire{{broadcast}}Event is called");
+    Logger::debug("fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} is called");
     {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}

@@ -50,7 +50,7 @@ class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                             Logger > {
- public:
+ protected:
   using icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                          Logger >::CommonAPIClient;
 
@@ -201,7 +201,7 @@ inline std::future<CommonAPI::CallStatus>
 ) {
   Logger::debug("request{{method}} is called");
   std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
-  return getProxy()->{{method.name}}Async(
+  return this->getProxy()->{{method.name}}Async(
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{ ", " if not loop.last }}
@@ -237,7 +237,7 @@ inline CommonAPI::CallStatus
 ) {
   Logger::debug("request{{method}} is called");
   CommonAPI::CallStatus callStatus;
-  getProxy()->{{method.name}}(
+  this->getProxy()->{{method.name}}(
     {%- if method.inputs is not none -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{", "}}
@@ -263,7 +263,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
       } else {
         Logger::debug("Subscribing on {{broadcast}} ...");
         std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
-        on_{{broadcast.lower()}}_update_ = getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
+        on_{{broadcast.lower()}}_update_ = this->getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
@@ -291,7 +291,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
         warning("{{broadcast}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{broadcast}} ...");
-        getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+        this->getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
         on_{{broadcast.lower()}}_update_ = kEmptySubscription;
       }
     }
@@ -313,7 +313,7 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
       } else {
         Logger::debug("Subscribing on {{attribute}} ...");
         std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
-        on_{{attribute.lower()}}_changed_ = getProxy()->get{{attribute}}Attribute().getChangedEvent().subscribe(
+        on_{{attribute.lower()}}_changed_ = this->getProxy()->get{{attribute}}Attribute().getChangedEvent().subscribe(
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
           if (auto client = weakClient.lock()) {
             push([=] {
@@ -329,7 +329,7 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
         warning("{{attribute}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{attribute}} ...");
-        getProxy()->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
+        this->getProxy()->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
         on_{{attribute.lower()}}_changed_ = kEmptySubscription;
       }
     }

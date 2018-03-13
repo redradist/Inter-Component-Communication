@@ -49,7 +49,7 @@ using v{{type_collection.major}}::{{type_collection.type}};
 class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
- public:
+ protected:
   using icc::commonapi::CommonAPIService< {{service_name}}StubDefault >::CommonAPIService;
 
  public:
