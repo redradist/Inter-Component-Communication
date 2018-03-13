@@ -123,7 +123,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override request{{method}}
     // This method will be called in thread of IComponent
-    this->Logger::warning("Default implementation of request{{method}}");
+    Logger::warning("Default implementation of request{{method}}");
   }
   {%- endfor %}
   {%- endif %}
@@ -137,8 +137,8 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override querySet{{attribute}}Attribute
     // This method will be called in thread of IComponent
-    this->Logger::warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
-    this->{{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
+    Logger::warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
   }
   {%- endif %}
   {%- endfor %}
@@ -158,8 +158,8 @@ void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::
 {{ ", "}}{{service_name}}Stub::{{method.name}}Reply_t _reply
 {%- endif -%}
 ) {
-  this->invoke([=] {
-    this->Logger::debug("request{{method}} is called");
+  invoke([=] {
+    Logger::debug("request{{method}} is called");
     request{{method}}(_client
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {{ ", " }}{%- for input in method.inputs -%}
@@ -179,17 +179,17 @@ void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::
 template< typename Logger >
 inline
 void {{class_name}}< Logger >::set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) {
-  this->invoke([=] {
-    this->Logger::debug("set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) is called");
-    this->{{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
+  invoke([=] {
+    Logger::debug("set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
   });
 }
 {%- if not attribute.is_read_only %}
 template< typename Logger >
 inline
 void {{class_name}}< Logger >::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
-  this->invoke([=] {
-    this->Logger::debug("querySet{{attribute}}Attribute is called");
+  invoke([=] {
+    Logger::debug("querySet{{attribute}}Attribute is called");
     querySet{{attribute}}Attribute(_client, _{{attribute.name}});
   });
 }
@@ -208,9 +208,9 @@ void {{class_name}}< Logger >::fire{{broadcast}}{{ 'Selective' if broadcast.is_s
   {%- endif -%}
   {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
-  this->invoke([=] {
-    this->Logger::debug("fire{{broadcast}}Event is called");
-    this->{{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+  invoke([=] {
+    Logger::debug("fire{{broadcast}}Event is called");
+    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}
       _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}

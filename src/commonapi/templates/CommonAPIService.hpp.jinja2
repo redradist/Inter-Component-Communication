@@ -190,12 +190,12 @@ void {{class_name}}::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::
 {%- for broadcast in broadcasts %}
 inline
 void {{class_name}}::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
-{%- if broadcast.parameters is not none -%}
-{%- for parameter in broadcast.parameters -%}
-{{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
-{%- endfor -%}
-{%- endif -%}
-{{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
+  {%- if broadcast.parameters is not none -%}
+  {%- for parameter in broadcast.parameters -%}
+  {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+  {%- endfor -%}
+  {%- endif -%}
+  {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
   invoke([=] {
     {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
