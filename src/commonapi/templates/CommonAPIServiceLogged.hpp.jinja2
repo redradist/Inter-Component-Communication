@@ -54,13 +54,13 @@ class {{class_name}}
  protected:
   {{class_name}}()
     : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >() {
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >() {
   }
 
   {{class_name}}(const std::string &_domain,
                  const std::string &_instance)
     : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >(
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >(
         _domain,
         _instance) {
   }

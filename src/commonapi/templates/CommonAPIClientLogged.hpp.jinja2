@@ -57,7 +57,7 @@ class {{class_name}}
   }
 
   {{class_name}}(const std::string &_domain,
-                   const std::string &_instance)
+                 const std::string &_instance)
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(
         _domain,
