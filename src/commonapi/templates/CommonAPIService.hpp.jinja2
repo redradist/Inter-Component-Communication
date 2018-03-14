@@ -209,7 +209,7 @@ void {{class_name}}::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective e
   {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
 ) {
   invoke([=] {
-    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} (
     {%- if broadcast.parameters is not none -%}
     {%- for parameter in broadcast.parameters -%}
     _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
