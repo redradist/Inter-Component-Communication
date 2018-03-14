@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 11)
 include(icc_envoriment.cmake)
 
 set(SOURCE_FILES    src/service/ProcessBus.cpp
-                    src/command/CommandLoop.cpp)
+                    src/command/CommandLoop.cpp src/exceptions/ICCException.hpp src/command/exception/CommandNotFound.hpp)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
