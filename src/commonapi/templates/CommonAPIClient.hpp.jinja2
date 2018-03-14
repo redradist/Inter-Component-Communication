@@ -195,7 +195,8 @@ inline std::future<CommonAPI::CallStatus>
 {%- endfor -%}
 {%- endif -%}
 ) {
-  return {{method.name}}Async(
+  std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
+  return getProxy()->{{method.name}}Async(
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{ ", " if not loop.last }}
@@ -208,11 +209,13 @@ inline std::future<CommonAPI::CallStatus>
   ) {
     if (auto client = weakClient.lock()) {
       push([=] {
-        response{{method}}(_callStatus{{ ", " if method.outputs }}
-        {%- for output in method.outputs -%}
-            _{{output.name}}{{ ", " if not loop.last }}
-        {%- endfor -%}
-        );
+        if (auto client = weakClient.lock()) {
+          response{{method}}(_callStatus{{ ", " if method.outputs }}
+          {%- for output in method.outputs -%}
+              _{{output.name}}{{ ", " if not loop.last }}
+          {%- endfor -%}
+          );
+        }
       });
     }
   });
@@ -227,7 +230,7 @@ inline CommonAPI::CallStatus
 {%- endif -%}
 ) {
   CommonAPI::CallStatus callStatus;
-  {{method.name}}(
+  getProxy()->{{method.name}}(
     {%- if method.inputs is not none -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{", "}}
@@ -247,6 +250,7 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
   invoke([=] {
     if (isNotify) {
       if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
+        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
         on_{{broadcast.lower()}}_update_ = getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
@@ -257,13 +261,15 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
         ) {
           if (auto client = weakClient.lock()) {
             push([=] {
-              informationOn{{broadcast}}(
-              {%- if broadcast.parameters is not none -%}
-              {%- for parameter in broadcast.parameters -%}
-                  _{{parameter.name}}{{ ", " if not loop.last }}
-              {%- endfor -%}
-              {%- endif -%}
-              );
+              if (auto client = weakClient.lock()) {
+                informationOn{{broadcast}}(
+                {%- if broadcast.parameters is not none -%}
+                {%- for parameter in broadcast.parameters -%}
+                    _{{parameter.name}}{{ ", " if not loop.last }}
+                {%- endfor -%}
+                {%- endif -%}
+                );
+              }
             });
           }
         });
@@ -286,12 +292,15 @@ void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
   invoke([=] {
     if (isNotify) {
       if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
+        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
         on_{{attribute.lower()}}_changed_ = getProxy()->get{{attribute}}Attribute().getChangedEvent().subscribe(
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
           if (auto client = weakClient.lock()) {
             push([=] {
-              on{{attribute}}Changed(_{{attribute.name}});
-            });
+              if (auto client = weakClient.lock()) {
+                on{{attribute}}Changed(_{{attribute.name}});
+              }
+           });
           }
         });
       }

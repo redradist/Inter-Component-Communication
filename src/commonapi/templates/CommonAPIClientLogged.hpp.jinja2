@@ -224,11 +224,13 @@ inline std::future<CommonAPI::CallStatus>
   ) {
     if (auto client = weakClient.lock()) {
       push([=] {
-        response{{method}}(_callStatus{{ ", " if method.outputs }}
+        if (auto client = weakClient.lock()) {
+          response{{method}}(_callStatus{{ ", " if method.outputs }}
           {%- for output in method.outputs -%}
-            _{{output.name}}{{ ", " if not loop.last }}
+              _{{output.name}}{{ ", " if not loop.last }}
           {%- endfor -%}
-        );
+          );
+        }
       });
     }
   });
@@ -281,13 +283,15 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
         ) {
           if (auto client = weakClient.lock()) {
             push([=] {
-              informationOn{{broadcast}}(
-              {%- if broadcast.parameters is not none -%}
-              {%- for parameter in broadcast.parameters -%}
-                  _{{parameter.name}}{{ ", " if not loop.last }}
-              {%- endfor -%}
-              {%- endif -%}
-              );
+              if (auto client = weakClient.lock()) {
+                informationOn{{broadcast}}(
+                {%- if broadcast.parameters is not none -%}
+                {%- for parameter in broadcast.parameters -%}
+                    _{{parameter.name}}{{ ", " if not loop.last }}
+                {%- endfor -%}
+                {%- endif -%}
+                );
+              }
             });
           }
         });
@@ -323,7 +327,9 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
           if (auto client = weakClient.lock()) {
             push([=] {
-              on{{attribute}}Changed(_{{attribute.name}});
+              if (auto client = weakClient.lock()) {
+                on{{attribute}}Changed(_{{attribute.name}});
+              }
             });
           }
         });
