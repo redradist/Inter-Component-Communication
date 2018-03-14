@@ -10,7 +10,7 @@
 #ifndef ICC_COMMANDLOOP_HPP
 #define ICC_COMMANDLOOP_HPP
 
-#include <queue>
+#include <deque>
 #include <future>
 #include <IComponent.hpp>
 #include <Event.hpp>
@@ -115,7 +115,24 @@ class CommandLoop
  public:
   virtual void setMode(LoopMode _mode);
   virtual void pushBack(std::shared_ptr<ICommand> _command);
-  std::future<LoopState> getState();
+  LoopState getState() override;
+  std::future<LoopState> getStateAsync() override;
+  size_t getNumberOfCommands();
+  std::future<size_t> getNumberOfCommandsAsync();
+  std::shared_ptr<ICommand> getCommandByIndex(const size_t _index);
+  std::future<std::shared_ptr<ICommand>> getCommandByIndexAsync(const size_t _index);
+  std::shared_ptr<ICommand>
+  getFirstCommandByType(const int _commandType);
+  std::future<std::shared_ptr<ICommand>>
+  getFirstCommandByTypeAsync(const int _commandType);
+  std::shared_ptr<ICommand>
+  getLastCommandByType(const int _commandType);
+  std::future<std::shared_ptr<ICommand>>
+  getLastCommandByTypeAsync(const int _commandType);
+  std::vector<std::shared_ptr<ICommand>>
+  findCommandsByType(const int _commandType);
+  std::future<std::vector<std::shared_ptr<ICommand>>>
+  findCommandsByTypeAsync(const int _commandType);
 
  protected:
   virtual void processEvent(const CommandData & _result) override;
@@ -124,7 +141,7 @@ class CommandLoop
  protected:
   LoopMode mode_ = LoopMode::Continuous;
   LoopState state_ = LoopState::INACTIVE;
-  std::queue<std::shared_ptr<ICommand>> commands_;
+  std::deque<std::shared_ptr<ICommand>> commands_;
 };
 
 }

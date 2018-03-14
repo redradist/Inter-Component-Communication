@@ -38,7 +38,8 @@ class ICommandLoop
  public:
   virtual void setMode(LoopMode _mode) = 0;
   virtual void pushBack(std::shared_ptr<ICommand> _command) = 0;
-  virtual std::future<LoopState> getState() = 0;
+  virtual LoopState getState() = 0;
+  virtual std::future<LoopState> getStateAsync() = 0;
 };
 
 }
