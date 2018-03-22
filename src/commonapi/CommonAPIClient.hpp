@@ -9,11 +9,13 @@
 #ifndef ICC_COMMONAPI_CLIENT_COMPONENT_HPP
 #define ICC_COMMONAPI_CLIENT_COMPONENT_HPP
 
-#include <CommonAPI/CommonAPI.hpp>
 #include <type_traits>
+#include <CommonAPI/CommonAPI.hpp>
 #include <IComponent.hpp>
+#include <commonapi/exceptions/CommonAPIClientError.hpp>
 #include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>
+#include <memory>
 
 namespace icc {
 
@@ -23,28 +25,56 @@ template< template< typename ... _AttributeExtensions > class Proxy,
           typename Logger = icc::logger::DummyLogger >
 class CommonAPIClient
     : public virtual IComponent
+    , public Proxy<>
     , public virtual Logger
     , public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> > {
   static_assert(std::is_base_of<CommonAPI::Proxy, Proxy<>>::value,
                 "Proxy does not derived from CommonAPI::Proxy");
- protected:
+ public:
   CommonAPIClient()
-    : IComponent(nullptr) {
-    Logger::debug("Constructor CommonAPIClient()");
+    : IComponent(nullptr)
+    , Proxy<>(nullptr) {
+    Logger::debug("CommonAPIClient()");
+    is_inited_ = false;
   }
 
   CommonAPIClient(const std::string &_domain,
                   const std::string &_instance)
-    : IComponent(nullptr) {
-    push([=] {
-      Logger::debug("Constructor CommonAPIClient(const std::string &_domain, const std::string &_instance)");
-      initClient(_domain, _instance);
-    });
+    : IComponent(nullptr)
+    , Proxy<>([=]() {
+      std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
+      auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
+      if (!proxy) {
+        throw icc::commonapi::CommonAPIClientError("Failed to create CommonAPIClient !!");
+      }
+      return proxy;
+    }()) {
+    Logger::debug("Constructor CommonAPIClient(const std::string &_domain, const std::string &_instance)");
+    is_inited_ = true;
   }
 
+  virtual ~CommonAPIClient() {
+    Logger::debug("Destructor CommonAPIClient");
+  }
+
+ protected:
   CommonAPIClient(const std::shared_ptr<CommonAPIClient> _client)
-    : IComponent(_client->getEventLoop()) {
+    : IComponent(_client->getEventLoop())
+    , Proxy<>([=]() {
+      unsubscribeFromServiceStatus();
+      return _client;
+    }()) {
     Logger::debug("Copy constructor CommonAPIClient()");
+    subscribeOnServiceStatus();
+    is_inited_ = true;
+  }
+
+ private:
+  CommonAPIClient & operator=(const std::shared_ptr<CommonAPIClient> _client) {
+    Logger::debug("operator= of CommonAPIClient()");
+    Proxy<>::operator=(*_client);
+    subscribeOnServiceStatus();
+    is_inited_ = true;
   }
 
   CommonAPIClient(CommonAPIClient const &) = delete;
@@ -52,11 +82,46 @@ class CommonAPIClient
   CommonAPIClient(CommonAPIClient &&) = delete;
   CommonAPIClient & operator=(CommonAPIClient &&) = delete;
 
-  virtual ~CommonAPIClient() {
-    Logger::debug("Destructor CommonAPIClient");
+ public:
+  void subscribeOnServiceStatus() {
+    invoke([=] {
+      Logger::debug("subscribeOnServiceStatus is called");
+      if (kEmptySubscription != on_service_status_) {
+        Logger::warning("Service Status is already subscribed !!");
+      } else {
+        Logger::debug("Subscribing on Service Status ...");
+        std::weak_ptr<CommonAPIClient> weakClient = this->shared_from_this();
+        on_service_status_ = Proxy<>::getProxyStatusEvent()
+            .subscribe(
+            [=](const CommonAPI::AvailabilityStatus & _status) mutable {
+              if (auto client = weakClient.lock()) {
+                push([=] {
+                  if (auto client = weakClient.lock()) {
+                    if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
+                      connected(*this);
+                    } else {
+                      disconnected(*this);
+                    }
+                  }
+                });
+              }
+            });
+      }
+    });
   }
 
- public:
+  void unsubscribeFromServiceStatus() {
+    invoke([=] {
+      Logger::debug("unsubscribeFromServiceStatus is called");
+      if (kEmptySubscription == on_service_status_) {
+        Logger::warning("Service Status is not subscribed !!");
+      } else {
+        Logger::debug("Unsubscribing on Service Status ...");
+        Proxy<>::getProxyStatusEvent().unsubscribe(on_service_status_);
+      }
+    });
+  }
+
   /**
    * Method for initialization of client
    * @param _domain Domain name
@@ -65,33 +130,16 @@ class CommonAPIClient
   void initClient(const std::string & _domain,
                   const std::string & _instance) {
     invoke([=] {
-      if (not proxy_ptr_ && !_domain.empty() && !_instance.empty()) {
-        proxy_ptr_ = std::unique_ptr<Proxy<> >(new Proxy<>([=]() {
-          Logger::debug("Building CommonAPIClient ...");
-          std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
-          auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
-          if (!proxy) {
-            Logger::error("proxy is nullptr");
-          } else {
-            Logger::debug("CommonAPIClient is built successfully !!");
-            std::weak_ptr<CommonAPIClient> weakClient = this->shared_from_this();
-            proxy->getProxyStatusEvent().subscribe(
-            [=](const CommonAPI::AvailabilityStatus &_status) mutable {
-              if (auto client = weakClient.lock()) {
-                client->push([=] {
-                  if (CommonAPI::AvailabilityStatus::AVAILABLE == _status) {
-                    Logger::debug("CommonAPIClient is connected");
-                    connected(*proxy);
-                  } else {
-                    Logger::debug("CommonAPIClient is disconnected");
-                    disconnected(*proxy);
-                  }
-                });
-              }
-            });
-          }
-          return proxy;
-        }()));
+      if (!is_inited_) {
+        Logger::warning("CommonAPIClient is already inited !!!");
+        Logger::warning("Deinit CommonAPIClient first !?");
+      } else {
+        if (!_domain.empty() && !_instance.empty()) {
+          *this = std::make_shared<CommonAPIClient<Proxy, Logger>>(_domain, _instance);
+          Logger::debug("CommonAPIClient inited successfully !!");
+        } else {
+          Logger::error("Failed to init CommonAPIClient !!");
+        }
       }
     });
   }
@@ -104,7 +152,7 @@ class CommonAPIClient
   void reinitClient(const std::string & _domain,
                     const std::string & _instance) {
     invoke([=] {
-      proxy_ptr_.reset();
+      deinitClient();
       initClient(_domain, _instance);
     });
   }
@@ -114,19 +162,25 @@ class CommonAPIClient
    */
   void deinitClient() {
     invoke([=] {
-      proxy_ptr_.reset();
+      disconnected(*this);
+      *this = nullptr;
+      is_inited_ = false;
     });
   }
 
   virtual void connected(Proxy<> &) = 0;
+
   virtual void disconnected(Proxy<> &) = 0;
 
-  Proxy<> * getProxy() const {
-    return proxy_ptr_.get();
-  }
-
  private:
-  std::unique_ptr< Proxy<> > proxy_ptr_;
+  bool is_inited_ = false;
+
+  const CommonAPI::Event<>::Subscription kEmptySubscription = 0;
+
+  /************************************************************
+   * Below variables for storing subscriptions on broadcasts
+   ***********************************************************/
+  CommonAPI::Event<>::Subscription on_service_status_ = kEmptySubscription;
 };
 
 }

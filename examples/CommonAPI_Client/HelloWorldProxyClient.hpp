@@ -10,6 +10,7 @@
 #include <v1/commonapi/HelloWorldProxy.hpp>
 #include <commonapi/CommonAPIClient.hpp>
 #include <HelloWorldClient.hpp>
+#include <HelloWorld2Client.hpp>
 
 class NewLogger {
  public:
@@ -38,15 +39,15 @@ class NewLogger {
 };
 
 class HelloWorldProxyClient
-  : public icc::commonapi::HelloWorldClient<>
+  : public icc::commonapi::HelloWorldClient<NewLogger>
   , public virtual NewLogger {
  public:
   HelloWorldProxyClient(const std::string &_domain,
                         const std::string &_instance);
   virtual ~HelloWorldProxyClient();
 
-  virtual void connected(v1::commonapi::HelloWorldProxy<> &);
-  virtual void disconnected(v1::commonapi::HelloWorldProxy<> &);
+  void connected(v1::commonapi::HelloWorldProxy<> &) override;
+  void disconnected(v1::commonapi::HelloWorldProxy<> &) override;
 };
 
 #endif //COMMONAPI_SERVER_HELLOWORLDSTUBIMPL_HPP

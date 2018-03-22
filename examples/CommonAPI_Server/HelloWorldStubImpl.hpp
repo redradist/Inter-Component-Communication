@@ -32,7 +32,6 @@ class DummyLogger2 {
 
 class HelloWorldStubImpl
     : public icc::commonapi::HelloWorldService<>
-    , public icc::commonapi::HelloWorld2Client<>
     , public icc::commonapi::HelloWorldClient<DummyLogger2> {
  public:
   HelloWorldStubImpl();
