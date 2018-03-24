@@ -201,9 +201,10 @@ class ICommand
    * @param _result Result with which command is finished
    */
   virtual void finished(const CommandResult & _result) {
-    State state = state_;
-    state_.store(State::FINISHED);
-    event_.operator()({shared_from_this(), _result});
+    State expected = State::ACTIVE;
+    if (state_.compare_exchange_strong(expected, State::FINISHED)) {
+      event_.operator()({shared_from_this(), _result});
+    }
   }
 
  private:
