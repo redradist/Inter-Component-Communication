@@ -5,12 +5,12 @@ It is thread safe and could be used for creating
 components that works in different threads.
 
 ## Integration
-To integrate this library in your project you just need
-in CMake add:
+To integrate this library in your project you just need in CMake add:
 add_subdirectory(<path_to_library>)
 
 ## Usage
-TODO: Write usage instructions
+For introduction to ICC library see:
+[link](docs/Tutorial.md)
 
 ## Contributing
 1. Fork it!
