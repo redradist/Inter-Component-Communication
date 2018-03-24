@@ -13,11 +13,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 include(icc_envoriment.cmake)
 
-set(SOURCE_FILES    src/service/ProcessBus.cpp
-                    src/command/CommandLoop.cpp)
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
-                           PUBLIC ${ICC_INCLUDE_DIRS})
+                           PUBLIC ${ICC_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} boost_system
                                       pthread)
