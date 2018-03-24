@@ -10,7 +10,7 @@ add_subdirectory(<path_to_library>)
 
 ## Usage
 For introduction to ICC library see:
-[link](docs/Tutorial.md)
+[Tutorial](docs/Tutorial.md)
 
 ## Contributing
 1. Fork it!
