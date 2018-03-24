@@ -96,17 +96,14 @@ class CommandLoop
    * Used to stop CommandLoop
    */
   virtual void processStopCommand() override;
-
   /**
    * Overridden exit method from ICommand
    */
   virtual void finished(const CommandResult & _result) override;
-
   /**
    * Overridden getting command type method
    */
   virtual int getCommandType() const override;
-
   /**
    * Overridden exit method from IComponent
    */
@@ -135,6 +132,9 @@ class CommandLoop
   findCommandsByTypeAsync(const int _commandType);
 
  protected:
+  /**
+   * Used to handle events from Commands
+   */
   virtual void processEvent(const CommandData & _result) override;
   virtual void nextCommand();
 

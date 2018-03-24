@@ -23,8 +23,18 @@ void CommandLoop::processStartCommand() {
 void CommandLoop::processResumeCommand() {
   invoke([=] {
     if (!commands_.empty()) {
-      auto &command = commands_.front();
-      command->resumeCommand();
+      if (!(LoopMode::MultiCommand & mode_)) {
+        auto &command = commands_.front();
+        if (State::INACTIVE == command->getState()) {
+          command->resumeCommand();
+        }
+      } else {
+        for (auto & command : commands_) {
+          if (State::INACTIVE == command->getState()) {
+            command->resumeCommand();
+          }
+        }
+      }
     }
   });
 }
@@ -32,8 +42,18 @@ void CommandLoop::processResumeCommand() {
 void CommandLoop::processSuspendCommand() {
   invoke([=] {
     if (!commands_.empty()) {
-      auto &command = commands_.front();
-      command->suspendCommand();
+      if (!(LoopMode::MultiCommand & mode_)) {
+        auto &command = commands_.front();
+        if (State::ACTIVE == command->getState()) {
+          command->suspendCommand();
+        }
+      } else {
+        for (auto & command : commands_) {
+          if (State::ACTIVE == command->getState()) {
+            command->suspendCommand();
+          }
+        }
+      }
     }
   });
 }
