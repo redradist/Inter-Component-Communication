@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-# This comented lines only for testing purposes
+project(ICC)
+
+#TODO(redra): This comented lines only for testing purposes
 #set(CMAKE_C_COMPILER "clang" )
 #set(CMAKE_CXX_COMPILER "clang++" )
 #add_definitions(-D__STRICT_ANSI__)
@@ -7,15 +9,14 @@ cmake_minimum_required(VERSION ${CMAKE_VERSION})
 #set(CMAKE_CXX_COMPILER "g++-4.8" )
 #set(CMAKE_C_COMPILER "gcc-4.9" )
 #set(CMAKE_CXX_COMPILER "g++-4.9" )
-project(ICC)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include(icc_envoriment.cmake)
+set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
+file(GLOB_RECURSE ICC_SOURCE_FILES src/*.cpp)
 
-add_library(${PROJECT_NAME} ${SOURCE_FILES})
+add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} boost_system
