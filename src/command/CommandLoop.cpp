@@ -212,9 +212,9 @@ CommandLoop::getFirstCommandByTypeAsync(const int _commandType) {
   invoke([=]() mutable {
     std::shared_ptr<ICommand> foundCommand;
     auto foundCommandIter = std::find_if(commands_.begin(), commands_.end(),
-                                         [=] (const std::shared_ptr<ICommand> & _command) {
-                                           return _commandType == _command->getCommandType();
-                                         });
+    [=] (const std::shared_ptr<ICommand> & _command) {
+      return _commandType == _command->getCommandType();
+    });
     if (commands_.end() != foundCommandIter) {
       foundCommand = *foundCommandIter;
     }
@@ -235,9 +235,9 @@ CommandLoop::getLastCommandByTypeAsync(const int _commandType) {
   invoke([=]() mutable {
     std::shared_ptr<ICommand> foundCommand;
     auto foundCommandIter = std::find_if(commands_.rbegin(), commands_.rend(),
-                                         [=] (const std::shared_ptr<ICommand> & _command) {
-                                           return _commandType == _command->getCommandType();
-                                         });
+    [=] (const std::shared_ptr<ICommand> & _command) {
+      return _commandType == _command->getCommandType();
+    });
     if (commands_.rend() != foundCommandIter) {
       foundCommand = *foundCommandIter;
     }
@@ -259,9 +259,9 @@ CommandLoop::findCommandsByTypeAsync(const int _commandType) {
     std::vector<std::shared_ptr<ICommand>> foundCommands;
     std::copy_if(commands_.begin(), commands_.end(),
                  std::back_inserter(foundCommands),
-                 [=] (const std::shared_ptr<ICommand> & _command) {
-                   return _commandType == _command->getCommandType();
-                 });
+    [=] (const std::shared_ptr<ICommand> & _command) {
+      return _commandType == _command->getCommandType();
+    });
     promise->set_value(foundCommands);
   });
   return result;
