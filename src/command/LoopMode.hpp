@@ -1,8 +1,8 @@
 /**
- * @file CommandLoop.hpp
+ * @file LoopMode.hpp
  * @author Denis Kotov
  * @date 23 Mar 2018
- * @brief Contains interface ICommandLoop
+ * @brief Contains CommandLoop LoopMode
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
