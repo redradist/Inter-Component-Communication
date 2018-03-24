@@ -41,14 +41,16 @@ using LoopModeType = std::underlying_type<LoopMode>::type;
 
 inline
 bool operator &(const LoopMode &_left, const LoopMode &_right) {
-  return static_cast<bool>(static_cast<LoopModeType>(_left) &
-         static_cast<LoopModeType>(_right));
+  return static_cast<bool>(
+            static_cast<LoopModeType>(_left) &
+            static_cast<LoopModeType>(_right));
 }
 
 inline
-bool operator |(const LoopMode &_left, const LoopMode &_right) {
-  return static_cast<bool>(static_cast<LoopModeType>(_left) |
-         static_cast<LoopModeType>(_right));
+LoopMode operator |(const LoopMode &_left, const LoopMode &_right) {
+  return static_cast<LoopMode>(
+            static_cast<LoopModeType>(_left) |
+            static_cast<LoopModeType>(_right));
 }
 
 }

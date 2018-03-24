@@ -1,6 +1,10 @@
-//
-// Created by redra on 24.03.18.
-//
+/**
+ * @file CommandStateAssert.hpp
+ * @author Denis Kotov
+ * @date 24 Mar 2018
+ * @brief Contains exception for Command State Assert for ICC library
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef COMMANDLOOP_COMMANDLOOPASSERT_HPP
 #define COMMANDLOOP_COMMANDLOOPASSERT_HPP

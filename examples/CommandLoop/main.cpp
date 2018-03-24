@@ -15,7 +15,7 @@ class ConnectionHFP
  public:
   virtual void processStartCommand() override {
     std::cout << "ConnectionHFP is started" << std::endl;
-    finished(icc::command::CommandResult::SUCCESS);
+//    finished(icc::command::CommandResult::SUCCESS);
   }
 };
 
@@ -24,7 +24,7 @@ class ConnectionA2DP
  public:
   virtual void processStartCommand() override {
     std::cout << "ConnectionA2DP is started" << std::endl;
-    finished(icc::command::CommandResult::SUCCESS);
+    finished(icc::command::CommandResult::FAILED);
   }
 };
 
@@ -34,6 +34,8 @@ class ConnectionBTProfiles
   friend class icc::command::Builder;
   ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
     : icc::IComponent(_eventLoop) {
+    setMode(icc::command::LoopMode::MultiCommand |
+            icc::command::LoopMode::Transaction);
     pushBack(std::make_shared<ConnectionHFP>());
     pushBack(std::make_shared<ConnectionA2DP>());
   }
