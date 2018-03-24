@@ -12,7 +12,7 @@
 #include <memory>
 #include <IComponent.hpp>
 #include "State.hpp"
-#include "exception/CommandStateAssert.hpp"
+#include "exceptions/CommandStateAssert.hpp"
 
 namespace icc {
 
