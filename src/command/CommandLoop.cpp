@@ -14,30 +14,23 @@ namespace icc {
 
 namespace command {
 
-void CommandLoop::startCommand() {
+void CommandLoop::processStartCommand() {
   invoke([=] {
-    if (LoopState::INACTIVE == state_) {
-      state_ = LoopState::ACTIVE;
-      nextCommand();
+    nextCommand();
+  });
+}
+
+void CommandLoop::processResumeCommand() {
+  invoke([=] {
+    if (!commands_.empty()) {
+      auto &command = commands_.front();
+      command->resumeCommand();
     }
   });
 }
 
-void CommandLoop::resumeCommand() {
+void CommandLoop::processSuspendCommand() {
   invoke([=] {
-    if (LoopState::SUSPENDED == state_) {
-      state_ = LoopState::ACTIVE;
-      if (!commands_.empty()) {
-        auto &command = commands_.front();
-        command->resumeCommand();
-      }
-    }
-  });
-}
-
-void CommandLoop::suspendCommand() {
-  invoke([=] {
-    state_ = LoopState::SUSPENDED;
     if (!commands_.empty()) {
       auto &command = commands_.front();
       command->suspendCommand();
@@ -45,21 +38,19 @@ void CommandLoop::suspendCommand() {
   });
 }
 
-void CommandLoop::stopCommand() {
+void CommandLoop::processStopCommand() {
   invoke([=] {
-    state_ = LoopState::INACTIVE;
     while (!commands_.empty()) {
       auto &command = commands_.front();
       command->stopCommand();
       commands_.pop_front();
     }
-    finished(CommandResult::ABORTED);
   });
 }
 
 void CommandLoop::setMode(LoopMode _mode) {
   invoke([=] {
-    if (LoopState::INACTIVE == state_) {
+    if (State::INACTIVE == getState()) {
       mode_ = _mode;
     }
   });
@@ -67,26 +58,86 @@ void CommandLoop::setMode(LoopMode _mode) {
 
 void CommandLoop::pushBack(std::shared_ptr<ICommand> _command) {
   invoke([=] {
-    commands_.push_back(_command);
-    if (1 == commands_.size()) {
+    auto foundCommand = std::find(commands_.begin(), commands_.end(),
+                                  _command);
+    if (commands_.end() == foundCommand) {
+      commands_.push_back(_command);
+    }
+    if (State::ACTIVE == getState()) {
+      if (1 == commands_.size() || (LoopMode::MultiCommand & mode_)) {
+        nextCommand();
+      }
+    }
+  });
+}
+
+void CommandLoop::nextCommand() {
+  if (!commands_.empty()) {
+    if (!(LoopMode::MultiCommand & mode_)) {
+      auto &command = commands_.front();
+      State commandState = command->getState();
+      if (State::ACTIVE != commandState && State::FINISHED != commandState) {
+        command->subscribe(std::static_pointer_cast<ICommand::IListener>(
+            this->icc::helpers::virtual_enable_shared_from_this<CommandLoop>::shared_from_this()));
+        command->startCommand();
+      }
+    } else {
+      for (auto & command : commands_) {
+        State commandState = command->getState();
+        if (State::ACTIVE != commandState && State::FINISHED != commandState) {
+          command->subscribe(std::static_pointer_cast<ICommand::IListener>(
+              this->icc::helpers::virtual_enable_shared_from_this<CommandLoop>::shared_from_this()));
+          command->startCommand();
+        }
+      }
+    }
+  } else if (!(LoopMode::Continuous & mode_)) {
+    if (State::ACTIVE == getState()) {
+      finished(CommandResult::SUCCESS);
+    } else {
+      finished(CommandResult::ABORTED);
+    }
+  }
+}
+
+void CommandLoop::processEvent(const CommandData & _data) {
+  invoke([=] {
+    CommandResult result = _data.result_;
+    if (!commands_.empty()) {
+      auto foundCommand = std::find(commands_.begin(), commands_.end(),
+                                    _data.p_command_);
+      if (commands_.end() != foundCommand) {
+        commands_.erase(foundCommand);
+      }
+    }
+    if (CommandResult::FAILED == result &&
+        !(LoopMode::Continuous & mode_) &&
+        (LoopMode::Transaction & mode_)) {
+      finished(CommandResult::FAILED);
+    } else {
       nextCommand();
     }
   });
 }
 
-LoopState
-CommandLoop::getState() {
-  return getStateAsync().get();
+void CommandLoop::finished(const CommandResult & _result) {
+  invoke([=] {
+    exit();
+    ICommand::finished(_result);
+  });
 }
 
-std::future<LoopState>
-CommandLoop::getStateAsync() {
-  auto promise = std::make_shared<std::promise<LoopState>>();
-  auto result = promise->get_future();
-  invoke([=]() mutable {
-    promise->set_value(state_);
+int CommandLoop::getCommandType() const {
+  return static_cast<int>(CommandTypes::LOOP);
+}
+
+void CommandLoop::exit() {
+  invoke([=]{
+    while (!commands_.empty()) {
+      commands_.pop_front();
+    }
+    IComponent::exit();
   });
-  return result;
 }
 
 std::shared_ptr<ICommand>
@@ -141,9 +192,9 @@ CommandLoop::getFirstCommandByTypeAsync(const int _commandType) {
   invoke([=]() mutable {
     std::shared_ptr<ICommand> foundCommand;
     auto foundCommandIter = std::find_if(commands_.begin(), commands_.end(),
-    [=] (const std::shared_ptr<ICommand> & _command) {
-      return _commandType == _command->getCommandType();
-    });
+                                         [=] (const std::shared_ptr<ICommand> & _command) {
+                                           return _commandType == _command->getCommandType();
+                                         });
     if (commands_.end() != foundCommandIter) {
       foundCommand = *foundCommandIter;
     }
@@ -164,9 +215,9 @@ CommandLoop::getLastCommandByTypeAsync(const int _commandType) {
   invoke([=]() mutable {
     std::shared_ptr<ICommand> foundCommand;
     auto foundCommandIter = std::find_if(commands_.rbegin(), commands_.rend(),
-    [=] (const std::shared_ptr<ICommand> & _command) {
-      return _commandType == _command->getCommandType();
-    });
+                                         [=] (const std::shared_ptr<ICommand> & _command) {
+                                           return _commandType == _command->getCommandType();
+                                         });
     if (commands_.rend() != foundCommandIter) {
       foundCommand = *foundCommandIter;
     }
@@ -188,60 +239,12 @@ CommandLoop::findCommandsByTypeAsync(const int _commandType) {
     std::vector<std::shared_ptr<ICommand>> foundCommands;
     std::copy_if(commands_.begin(), commands_.end(),
                  std::back_inserter(foundCommands),
-    [=] (const std::shared_ptr<ICommand> & _command) {
-      return _commandType == _command->getCommandType();
-    });
+                 [=] (const std::shared_ptr<ICommand> & _command) {
+                   return _commandType == _command->getCommandType();
+                 });
     promise->set_value(foundCommands);
   });
   return result;
-}
-
-void CommandLoop::nextCommand() {
-  if (LoopState::ACTIVE == state_) {
-    if (!commands_.empty()) {
-      auto & command = commands_.front();
-      command->subscribe(std::static_pointer_cast<ICommand::IListener>(
-          this->icc::helpers::virtual_enable_shared_from_this<CommandLoop>::shared_from_this()));
-      command->startCommand();
-    } else if (LoopMode::Finite == mode_) {
-      finished(CommandResult::SUCCESS);
-    }
-  }
-}
-
-void CommandLoop::processEvent(const CommandData & _data) {
-  invoke([=] {
-    CommandResult result = _data.result_;
-    if (!commands_.empty()) {
-      commands_.pop_front();
-    }
-    if (LoopMode::Finite == mode_ &&
-        CommandResult::FAILED == result) {
-      finished(CommandResult::FAILED);
-    } else {
-      nextCommand();
-    }
-  });
-}
-
-void CommandLoop::finished(const CommandResult & _result) {
-  invoke([=] {
-    exit();
-    ICommand::finished(_result);
-  });
-}
-
-int CommandLoop::getCommandType() const {
-  return static_cast<int>(CommandTypes::LOOP);
-}
-
-void CommandLoop::exit() {
-  invoke([=]{
-    while (!commands_.empty()) {
-      commands_.pop_front();
-    }
-    IComponent::exit();
-  });
 }
 
 }

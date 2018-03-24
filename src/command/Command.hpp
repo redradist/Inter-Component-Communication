@@ -26,28 +26,28 @@ class Command
   /**
    * Default implementation of start()
    */
-  virtual void startCommand() override {
+  virtual void processStartCommand() override {
     finished(CommandResult::SUCCESS);
   }
 
   /**
    * Default implementation of resume()
    */
-  virtual void resumeCommand() override {
+  virtual void processResumeCommand() override {
     finished(CommandResult::FAILED);
   }
 
   /**
    * Default implementation of suspend()
    */
-  virtual void suspendCommand() override {
+  virtual void processSuspendCommand() override {
     finished(CommandResult::FAILED);
   }
 
   /**
    * Default implementation of stop()
    */
-  virtual void stopCommand() override {
+  virtual void processStopCommand() override {
     finished(CommandResult::ABORTED);
   }
 

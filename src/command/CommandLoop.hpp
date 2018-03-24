@@ -83,19 +83,19 @@ class CommandLoop
   /**
    * Used to start CommandLoop
    */
-  virtual void startCommand() override;
+  virtual void processStartCommand() override;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resumeCommand() override;
+  virtual void processResumeCommand() override;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspendCommand() override;
+  virtual void processSuspendCommand() override;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stopCommand() override;
+  virtual void processStopCommand() override;
 
   /**
    * Overridden exit method from ICommand
@@ -113,10 +113,10 @@ class CommandLoop
   virtual void exit() override;
 
  public:
-  virtual void setMode(LoopMode _mode);
-  virtual void pushBack(std::shared_ptr<ICommand> _command);
-  LoopState getState() override;
-  std::future<LoopState> getStateAsync() override;
+  void setMode(LoopMode _mode) override;
+  void pushBack(std::shared_ptr<ICommand> _command) override;
+
+ public:
   size_t getNumberOfCommands();
   std::future<size_t> getNumberOfCommandsAsync();
   std::shared_ptr<ICommand> getCommandByIndex(const size_t _index);
@@ -139,8 +139,7 @@ class CommandLoop
   virtual void nextCommand();
 
  protected:
-  LoopMode mode_ = LoopMode::Continuous;
-  LoopState state_ = LoopState::INACTIVE;
+  LoopMode mode_ = LoopMode::Default;
   std::deque<std::shared_ptr<ICommand>> commands_;
 };
 

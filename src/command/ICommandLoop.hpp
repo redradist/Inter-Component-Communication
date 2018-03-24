@@ -11,35 +11,18 @@
 
 #include <future>
 #include "ICommand.hpp"
+#include "LoopMode.hpp"
+#include "State.hpp"
 
 namespace icc {
 
 namespace command {
-
-enum class LoopState {
-  INACTIVE,
-  ACTIVE,
-  SUSPENDED,
-};
-
-enum class LoopMode {
-  /**
-   * Should be used for setting continuous mode
-   */
-  Finite,
-  /**
-   * Should be used for setting one time mode
-   */
-  Continuous,
-};
 
 class ICommandLoop
  : public ICommand {
  public:
   virtual void setMode(LoopMode _mode) = 0;
   virtual void pushBack(std::shared_ptr<ICommand> _command) = 0;
-  virtual LoopState getState() = 0;
-  virtual std::future<LoopState> getStateAsync() = 0;
 };
 
 }
