@@ -11,6 +11,8 @@
 
 #include <memory>
 #include <IComponent.hpp>
+#include "ICommandData.hpp"
+#include "ICommandHandler.hpp"
 #include "State.hpp"
 #include "exceptions/CommandStateAssert.hpp"
 
@@ -31,7 +33,9 @@ enum class CommandTypes : int {
 };
 
 class ICommand
-  : public icc::helpers::virtual_enable_shared_from_this<ICommand> {
+  : public ICommandData
+  , public ICommandHandler
+  , public icc::helpers::virtual_enable_shared_from_this<ICommand> {
  public:
 
   struct CommandData {
@@ -109,34 +113,13 @@ class ICommand
     }
   }
 
- protected:
-  /**
-   * Used to start CommandLoop
-   */
-  virtual void processStartCommand() = 0;
-  /**
-   * Used to resume CommandLoop
-   */
-  virtual void processResumeCommand() = 0;
-  /**
-   * Used to suspend CommandLoop
-   */
-  virtual void processSuspendCommand() = 0;
-
-  /**
-   * Used to stop CommandLoop
-   */
-  virtual void processStopCommand() = 0;
-
  public:
   /**
    * Sections that described Command Meta Data
    */
-  virtual State getState() const final {
+  State getState() const final {
     return state_;
   }
-
-  virtual int getCommandType() const = 0;
 
  public:
   /**

@@ -80,38 +80,12 @@ class CommandLoop
   virtual ~CommandLoop() = default;
 
  public:
-  /**
-   * Used to start CommandLoop
-   */
-  virtual void processStartCommand() override;
-  /**
-   * Used to resume CommandLoop
-   */
-  virtual void processResumeCommand() override;
-  /**
-   * Used to suspend CommandLoop
-   */
-  virtual void processSuspendCommand() override;
-  /**
-   * Used to stop CommandLoop
-   */
-  virtual void processStopCommand() override;
-  /**
-   * Overridden exit method from ICommand
-   */
-  virtual void finished(const CommandResult & _result) override;
+  void setMode(LoopMode _mode) override;
+  void pushBack(std::shared_ptr<ICommand> _command) override;
   /**
    * Overridden getting command type method
    */
   virtual int getCommandType() const override;
-  /**
-   * Overridden exit method from IComponent
-   */
-  virtual void exit() override;
-
- public:
-  void setMode(LoopMode _mode) override;
-  void pushBack(std::shared_ptr<ICommand> _command) override;
 
  public:
   size_t getNumberOfCommands();
@@ -133,10 +107,37 @@ class CommandLoop
 
  protected:
   /**
+   * Used to start CommandLoop
+   */
+  virtual void processStartCommand() override;
+  /**
+   * Used to resume CommandLoop
+   */
+  virtual void processResumeCommand() override;
+  /**
+   * Used to suspend CommandLoop
+   */
+  virtual void processSuspendCommand() override;
+  /**
+   * Used to stop CommandLoop
+   */
+  virtual void processStopCommand() override;
+  /**
    * Used to handle events from Commands
    */
   virtual void processEvent(const CommandData & _result) override;
+  /**
+   * Overridden exit method from ICommand
+   */
+  virtual void finished(const CommandResult & _result) override;
+  /**
+   * Launch next command
+   */
   virtual void nextCommand();
+  /**
+   * Overridden exit method from IComponent
+   */
+  virtual void exit() override;
 
  protected:
   LoopMode mode_ = LoopMode::Default;

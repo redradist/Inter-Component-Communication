@@ -22,7 +22,6 @@ class Command
  protected:
   using ICommand::ICommand;
 
- public:
   /**
    * Default implementation of start()
    */
