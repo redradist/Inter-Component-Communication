@@ -6,7 +6,6 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#include <iostream>
 #include <thread>
 #include "Task.hpp"
 #include "ThreadPool.hpp"
@@ -21,7 +20,6 @@ ThreadPool::ThreadPool() {
     services_.emplace_back(new boost::asio::io_service());
     services_meta_data_.emplace(services_[i]);
     thread_pool_.emplace_back([=] {
-//      std::cout << "Started thread with id = " << std::this_thread::get_id() << std::endl << std::endl;;
       services_[i]->run();
     });
   }

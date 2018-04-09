@@ -9,10 +9,10 @@
 #ifndef ICC_THREADPOOL_HPP
 #define ICC_THREADPOOL_HPP
 
-#include <IComponent.hpp>
-#include <boost/asio/io_service.hpp>
 #include <queue>
 #include <mutex>
+#include <boost/asio/io_service.hpp>
+#include <IComponent.hpp>
 
 namespace icc {
 
