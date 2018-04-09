@@ -2,7 +2,7 @@
  * @file ThreadPool.hpp
  * @author Denis Kotov
  * @date 08 Apr 2018
- * @brief Throws when task is invalid
+ * @brief Definition of ThreadPool library
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 

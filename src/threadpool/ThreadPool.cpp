@@ -1,6 +1,10 @@
-//
-// Created by redra on 08.04.18.
-//
+/**
+ * @file ThreadPool.cpp
+ * @author Denis Kotov
+ * @date 08 Apr 2018
+ * @brief Implementation of ThreadPool support
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #include <iostream>
 #include <thread>
