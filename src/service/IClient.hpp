@@ -33,7 +33,8 @@ class IClient
    * @param _serviceName Service name, should be unique in the process
    */
   IClient(const std::string &_serviceName)
-      : service_name_(_serviceName) {
+      : IComponent(nullptr)
+      , service_name_(_serviceName) {
     push([=] {
       ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
     });
