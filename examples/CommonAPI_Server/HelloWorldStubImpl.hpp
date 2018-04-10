@@ -8,9 +8,31 @@
 #include <CommonAPI/DBus/CommonAPIDBus.hpp>
 #include <CommonAPI/CommonAPI.hpp>
 #include "HelloWorldService.hpp"
+#include "HelloWorldClient.hpp"
+#include "HelloWorld2Client.hpp"
+
+class DummyLogger2 {
+ public:
+  inline void debug(const std::string & _str) {
+    // Dummy implementation
+  }
+
+  inline void info(const std::string & _str) {
+    // Dummy implementation
+  }
+
+  inline void warning(const std::string & _str) {
+    // Dummy implementation
+  }
+
+  inline void error(const std::string & _str) {
+    // Dummy implementation
+  }
+};
 
 class HelloWorldStubImpl
-    : public icc::commonapi::HelloWorldService<> {
+    : public icc::commonapi::HelloWorldService<>
+    , public icc::commonapi::HelloWorldClient<DummyLogger2> {
  public:
   HelloWorldStubImpl();
   virtual ~HelloWorldStubImpl();

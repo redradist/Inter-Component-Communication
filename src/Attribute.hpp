@@ -7,8 +7,8 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef FORECAST_ATTRIBUTE_HPP
-#define FORECAST_ATTRIBUTE_HPP
+#ifndef ICC_ATTRIBUTE_HPP
+#define ICC_ATTRIBUTE_HPP
 
 #include "Event.hpp"
 
@@ -102,4 +102,4 @@ class Attribute
 
 }
 
-#endif //FORECAST_ATTRIBUTE_HPP
+#endif //ICC_ATTRIBUTE_HPP

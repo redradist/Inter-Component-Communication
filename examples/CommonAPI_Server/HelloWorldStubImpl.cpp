@@ -4,7 +4,8 @@
 
 #include "HelloWorldStubImpl.hpp"
 
-HelloWorldStubImpl::HelloWorldStubImpl() { }
+HelloWorldStubImpl::HelloWorldStubImpl()
+ : icc::IComponent(nullptr) { }
 HelloWorldStubImpl::~HelloWorldStubImpl() { }
 
 void HelloWorldStubImpl::requestSayHello(const std::shared_ptr<CommonAPI::ClientId> _client,

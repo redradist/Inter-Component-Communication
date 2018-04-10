@@ -10,96 +10,136 @@
 #ifndef ICC_COMMANDLOOP_HPP
 #define ICC_COMMANDLOOP_HPP
 
-#include <queue>
+#include <deque>
 #include <future>
 #include <IComponent.hpp>
 #include <Event.hpp>
 #include <helpers/memory_helpers.hpp>
-#include "ICommand.hpp"
+#include "ICommandLoop.hpp"
 
 namespace icc {
 
 namespace command {
 
-enum class LoopState {
-  INACTIVE,
-  ACTIVE,
-  SUSPENDED,
-};
-
-enum class LoopMode {
-  /**
-   * Should be used for setting continuous mode
-   */
-  Finite,
-  /**
-   * Should be used for setting one time mode
-   */
-  Continuous,
-};
-
 class CommandLoop
-    : public icc::helpers::virtual_enable_shared_from_this<CommandLoop>,
-      public virtual IComponent,
-      public ICommand,
-      public ICommand::IListener {
- public:
+    : public virtual IComponent
+    , public ICommandLoop
+    , public ICommand::IListener
+    , public icc::helpers::virtual_enable_shared_from_this<CommandLoop> {
+ protected:
   /**
-   * Delegate constructors from IComponent
+   * Delegate constructor. Needed for inheritance
    */
-  using IComponent::IComponent;
+  CommandLoop()
+      : IComponent(nullptr) {
+  }
 
-  CommandLoop() = default;
-  virtual ~CommandLoop() = default;
+ private:
+  friend class Builder;
+  /**
+   * Delegate constructor
+   */
+  CommandLoop(std::nullptr_t)
+      : IComponent(nullptr) {
+  }
+
+  /**
+   * Constructor for initializing within event loop created outside.
+   * Owner of this pointer is not we
+   * @param _eventLoop Event loop that will be used
+   */
+  CommandLoop(boost::asio::io_service *_eventLoop)
+      : IComponent(_eventLoop) {
+  }
+
+  /**
+   * Constructor for initializing within event loop created outside
+   * @param _eventLoop Event loop that will be used
+   */
+  CommandLoop(std::shared_ptr<boost::asio::io_service> _eventLoop)
+      : IComponent(_eventLoop) {
+  }
+
+  /**
+   * Used to share event loop of parent object
+   * @param _parent Parent compenent that will share event loop
+   */
+  CommandLoop(IComponent *_parent)
+      : IComponent(_parent) {
+  }
+
+  /**
+   * Used to share event loop of parent object
+   * @param _parent Parent compenent that will share event loop
+   */
+  CommandLoop(std::shared_ptr<IComponent> _parent)
+      : IComponent(_parent) {
+  }
 
  public:
+  void setMode(LoopMode _mode) override;
+  void pushBack(std::shared_ptr<ICommand> _command) override;
+  /**
+   * Overridden getting command type method
+   */
+  virtual int getCommandType() const override;
+
+ public:
+  size_t getNumberOfCommands();
+  std::future<size_t> getNumberOfCommandsAsync();
+  std::shared_ptr<ICommand> getCommandByIndex(const size_t _index);
+  std::future<std::shared_ptr<ICommand>> getCommandByIndexAsync(const size_t _index);
+  std::shared_ptr<ICommand>
+  getFirstCommandByType(const int _commandType);
+  std::future<std::shared_ptr<ICommand>>
+  getFirstCommandByTypeAsync(const int _commandType);
+  std::shared_ptr<ICommand>
+  getLastCommandByType(const int _commandType);
+  std::future<std::shared_ptr<ICommand>>
+  getLastCommandByTypeAsync(const int _commandType);
+  std::vector<std::shared_ptr<ICommand>>
+  findCommandsByType(const int _commandType);
+  std::future<std::vector<std::shared_ptr<ICommand>>>
+  findCommandsByTypeAsync(const int _commandType);
+
+ protected:
+  void helperFinished(const CommandResult & _result);
   /**
    * Used to start CommandLoop
    */
-  virtual void startCommand() override;
+  virtual void processStartCommand() override;
   /**
    * Used to resume CommandLoop
    */
-  virtual void resumeCommand() override;
+  virtual void processResumeCommand() override;
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspendCommand() override;
+  virtual void processSuspendCommand() override;
   /**
    * Used to stop CommandLoop
    */
-  virtual void stopCommand() override;
-
+  virtual void processStopCommand() override;
+  /**
+   * Used to handle events from Commands
+   */
+  virtual void processEvent(const CommandData & _result) override;
   /**
    * Overridden exit method from ICommand
    */
   virtual void finished(const CommandResult & _result) override;
-
   /**
-   * Overridden getting command type method
+   * Launch next command
    */
-  virtual int getCommandType() override;
-
+  virtual void nextCommand();
   /**
    * Overridden exit method from IComponent
    */
   virtual void exit() override;
 
- public:
-  virtual void setMode(LoopMode _mode);
-  virtual void push_back(std::shared_ptr<ICommand> _command);
-
-  std::future<LoopState> getState();
-
  protected:
-  void helperFinished(const CommandResult & _result);
-  virtual void processEvent(const CommandData & _result) override;
-  virtual void nextCommand();
-
- protected:
-  LoopMode mode_ = LoopMode::Continuous;
-  LoopState state_ = LoopState::INACTIVE;
-  std::queue<std::shared_ptr<ICommand>> commands_;
+  LoopMode mode_ = LoopMode::Default;
+  std::deque<std::shared_ptr<ICommand>> commands_;
 };
 
 }

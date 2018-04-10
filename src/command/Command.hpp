@@ -17,39 +17,42 @@ namespace command {
 
 class Command
   : public ICommand {
- public:
+  friend class Builder;
+
+ protected:
+  using ICommand::ICommand;
+
   /**
    * Default implementation of start()
    */
-  virtual void startCommand() override {
+  virtual void processStartCommand() override {
     finished(CommandResult::SUCCESS);
   }
 
   /**
    * Default implementation of resume()
    */
-  virtual void resumeCommand() override {
+  virtual void processResumeCommand() override {
     finished(CommandResult::FAILED);
   }
 
   /**
    * Default implementation of suspend()
    */
-  virtual void suspendCommand() override {
+  virtual void processSuspendCommand() override {
     finished(CommandResult::FAILED);
   }
 
   /**
    * Default implementation of stop()
    */
-  virtual void stopCommand() override {
+  virtual void processStopCommand() override {
     finished(CommandResult::ABORTED);
   }
 
-  virtual int getCommandType() override {
+  virtual int getCommandType() const override {
     return static_cast<int>(CommandTypes::COMMAND);
   }
-
 };
 
 }

@@ -20,7 +20,7 @@
 namespace icc {
 
 class IComponent {
- public:
+ private:
   /**
    * Default constructor.
    * Only with this constructor object will be owner of service_.
@@ -31,8 +31,10 @@ class IComponent {
         worker_(new boost::asio::io_service::work(*service_)) {
   }
 
+ public:
   /**
-   * Delegate constructor
+   * Delegate constructor.
+   * Use only in case if you want to be an OWNER of event loop !!
    */
   IComponent(std::nullptr_t)
       : IComponent() {

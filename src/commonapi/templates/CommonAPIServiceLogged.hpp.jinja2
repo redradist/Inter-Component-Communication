@@ -52,8 +52,19 @@ class {{class_name}}
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                              Logger > {
  public:
-  using icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
-                                          Logger >::CommonAPIService;
+  {{class_name}}()
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >() {
+  }
+
+  {{class_name}}(const std::string &_domain,
+    const std::string &_instance)
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >(
+      _domain,
+      _instance) {
+  }
+
  public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************

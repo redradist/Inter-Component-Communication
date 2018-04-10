@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(CommandLoop)
+project(TreadPool)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -22,9 +22,9 @@ link_directories(/usr/local/lib)
 
 set(SOURCE_FILES    main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
-add_executable(CommandLoop ${SOURCE_FILES})
-add_dependencies(CommandLoop ICC)
-target_link_libraries(CommandLoop boost_system
+add_executable(TreadPool ${SOURCE_FILES})
+add_dependencies(TreadPool ICC)
+target_link_libraries(TreadPool boost_system
         pthread
         ICC
         )

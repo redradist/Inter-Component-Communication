@@ -31,12 +31,16 @@ class IService
   /**
    * Default constructor
    */
-  IService() = default;
+  IService()
+    : IComponent(nullptr) {
+
+  }
   /**
    * Constructor which register the service
    * @param _serviceName Service name, should be unique in the process
    */
-  IService(const std::string & _serviceName) {
+  IService(const std::string & _serviceName)
+    : IComponent(nullptr) {
     registerService(_serviceName);
   }
 
