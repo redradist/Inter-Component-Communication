@@ -14,9 +14,8 @@ namespace icc {
 
 namespace pools {
 
-ThreadPool::ThreadPool() {
-  const auto kNumThreads = std::thread::hardware_concurrency();
-  for (int i = 0; i < kNumThreads; ++i) {
+ThreadPool::ThreadPool(const unsigned int _numThreads) {
+  for (int i = 0; i < _numThreads; ++i) {
     services_.emplace_back(new boost::asio::io_service());
     services_meta_data_.emplace(services_[i]);
     thread_pool_.emplace_back([=] {
@@ -36,8 +35,8 @@ ThreadPool::~ThreadPool() {
 }
 
 ThreadPool &
-ThreadPool::getPool() {
-  static ThreadPool pool;
+ThreadPool::getPool(const unsigned int _numThreads) {
+  static ThreadPool pool(_numThreads);
   return pool;
 }
 
