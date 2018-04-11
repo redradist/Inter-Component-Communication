@@ -9,7 +9,15 @@
 #ifndef ICC_ICOMMAND_HPP
 #define ICC_ICOMMAND_HPP
 
+#include <memory>
 #include <IComponent.hpp>
+#include <Event.hpp>
+#include <helpers/memory_helpers.hpp>
+
+#include "State.hpp"
+#include "ICommandData.hpp"
+#include "ICommandHandler.hpp"
+#include "exceptions/CommandStateAssert.hpp"
 
 namespace icc {
 
@@ -28,7 +36,9 @@ enum class CommandTypes : int {
 };
 
 class ICommand
-  : public icc::helpers::virtual_enable_shared_from_this<ICommand> {
+  : public ICommandData
+  , public ICommandHandler
+  , public icc::helpers::virtual_enable_shared_from_this<ICommand> {
  public:
 
   struct CommandData {
@@ -38,39 +48,81 @@ class ICommand
 
   class IListener : public virtual IComponent {
    public:
+    IListener() : IComponent(nullptr) {}
     /**
      * Method proved by derived class to listen results of command
      */
     virtual void processEvent(const CommandData &) = 0;
   };
 
+ protected:
+  ICommand() {
+    state_.store(State::INACTIVE);
+  }
+
  public:
-  ICommand() = default;
   virtual ~ICommand() = 0;
 
  public:
   /**
    * Used to start CommandLoop
    */
-  virtual void startCommand() = 0;
+  virtual void startCommand() final {
+    State expected = State::INACTIVE;
+    if (state_.compare_exchange_strong(expected, State::ACTIVE)) {
+      processStartCommand();
+    } else {
+      throw icc::command::CommandStateAssert{shared_from_this(),
+                                             "State of command is not INACTIVE"};
+    }
+  }
+
   /**
    * Used to resume CommandLoop
    */
-  virtual void resumeCommand() = 0;
+  virtual void resumeCommand() final {
+    State expected = State::SUSPENDED;
+    if (state_.compare_exchange_strong(expected, State::ACTIVE)) {
+      processResumeCommand();
+    } else {
+      throw icc::command::CommandStateAssert{shared_from_this(),
+                                             "State of command is not SUSPENDED"};
+    }
+  }
+
   /**
    * Used to suspend CommandLoop
    */
-  virtual void suspendCommand() = 0;
+  virtual void suspendCommand() final {
+    State expected = State::ACTIVE;
+    if (state_.compare_exchange_strong(expected, State::SUSPENDED)) {
+      processSuspendCommand();
+    } else {
+      throw icc::command::CommandStateAssert{shared_from_this(),
+                                             "State of command is not ACTIVE"};
+    }
+  }
+
   /**
    * Used to stop CommandLoop
    */
-  virtual void stopCommand() = 0;
+  virtual void stopCommand() final {
+    State expected = State::ACTIVE;
+    if (state_.compare_exchange_strong(expected, State::INACTIVE)) {
+      processStopCommand();
+    } else {
+      throw icc::command::CommandStateAssert{shared_from_this(),
+                                             "State of command is not ACTIVE"};
+    }
+  }
 
  public:
   /**
    * Sections that described Command Meta Data
    */
-  virtual int getCommandType() = 0;
+  State getState() const final {
+    return state_;
+  }
 
  public:
   /**
@@ -135,10 +187,14 @@ class ICommand
    * @param _result Result with which command is finished
    */
   virtual void finished(const CommandResult & _result) {
-    event_.operator()({shared_from_this(), _result});
+    State expected = State::ACTIVE;
+    if (state_.compare_exchange_strong(expected, State::FINISHED)) {
+      event_.operator()({shared_from_this(), _result});
+    }
   }
 
  private:
+  std::atomic<State> state_;
   Event<void(const CommandData &)> event_;
 };
 

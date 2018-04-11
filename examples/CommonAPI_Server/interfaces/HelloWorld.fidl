@@ -13,6 +13,7 @@ interface HelloWorld {
 
   method setSettings {
     in {
+      <** @description : the  phone book itself **>
       Int32[] setting
     }
     out {
@@ -25,6 +26,8 @@ interface HelloWorld {
     String name
     }
   }
+
+  attribute Int32 myName readonly
 }
 
 interface HelloWorld2 {
@@ -40,6 +43,7 @@ interface HelloWorld2 {
 
   method setSettings {
     in {
+      <** @description : the phone book itself **>
       Int32[] setting
     }
     out {

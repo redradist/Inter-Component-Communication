@@ -62,16 +62,12 @@ set(SOURCE_FILES main.cpp HelloWorldProxyClient.cpp HelloWorldProxyClient.hpp)
 #        COMMAND ${COMMONAPI_GENERATOR} --dest ${GENERATOR_PATH} -sk ${FIDL_FILES}
 #        COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${GENERATOR_PATH} ${FIDL_FILES}
 #)
-add_custom_target(
-        afdsaasdadsdas_commonapi_gen
-        DEPENDS ${GENERATED_FILES}
-        COMMAND echo "Generation of CommonAPI wrappers is finished")
 
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
 add_executable(
         CommonAPI_Client
         ${SOURCE_FILES}
         ${GENERATED_FILES})
-add_dependencies(CommonAPI_Client ICC afdsaasdadsdas_commonapi_gen)
+add_dependencies(CommonAPI_Client ICC)
 add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client TRUE ${CMAKE_BINARY_DIR})
 target_link_libraries(CommonAPI_Client CommonAPI CommonAPI-DBus dbus-1 boost_system)

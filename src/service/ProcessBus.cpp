@@ -14,7 +14,8 @@ namespace icc {
 
 namespace service {
 
-ProcessBus::ProcessBus() {
+ProcessBus::ProcessBus()
+  : IComponent(nullptr) {
   thread_ = std::thread([=]() {
     exec();
   });
