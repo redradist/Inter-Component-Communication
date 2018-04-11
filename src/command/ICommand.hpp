@@ -11,9 +11,12 @@
 
 #include <memory>
 #include <IComponent.hpp>
+#include <Event.hpp>
+#include <helpers/memory_helpers.hpp>
+
+#include "State.hpp"
 #include "ICommandData.hpp"
 #include "ICommandHandler.hpp"
-#include "State.hpp"
 #include "exceptions/CommandStateAssert.hpp"
 
 namespace icc {

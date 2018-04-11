@@ -53,12 +53,17 @@ class {{class_name}}
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >() {
   }
 
-  {{class_name}}(const std::string &_domain,
-    const std::string &_instance)
+  {{class_name}}(const std::string &_domain, const std::string &_instance)
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(
       _domain,
       _instance) {
+  }
+
+  {{class_name}}(std::shared_ptr<{{class_name}}> _client)
+    : icc::IComponent(_client.get())
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(_client) {
+    this->debug("Constructor {{class_name}}(std::shared_ptr<{{class_name}}> _client)");
   }
 
  public:

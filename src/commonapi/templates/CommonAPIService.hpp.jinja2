@@ -55,8 +55,7 @@ class {{class_name}}
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >() {
   }
 
-  {{class_name}}(const std::string &_domain,
-    const std::string &_instance)
+  {{class_name}}(const std::string &_domain, const std::string &_instance)
     : icc::IComponent(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >(
       _domain,

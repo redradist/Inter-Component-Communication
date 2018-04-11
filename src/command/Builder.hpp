@@ -21,17 +21,17 @@ namespace command {
 class Builder {
  public:
   template<typename _Command = Command, typename ... _Args>
-  static std::shared_ptr<ICommand> buildCommand(_Args &&... _args) {
+  static std::shared_ptr<_Command> buildCommand(_Args &&... _args) {
     static_assert(std::is_base_of<ICommand, _Command>::value,
                   "_Command is not an ICommand class");
-    return std::shared_ptr<ICommand>(new _Command(std::forward<_Args>(_args)...));
+    return std::shared_ptr<_Command>(new _Command(std::forward<_Args>(_args)...));
   }
 
   template<typename _CommandLoop = CommandLoop, typename ... _Args>
-  static std::shared_ptr<ICommandLoop> buildCommandLoop(_Args &&... _args) {
+  static std::shared_ptr<_CommandLoop> buildCommandLoop(_Args &&... _args) {
     static_assert(std::is_base_of<ICommandLoop, _CommandLoop>::value,
                   "_CommandLoop is not an ICommandLoop class");
-    return std::shared_ptr<ICommandLoop>(new _CommandLoop(std::forward<_Args>(_args)...));
+    return std::shared_ptr<_CommandLoop>(new _CommandLoop(std::forward<_Args>(_args)...));
   }
 };
 
