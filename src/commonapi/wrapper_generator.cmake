@@ -13,7 +13,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
         execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/interface_hierarchical_path.py
-                                ${FIDL}
+                                        ${FIDL}
                         OUTPUT_VARIABLE HIERARCHIC_PATHS)
         string(REGEX MATCHALL "([^;]*);"
                INTERFACE_HIERARCHIC_PATHS "${HIERARCHIC_PATHS}")
@@ -28,45 +28,74 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
             if(${SERVICE_OR_CLIENT} STREQUAL "Service")
                 set(COMMONAPI_GENERATED_FILES
                     ${COMMONAPI_GENERATED_FILES}
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+                    "${GEN_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusStubAdapter.cpp"
+                    "${GEN_DIR}/${INTERFACE_HIERARCHIC_PATH}StubDefault.cpp"
+                    "${GEN_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
             else(${SERVICE_OR_CLIENT} STREQUAL "Service")
                 set(COMMONAPI_GENERATED_FILES
                     ${COMMONAPI_GENERATED_FILES}
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
-                    "${CMAKE_BINARY_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
+                    "${GEN_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusProxy.cpp"
+                    "${GEN_DIR}/${INTERFACE_HIERARCHIC_PATH}DBusDeployment.cpp")
             endif(${SERVICE_OR_CLIENT} STREQUAL "Service")
-            set(COMMONAPI_WRAPPER_GENERATED_FILES
-                ${COMMONAPI_WRAPPER_GENERATED_FILES}
-                ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
-                ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+
             if (${IS_LOGGED})
                 message(STATUS "Logged wrappers was choosed")
-                add_custom_command(
-                        OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                if(${SERVICE_OR_CLIENT} STREQUAL "Service")
+                    set(COMMONAPI_WRAPPER_GENERATED_FILES
+                        ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                        ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+                    add_custom_command(
                         OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
                         DEPENDS ${FIDL}
                         COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
                         COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                         ${FIDL}
                         ${GENERATOR_PATH}
-                        --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClientLogged.hpp.jinja2
                         --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIServiceLogged.hpp.jinja2
-                )
+                    )
+                else(${SERVICE_OR_CLIENT} STREQUAL "Service")
+                    set(COMMONAPI_WRAPPER_GENERATED_FILES
+                        ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                        ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp)
+                    add_custom_command(
+                            OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                            DEPENDS ${FIDL}
+                            COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
+                            COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
+                            ${FIDL}
+                            ${GENERATOR_PATH}
+                            --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClientLogged.hpp.jinja2
+                    )
+                endif ()
             else()
                 message(STATUS "Simple wrappers was choosed")
-                add_custom_command(
-                        OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
+                if(${SERVICE_OR_CLIENT} STREQUAL "Service")
+                    set(COMMONAPI_WRAPPER_GENERATED_FILES
+                        ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                        ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp)
+                    add_custom_command(
                         OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Service.hpp
+                        DEPENDS ${FIDL}
+                        COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
+                        COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
+                        ${FIDL}
+                        ${GENERATOR_PATH}
+                        --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIService.hpp.jinja2
+                    )
+                else(${SERVICE_OR_CLIENT} STREQUAL "Service")
+                    set(COMMONAPI_WRAPPER_GENERATED_FILES
+                        ${COMMONAPI_WRAPPER_GENERATED_FILES}
+                        ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp)
+                    add_custom_command(
+                        OUTPUT ${GENERATOR_PATH}/${INTERFACE_NAME}Client.hpp
                         DEPENDS ${FIDL}
                         COMMAND touch ${INTERFACE_NAME}CommonAPIWrappers
                         COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                         ${FIDL}
                         ${GENERATOR_PATH}
                         --capi_client ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIClient.hpp.jinja2
-                        --capi_service ${ICC_SOURCE_DIR}/src/commonapi/templates/CommonAPIService.hpp.jinja2
-                )
+                    )
+                endif ()
             endif ()
 
         endforeach()
@@ -80,16 +109,16 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT IS_LOGGED 
     foreach(COMMONAPI_GENERATED_FILE ${COMMONAPI_GENERATED_FILES})
         if(NOT TARGET ${COMMONAPI_GENERATED_FILE})
             set(FILTERED_COMMONAPI_GENERATED_FILES
-                    ${FILTERED_COMMONAPI_GENERATED_FILES}
-                    ${COMMONAPI_GENERATED_FILE})
+                ${FILTERED_COMMONAPI_GENERATED_FILES}
+                ${COMMONAPI_GENERATED_FILE})
         endif()
     endforeach()
     if(FILTERED_COMMONAPI_GENERATED_FILES)
         add_custom_command(
-                OUTPUT ${FILTERED_COMMONAPI_GENERATED_FILES}
-                DEPENDS ${FIDL_FILES}
-                COMMAND ${COMMONAPI_GENERATOR} --dest ${GENERATOR_PATH} -sk ${FIDL_FILES}
-                COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${GENERATOR_PATH} ${FIDL_FILES}
+            OUTPUT ${FILTERED_COMMONAPI_GENERATED_FILES}
+            DEPENDS ${FIDL_FILES}
+            COMMAND ${COMMONAPI_GENERATOR} --dest ${GEN_DIR} -sk ${FIDL_FILES}
+            COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${GEN_DIR} ${FIDL_FILES}
         )
     endif()
     set_source_files_properties(${FILTERED_COMMONAPI_GENERATED_FILES} PROPERTIES GENERATED TRUE)
