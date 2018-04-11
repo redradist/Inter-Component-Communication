@@ -36,10 +36,11 @@ class ThreadPool {
   };
 
  public:
-  ThreadPool();
+  ThreadPool(const unsigned int _numThreads);
   ~ThreadPool();
 
-  static ThreadPool & getPool();
+  static ThreadPool & getPool(
+      const unsigned int _numThreads = std::thread::hardware_concurrency());
 
   /**
    * Method used to push task for execution
