@@ -77,6 +77,9 @@ class CommandLoop
   }
 
  public:
+  virtual ~CommandLoop() = default;
+
+ public:
   void setMode(LoopMode _mode) override;
   void pushBack(std::shared_ptr<ICommand> _command) override;
   /**
@@ -101,6 +104,7 @@ class CommandLoop
   findCommandsByType(const int _commandType);
   std::future<std::vector<std::shared_ptr<ICommand>>>
   findCommandsByTypeAsync(const int _commandType);
+  void clearLoop();
 
  protected:
   void helperFinished(const CommandResult & _result);

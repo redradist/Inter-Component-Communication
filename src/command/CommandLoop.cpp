@@ -70,7 +70,7 @@ void CommandLoop::processStopCommand() {
 
 void CommandLoop::setMode(LoopMode _mode) {
   invoke([=] {
-    if (State::INACTIVE == getState()) {
+    if (0 == commands_.size()) {
       mode_ = _mode;
     }
   });
@@ -274,6 +274,17 @@ CommandLoop::findCommandsByTypeAsync(const int _commandType) {
     promise->set_value(foundCommands);
   });
   return result;
+}
+
+void CommandLoop::clearLoop() {
+  invoke([=]() mutable {
+    for (auto & command : commands_) {
+      try {
+        command->stopCommand();
+      } catch(...) {
+      }
+    }
+  });
 }
 
 }
