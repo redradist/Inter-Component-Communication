@@ -104,6 +104,7 @@ class CommandLoop
   findCommandsByType(const int _commandType);
   std::future<std::vector<std::shared_ptr<ICommand>>>
   findCommandsByTypeAsync(const int _commandType);
+  void clearLoop();
 
  protected:
   /**

@@ -15,7 +15,7 @@ class ConnectionHFP
  public:
   virtual void processStartCommand() override {
     std::cout << "ConnectionHFP is started" << std::endl;
-//    finished(icc::command::CommandResult::SUCCESS);
+    finished(icc::command::CommandResult::FAILED);
   }
 };
 
@@ -24,7 +24,7 @@ class ConnectionA2DP
  public:
   virtual void processStartCommand() override {
     std::cout << "ConnectionA2DP is started" << std::endl;
-    finished(icc::command::CommandResult::FAILED);
+    finished(icc::command::CommandResult::SUCCESS);
   }
 };
 
