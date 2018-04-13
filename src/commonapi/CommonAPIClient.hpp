@@ -9,13 +9,14 @@
 #ifndef ICC_COMMONAPI_CLIENT_COMPONENT_HPP
 #define ICC_COMMONAPI_CLIENT_COMPONENT_HPP
 
+#include <memory>
 #include <type_traits>
+#include <boost/optional.hpp>
 #include <CommonAPI/CommonAPI.hpp>
 #include <IComponent.hpp>
 #include <commonapi/exceptions/CommonAPIClientError.hpp>
 #include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>
-#include <memory>
 
 namespace icc {
 
@@ -65,7 +66,6 @@ class CommonAPIClient
       return _client;
     }()) {
     Logger::debug("Copy constructor CommonAPIClient()");
-    subscribeOnServiceStatus();
     is_inited_ = true;
   }
 
@@ -73,7 +73,6 @@ class CommonAPIClient
   CommonAPIClient & operator=(const std::shared_ptr<CommonAPIClient> _client) {
     Logger::debug("operator= of CommonAPIClient()");
     Proxy<>::operator=(*_client);
-    subscribeOnServiceStatus();
     is_inited_ = true;
   }
 
@@ -86,7 +85,7 @@ class CommonAPIClient
   void subscribeOnServiceStatus() {
     invoke([=] {
       Logger::debug("subscribeOnServiceStatus is called");
-      if (kEmptySubscription != on_service_status_) {
+      if (on_service_status_) {
         Logger::warning("Service Status is already subscribed !!");
       } else {
         Logger::debug("Subscribing on Service Status ...");
@@ -113,11 +112,12 @@ class CommonAPIClient
   void unsubscribeFromServiceStatus() {
     invoke([=] {
       Logger::debug("unsubscribeFromServiceStatus is called");
-      if (kEmptySubscription == on_service_status_) {
+      if (!on_service_status_) {
         Logger::warning("Service Status is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on Service Status ...");
-        Proxy<>::getProxyStatusEvent().unsubscribe(on_service_status_);
+        Proxy<>::getProxyStatusEvent().unsubscribe(on_service_status_.get());
+        on_service_status_.reset();
       }
     });
   }
@@ -175,12 +175,10 @@ class CommonAPIClient
  private:
   bool is_inited_ = false;
 
-  const CommonAPI::Event<>::Subscription kEmptySubscription = 0;
-
   /************************************************************
    * Below variables for storing subscriptions on broadcasts
    ***********************************************************/
-  CommonAPI::Event<>::Subscription on_service_status_ = kEmptySubscription;
+  boost::optional<CommonAPI::Event<>::Subscription> on_service_status_;
 };
 
 }

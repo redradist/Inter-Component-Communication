@@ -18,6 +18,8 @@ ThreadPool::ThreadPool(const unsigned int _numThreads) {
   for (int i = 0; i < _numThreads; ++i) {
     services_.emplace_back(new boost::asio::io_service());
     services_meta_data_.emplace(services_[i]);
+  }
+  for (int i = 0; i < _numThreads; ++i) {
     thread_pool_.emplace_back([=] {
       services_[i]->run();
     });
