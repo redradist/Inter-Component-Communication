@@ -46,6 +46,7 @@ file(GLOB FIDL_FILES ./interfaces/HelloWorld.fidl)
 #list(FILTER FIDL_FILES INCLUDE REGEX ./interfaces/I*.fidl)
 message(STATUS "FIDL_FILES is ${FIDL_FILES}")
 
+set(GEN_DIR "${CMAKE_BINARY_DIR}")
 set(SOURCE_FILES main.cpp HelloWorldProxyClient.cpp HelloWorldProxyClient.hpp)
 #set(GENERATED_FILES
 #        "${CMAKE_BINARY_DIR}/v1/commonapi/HelloWorldDBusProxy.cpp"
