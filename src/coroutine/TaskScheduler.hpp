@@ -1,6 +1,10 @@
-//
-// Created by redra on 23.04.18.
-//
+/**
+ * @file TaskScheduler.hpp
+ * @author Denis Kotov
+ * @date 23 Apr 2018
+ * @brief Scheduler for starting coroutine Tasks
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_TASHSHEDULER_HPP
 #define ICC_TASHSHEDULER_HPP
@@ -25,12 +29,12 @@ class TaskScheduler
 
   TaskScheduler(std::shared_ptr<boost::asio::io_service> _eventLoop);
 
-  ~TaskScheduler();
+  virtual ~TaskScheduler();
 
   static TaskScheduler & getDefaultTaskSheduler(boost::asio::io_service *_eventLoop);
 
   template <typename _R>
-  void startTask(Task<_R> & _task) {
+  void startCoroutine(Task<_R> & _task) {
     _task.setIOService(getEventLoop());
     _task.initialStart();
   }

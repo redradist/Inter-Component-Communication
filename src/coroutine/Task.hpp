@@ -2,7 +2,7 @@
  * @file Task.hpp
  * @author Denis Kotov
  * @date 18 Apr 2018
- * @brief
+ * @brief Suspendable Task (coroutine)
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
