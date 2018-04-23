@@ -421,6 +421,7 @@ class Event<_R(_Arg0)> {
         });
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -660,6 +661,7 @@ class Event<_R(_Arg0, _Arg1)> {
         });
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -900,12 +902,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2)> {
             callback(_arg0, _arg1, _arg2);
           }
         });
-        ++listener;
-      } else {
-        // NOTE(redra): Deleting listener
-        listener = checked_listeners_.erase(listener);
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -1149,12 +1148,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3)> {
             callback(_arg0, _arg1, _arg2, _arg3);
           }
         });
-        ++listener;
-      } else {
-        // NOTE(redra): Deleting listener
-        listener = checked_listeners_.erase(listener);
       }
     }
+    clearExpiredClient();
   }
 
   /**
@@ -1401,12 +1397,9 @@ class Event<_R(_Arg0, _Arg1, _Arg2, _Arg3, _Arg4)> {
             callback(_arg0, _arg1, _arg2, _arg3, _arg4);
           }
         });
-        ++listener;
-      } else {
-        // NOTE(redra): Deleting listener
-        listener = checked_listeners_.erase(listener);
       }
     }
+    clearExpiredClient();
   }
 
   /**
