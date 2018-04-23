@@ -62,7 +62,6 @@ class CommonAPIClient
   CommonAPIClient(const std::shared_ptr<CommonAPIClient> _client)
     : IComponent(_client->getEventLoop())
     , Proxy<>([=]() {
-      unsubscribeFromServiceStatus();
       return _client;
     }()) {
     Logger::debug("Copy constructor CommonAPIClient()");
