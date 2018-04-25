@@ -48,7 +48,8 @@ icc::coroutine::Task<void> compute_value()
 //  co_await boost::posix_time::time_duration();
 //  co_await boost::posix_time::hours(5);
   std::cout << "Start timer" << std::endl;
-  co_await boost::posix_time::minutes(1);
+  co_await (boost::posix_time::minutes(1) +
+            boost::posix_time::seconds(5));
 //  co_await boost::posix_time::seconds(5);
 //  co_await boost::posix_time::milliseconds(5);
 //  co_await boost::posix_time::microseconds(5);

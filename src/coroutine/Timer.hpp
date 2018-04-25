@@ -18,7 +18,9 @@
 #include <shared_mutex>
 #include <condition_variable>
 #include <boost/optional.hpp>
+#include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <experimental/coroutine>
 
 namespace icc {
