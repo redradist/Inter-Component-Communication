@@ -20,7 +20,6 @@
 #include <boost/optional.hpp>
 #include <boost/asio/io_service.hpp>
 #include <experimental/coroutine>
-#include <Timer.hpp>
 
 namespace icc {
 
