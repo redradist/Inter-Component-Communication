@@ -9,8 +9,7 @@
 #ifndef ICC_TASHSHEDULER_HPP
 #define ICC_TASHSHEDULER_HPP
 
-#if defined(__cpp_coroutines)
-#if __cpp_coroutines >= 201703
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
 #include <boost/asio/io_service.hpp>
 #include <IComponent.hpp>
@@ -50,7 +49,6 @@ class TaskScheduler
 
 }
 
-#endif
 #endif
 
 #endif //ICC_TASHSHEDULER_HPP

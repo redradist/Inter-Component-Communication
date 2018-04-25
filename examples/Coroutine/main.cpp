@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include <coroutine/Task.hpp>
+#include <coroutine/Timer.hpp>
 #include <coroutine/TaskScheduler.hpp>
 
 std::promise<int> promise;
@@ -22,6 +23,7 @@ std::future<float> compute_value242()
 icc::coroutine::Task<float> compute_value3()
 {
   auto result = co_await compute_value242();
+
   std::cout << "icc::Task<float> compute_value3(): result = " << result << std::endl;
   co_return result;
 }
@@ -35,6 +37,22 @@ icc::coroutine::Task<void> compute_value()
 {
   auto value0 = co_await compute_value2();
   auto value1 = co_await compute_value3();
+  std::cout << "Start timer" << std::endl;
+  co_await std::chrono::duration< long, std::ratio<60> >(1);
+  std::cout << "Finished timer" << std::endl;
+//  co_await std::chrono::hours(1);
+//  co_await std::chrono::minutes(1);
+//  co_await std::chrono::seconds(1);
+//  co_await std::chrono::milliseconds(1);
+//  co_await std::chrono::microseconds(1);
+//  co_await boost::posix_time::time_duration();
+//  co_await boost::posix_time::hours(5);
+  std::cout << "Start timer" << std::endl;
+  co_await boost::posix_time::minutes(1);
+//  co_await boost::posix_time::seconds(5);
+//  co_await boost::posix_time::milliseconds(5);
+//  co_await boost::posix_time::microseconds(5);
+  std::cout << "Finished timer" << std::endl;
   co_await compute_value4();
   std::cout << "Task is finihed" << std::endl;
 }
