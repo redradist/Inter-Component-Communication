@@ -9,8 +9,7 @@
 #ifndef COROUTINELIBRARY_TASK_HPP
 #define COROUTINELIBRARY_TASK_HPP
 
-#if defined(__cpp_coroutines)
-#if __cpp_coroutines >= 201703
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
 #include <type_traits>
 #include <iostream>
@@ -441,7 +440,6 @@ struct coroutine_traits<icc::coroutine::Task<_R>, Args...> {
 
 }
 
-#endif
 #endif
 
 #endif //COROUTINELIBRARY_TASK_HPP
