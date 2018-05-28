@@ -19,7 +19,7 @@
 
 namespace icc {
 
-namespace service {
+namespace localbus {
 
 template<typename _Interface>
 class IClient
@@ -35,9 +35,7 @@ class IClient
   IClient(const std::string &_serviceName)
       : IComponent(nullptr)
       , service_name_(_serviceName) {
-    push([=] {
-      ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
-    });
+    ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
   }
 
   /**
@@ -132,7 +130,10 @@ class IClient
   };
 
  private:
-  const std::string service_name_;
+    std::shared_ptr< IClient > holder_ = std::shared_ptr< IClient >(this, [](IClient*) {
+                                                                            // NOTE(redra): Nothing need to do. Just create holder for responses and broadcasts
+                                                                          });
+    const std::string service_name_;
 };
 
 /**
