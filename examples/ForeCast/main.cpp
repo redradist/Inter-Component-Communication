@@ -6,17 +6,17 @@
 #include <IComponent.hpp>
 #include <Event.hpp>
 #include <Timer.hpp>
-#include <service/IService.hpp>
-#include <service/IClient.hpp>
+#include <localbus/IService.hpp>
+#include <localbus/IClient.hpp>
 #include "Forecast.hpp"
 
 class WeatherStation
-    : public icc::service::IService<Forecast>,
+    : public icc::localbus::IService<Forecast>,
       public icc::ITimerListener {
  public:
   WeatherStation(boost::asio::io_service & _io_service)
       : icc::IComponent(&_io_service),
-        icc::service::IService<Forecast>("WeatherStation"),
+        icc::localbus::IService<Forecast>("WeatherStation"),
         timer_(service_) {
     std::cout << "WeatherStation" << std::endl;
     // Experimentation
@@ -49,7 +49,7 @@ class WeatherStation
    * and releasing io::service
    */
   void exit() override {
-    icc::service::IService<Forecast>::exit();
+    icc::localbus::IService<Forecast>::exit();
     timer_.stop();
   }
 
@@ -68,11 +68,11 @@ class TestObserver
 };
 
 class WeatherObserver
-    : public icc::service::IClient<Forecast> {
+    : public icc::localbus::IClient<Forecast> {
  public:
   WeatherObserver(boost::asio::io_service & _io_service)
       : icc::IComponent(&_io_service),
-        icc::service::IClient<Forecast>("WeatherStation") {
+        icc::localbus::IClient<Forecast>("WeatherStation") {
     std::cout << "WeatherObserver" << std::endl;
   }
 
