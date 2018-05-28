@@ -18,7 +18,7 @@
 
 namespace icc {
 
-namespace service {
+namespace localbus {
 
 template <typename _Interface>
 class IService
@@ -74,6 +74,9 @@ class IService
   }
 
  private:
+  std::shared_ptr< IService > holder_ = std::shared_ptr< IService >(this, [](IService*) {
+                                                                            // NOTE(redra): Nothing need to do. Just create holder for responses and broadcasts
+                                                                          });
   std::string service_name_;
 };
 

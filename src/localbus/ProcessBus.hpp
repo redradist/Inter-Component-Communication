@@ -26,7 +26,7 @@ class Event;
 template<typename _U, typename _T>
 class Attribute;
 
-namespace service {
+namespace localbus {
 
 template<typename _Interface>
 class IClient;
