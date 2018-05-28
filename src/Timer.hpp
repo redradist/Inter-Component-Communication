@@ -174,8 +174,8 @@ class Timer
   }
 
  protected:
-  int32_t counter_;
-  boost::posix_time::time_duration duration_;
+  int32_t counter_ = OneTime;
+  boost::posix_time::time_duration duration_ = boost::posix_time::not_a_date_time;
   boost::asio::deadline_timer timer_;
 };
 

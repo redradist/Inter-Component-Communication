@@ -53,7 +53,7 @@ class Attribute
    * Method is used to get attribute value
    * @return Attribute value
    */
-  _Field getValue() {
+  const _Field & getValue() {
     return field_;
   }
 
@@ -84,6 +84,22 @@ class Attribute
    */
   operator _Field() const {
     return field_;
+  }
+
+  /**
+   * Cast Attribute to const reference of underlying type
+   * @return
+   */
+  operator const _Field &() const {
+    return field_;
+  }
+
+  /**
+   * Cast Attribute to move reference of underlying type
+   * @return
+   */
+  operator _Field &&() const {
+    return std::move(field_);
   }
 
  protected:
