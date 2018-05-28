@@ -12,7 +12,7 @@
 
 namespace icc {
 
-namespace service {
+namespace localbus {
 
 ProcessBus::ProcessBus()
   : IComponent(nullptr) {
