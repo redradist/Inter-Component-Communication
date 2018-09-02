@@ -74,7 +74,9 @@ class ProcessBus
              client != clients.end();) {
           auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
           if (auto _client = weak_client.lock()) {
-            _client->connected(_service.get());
+            _client->push([=]() mutable {
+              _client->connected(_service.get());
+            });
             ++client;
           } else {
             // NOTE(redra): Deleting client
@@ -105,7 +107,9 @@ class ProcessBus
              client != clients.end();) {
           auto weak_client = *reinterpret_cast<std::weak_ptr<IClient<_Interface>>*>(client->second());
           if (auto _client = weak_client.lock()) {
-            _client->disconnected(nullptr);
+            _client->push([=]() mutable {
+              _client->disconnected(nullptr);
+            });
             ++client;
           } else {
             // NOTE(redra): Deleting client
@@ -137,7 +141,9 @@ class ProcessBus
             [weak_client]() mutable { return reinterpret_cast<void *>(&weak_client); });
         auto service = this->getService<_Interface>(_serviceName);
         if (service) {
-          _client->connected(service.get());
+          _client->invoke([=]() mutable {
+            _client->connected(service.get());
+          });
         }
       }
     });
