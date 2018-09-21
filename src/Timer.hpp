@@ -10,16 +10,16 @@
 #ifndef ICC_TIMER_HPP
 #define ICC_TIMER_HPP
 
+#include <chrono>
 #include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include "IComponent.hpp"
 #include "ITimerListener.hpp"
 #include "Event.hpp"
 
 namespace icc {
 
-class Timer
-    : public Event<void(const TimerEvents &)> {
+class Timer : public Event<void(const TimerEvents &)> {
  public:
   enum : int32_t {
     /**
@@ -72,9 +72,17 @@ class Timer
 
   /**
    * Setting interval mode for the timer
-   * @param _duration Timeout duration
+   * @param _duration Timeout duration in boost::posix_time::time_duration
    */
   void setInterval(const boost::posix_time::time_duration &_duration) {
+    duration_ = std::chrono::nanoseconds(_duration.total_nanoseconds());
+  }
+
+  /**
+   * Setting interval mode for the timer
+   * @param _duration Timeout duration in std::chrono::nanoseconds
+   */
+  void setInterval(const std::chrono::nanoseconds &_duration) {
     duration_ = _duration;
   }
 
@@ -166,8 +174,7 @@ class Timer
       if (counter_ > 0) {
         --counter_;
       }
-      if (Infinite == counter_ ||
-          counter_ > 0) {
+      if (Infinite == counter_ || counter_ > 0) {
         start();
       }
     }
@@ -175,8 +182,8 @@ class Timer
 
  protected:
   int32_t counter_ = OneTime;
-  boost::posix_time::time_duration duration_ = boost::posix_time::not_a_date_time;
-  boost::asio::deadline_timer timer_;
+  std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
+  boost::asio::steady_timer timer_;
 };
 
 }
