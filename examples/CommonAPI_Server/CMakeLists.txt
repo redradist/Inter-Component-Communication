@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++11")
 set(COMMONAPI_GENERATOR $ENV{HOME}/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
 set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
 
-include(../../src/commonapi/wrapper_generator.cmake)
+include(../../src/commonapi/cmake-config/wrapper_generator.cmake)
 include_directories(../../src)
 
 include_directories(${CMAKE_BINARY_DIR})
@@ -34,6 +34,7 @@ link_directories(/usr/local/lib/boost/lib)
 link_directories(/usr/local/lib)
 
 file(GLOB FIDL_FILES ./interfaces/*.fidl)
+set(GEN_DIR "${CMAKE_BINARY_DIR}")
 set(SOURCE_FILES main.cpp HelloWorldStubImpl.cpp HelloWorldStubImpl.hpp)
 #set(GENERATED_FILES
 #        "${CMAKE_BINARY_DIR}/src-gen/v1/commonapi/HelloWorldDBusProxy.cpp"
