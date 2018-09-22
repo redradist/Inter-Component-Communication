@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include <Event.hpp>
 #include <Timer.hpp>
 #include <localbus/IService.hpp>

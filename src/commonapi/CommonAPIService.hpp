@@ -10,7 +10,7 @@
 #define ICC_COMMONAPISERVICE_HPP
 
 #include <CommonAPI/CommonAPI.hpp>
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include <helpers/concept_base_of_template.hpp>
 #include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>

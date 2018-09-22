@@ -9,7 +9,7 @@
 #ifndef ICC_TREADPOOL_TASK_HPP
 #define ICC_TREADPOOL_TASK_HPP
 
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include "ThreadPool.hpp"
 #include "exceptions/TaskInvalid.hpp"
 #include "exceptions/TaskStateAssert.hpp"
@@ -46,7 +46,7 @@ class Task {
   Task & callback(void(_Component::*_callback)(_R),
                   std::shared_ptr<_Component> _listener) {
     static_assert(std::is_base_of<icc::IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+                  "_listener is not derived from Component");
     std::weak_ptr<_Component> weakListener = _listener;
     callback_ = [=] (_R _result) {
       if (auto listener = weakListener.lock()) {
@@ -62,7 +62,7 @@ class Task {
   Task & callback(void(_Component::*_callback)(_R),
                   _Component *_listener) {
     static_assert(std::is_base_of<icc::IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+                  "_listener is not derived from Component");
     callback_ = [=] (_R _result) {
       _listener->push([=] {
         (_listener->*_callback)(_result);

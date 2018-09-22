@@ -156,7 +156,7 @@ void CommandLoop::exit() {
     while (!commands_.empty()) {
       commands_.pop_front();
     }
-    IComponent::exit();
+    Component::exit();
   });
 }
 

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <mutex>
 #include <helpers/memory_helpers.hpp>
-#include "IComponent.hpp"
+#include "Component.hpp"
 
 namespace icc {
 
@@ -30,9 +30,9 @@ class Event<_R(_Args...)> {
  public:
   using tPointer = void *;
   using tCallback = std::function<_R(_Args...)>;
-  using tUncheckedCallbacks = std::tuple<IComponent *, tPointer, tCallback>;
+  using tUncheckedCallbacks = std::tuple<Component *, tPointer, tCallback>;
   using tUncheckedListCallbacks = std::vector<tUncheckedCallbacks>;
-  using tCheckedCallbacks = std::tuple<std::weak_ptr<IComponent>, tPointer, tCallback>;
+  using tCheckedCallbacks = std::tuple<std::weak_ptr<Component>, tPointer, tCallback>;
   using tCheckedListCallbacks = std::vector<tCheckedCallbacks>;
  public:
   Event() = default;
@@ -57,12 +57,12 @@ class Event<_R(_Args...)> {
   template<typename _Component>
   void connect(_R(_Component::*_callback)(_Args...),
                _Component *_listener) {
-    static_assert(std::is_base_of<IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Component>::value,
+                  "_listener is not derived from Component");
     if (_listener) {
       std::lock_guard<std::mutex> lock(mutex_);
       tUncheckedCallbacks callback(
-          static_cast<IComponent *>(_listener),
+          static_cast<Component *>(_listener),
           icc::helpers::void_cast(_callback),
           [=](_Args ... _args) {
             (_listener->*_callback)(_args...);
@@ -81,13 +81,13 @@ class Event<_R(_Args...)> {
   template<typename _Component>
   void connect(_R(_Component::*_callback)(_Args...),
                std::shared_ptr<_Component> _listener) {
-    static_assert(std::is_base_of<IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Component>::value,
+                  "_listener is not derived from Component");
     if (_listener) {
       std::lock_guard<std::mutex> lock(mutex_);
       auto _p_listener = _listener.get();
       tCheckedCallbacks callback(
-          std::static_pointer_cast<IComponent>(_listener),
+          std::static_pointer_cast<Component>(_listener),
           icc::helpers::void_cast(_callback),
           [=](_Args ... _args) {
             (_p_listener->*_callback)(_args...);
@@ -106,8 +106,8 @@ class Event<_R(_Args...)> {
   template<typename _Component>
   void disconnect(_R(_Component::*_callback)(_Args...),
                   _Component *_listener) {
-    static_assert(std::is_base_of<IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Component>::value,
+                  "_listener is not derived from Component");
     if (_listener) {
       std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(unchecked_listeners_.begin(),
@@ -130,8 +130,8 @@ class Event<_R(_Args...)> {
   template<typename _Component>
   void disconnect(_R(_Component::*_callback)(_Args...),
                   std::shared_ptr<_Component> _listener) {
-    static_assert(std::is_base_of<IComponent, _Component>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Component>::value,
+                  "_listener is not derived from Component");
     if (_listener) {
       std::lock_guard<std::mutex> lock(mutex_);
       auto erase = std::remove_if(checked_listeners_.begin(),
