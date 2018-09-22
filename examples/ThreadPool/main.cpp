@@ -10,10 +10,10 @@
 #include <chrono>
 #include <thread>
 
-class MyComponent : public icc::IComponent {
+class MyComponent : public icc::Component {
  public:
   MyComponent ()
-    : icc::IComponent(nullptr) {
+    : icc::Component(nullptr) {
 
   }
   void newFunction(int _result) {

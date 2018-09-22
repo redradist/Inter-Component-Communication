@@ -48,25 +48,25 @@ using v{{type_collection.major}}::{{type_collection.type}};
 
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
-  : public virtual icc::IComponent
+  : public virtual icc::Component
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
                                             Logger > {
  protected:
   {{class_name}}()
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >() {
   }
 
   {{class_name}}(const std::string &_domain,
                  const std::string &_instance)
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(
         _domain,
         _instance) {
   }
 
   {{class_name}}(std::shared_ptr<{{class_name}}> _client)
-    : icc::IComponent(_client.get())
+    : icc::Component(_client.get())
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(_client) {
   }
 

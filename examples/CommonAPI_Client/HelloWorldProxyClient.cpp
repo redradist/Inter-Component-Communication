@@ -6,7 +6,7 @@
 
 HelloWorldProxyClient::HelloWorldProxyClient(const std::string &_domain,
                                              const std::string &_instance)
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::HelloWorldClient<NewLogger>(_domain, _instance)
     , NewLogger("") {
 }

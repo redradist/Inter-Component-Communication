@@ -20,7 +20,7 @@ namespace icc {
 namespace coroutine {
 
 class TaskScheduler
-    : public virtual icc::IComponent {
+    : public virtual icc::Component {
  public:
   TaskScheduler();
 

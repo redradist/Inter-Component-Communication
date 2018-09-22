@@ -47,17 +47,17 @@ using v{{type_collection.major}}::{{type_collection.type}};
 {%- endif %}
 
 class {{class_name}}
-  : public virtual icc::IComponent
+  : public virtual icc::Component
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
  protected:
   {{class_name}}()
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >() {
   }
 
   {{class_name}}(const std::string &_domain,
                  const std::string &_instance)
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault >(
         _domain,
         _instance) {

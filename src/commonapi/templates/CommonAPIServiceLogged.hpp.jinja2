@@ -48,18 +48,18 @@ using v{{type_collection.major}}::{{type_collection.type}};
 
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
-  : public virtual icc::IComponent
+  : public virtual icc::Component
   , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
                                              Logger > {
  protected:
   {{class_name}}()
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >() {
   }
 
   {{class_name}}(const std::string &_domain,
                  const std::string &_instance)
-    : icc::IComponent(nullptr)
+    : icc::Component(nullptr)
     , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >(
         _domain,
         _instance) {

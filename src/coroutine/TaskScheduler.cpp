@@ -15,15 +15,15 @@ namespace icc {
 namespace coroutine {
 
 TaskScheduler::TaskScheduler()
-    : icc::IComponent(nullptr) {
+    : icc::Component(nullptr) {
 }
 
 TaskScheduler::TaskScheduler(boost::asio::io_service *_eventLoop)
-: icc::IComponent(_eventLoop) {
+: icc::Component(_eventLoop) {
 }
 
 TaskScheduler::TaskScheduler(std::shared_ptr<boost::asio::io_service> _eventLoop)
-: icc::IComponent(_eventLoop) {
+: icc::Component(_eventLoop) {
 }
 
 TaskScheduler::~TaskScheduler() {

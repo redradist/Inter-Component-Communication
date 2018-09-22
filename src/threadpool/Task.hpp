@@ -45,7 +45,7 @@ class Task {
   template<typename _Component>
   Task & callback(void(_Component::*_callback)(_R),
                   std::shared_ptr<_Component> _listener) {
-    static_assert(std::is_base_of<icc::IComponent, _Component>::value,
+    static_assert(std::is_base_of<icc::Component, _Component>::value,
                   "_listener is not derived from Component");
     std::weak_ptr<_Component> weakListener = _listener;
     callback_ = [=] (_R _result) {
@@ -61,7 +61,7 @@ class Task {
   template<typename _Component>
   Task & callback(void(_Component::*_callback)(_R),
                   _Component *_listener) {
-    static_assert(std::is_base_of<icc::IComponent, _Component>::value,
+    static_assert(std::is_base_of<icc::Component, _Component>::value,
                   "_listener is not derived from Component");
     callback_ = [=] (_R _result) {
       _listener->push([=] {

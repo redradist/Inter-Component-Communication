@@ -33,7 +33,7 @@ class ConnectionBTProfiles
  private:
   friend class icc::command::Builder;
   ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
-    : icc::IComponent(_eventLoop) {
+    : icc::Component(_eventLoop) {
     setMode(icc::command::LoopMode::MultiCommand |
             icc::command::LoopMode::Transaction);
     pushBack(std::make_shared<ConnectionHFP>());
@@ -67,7 +67,7 @@ class Connect
  private:
   friend class icc::command::Builder;
   Connect(boost::asio::io_service *_eventLoop)
-    : icc::IComponent(_eventLoop) {
+    : icc::Component(_eventLoop) {
   }
 
  public:

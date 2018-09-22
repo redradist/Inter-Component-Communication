@@ -15,7 +15,7 @@ class WeatherStation
       public icc::ITimerListener {
  public:
   WeatherStation(boost::asio::io_service & _io_service)
-      : icc::IComponent(&_io_service),
+      : icc::Component(&_io_service),
         icc::localbus::IService<Forecast>("WeatherStation"),
         timer_(service_) {
     std::cout << "WeatherStation" << std::endl;
@@ -58,9 +58,9 @@ class WeatherStation
 };
 
 class TestObserver
-    : public icc::IComponent {
+    : public icc::Component {
  public:
-  using icc::IComponent::IComponent;
+  using icc::Component::IComponent;
  public:
   void onTemperature(const double & _temperature) {
     std::cout << "TestObserver::Temperature is " << _temperature << std::endl;
@@ -71,7 +71,7 @@ class WeatherObserver
     : public icc::localbus::IClient<Forecast> {
  public:
   WeatherObserver(boost::asio::io_service & _io_service)
-      : icc::IComponent(&_io_service),
+      : icc::Component(&_io_service),
         icc::localbus::IClient<Forecast>("WeatherStation") {
     std::cout << "WeatherObserver" << std::endl;
   }
