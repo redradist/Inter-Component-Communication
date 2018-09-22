@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <boost/optional.hpp>
 #include <CommonAPI/CommonAPI.hpp>
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include <commonapi/exceptions/CommonAPIClientError.hpp>
 #include <helpers/memory_helpers.hpp>
 #include <logger/DummyLogger.hpp>

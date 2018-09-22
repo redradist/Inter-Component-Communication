@@ -13,7 +13,7 @@
 
 #include <utility>
 #include <type_traits>
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include <helpers/memory_helpers.hpp>
 #include "ProcessBus.hpp"
 

@@ -15,7 +15,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
-#include <IComponent.hpp>
+#include <Component.hpp>
 #include <helpers/hash_helpers.hpp>
 
 namespace icc {
@@ -246,7 +246,7 @@ class ProcessBus
                  Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
     static_assert(std::is_base_of<IComponent, _Client>::value,
-                  "IComponent is not a base class of _Client");
+                  "Component is not a base class of _Client");
     invoke([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
@@ -363,7 +363,7 @@ class ProcessBus
                  Attribute<_Values...> _Interface::*_attribute,
                  void(_Client::*_callback)(_Arg)) {
     static_assert(std::is_base_of<IComponent, _Client>::value,
-                  "IComponent is not a base class of _Client");
+                  "Component is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
