@@ -70,6 +70,19 @@ class {{class_name}}
     , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(_client) {
   }
 
+  ~{{class_name}}() {
+    {%- if broadcasts is not none and broadcasts|length > 0 %}
+    {%- for broadcast in broadcasts %}
+    this->notifyOn{{broadcast}}Update(false);
+    {%- endfor %}
+    {% endif %}
+    {%- if attributes is not none and attributes|length > 0 %}
+    {%- for attribute in attributes %}
+    this->notifyOn{{attribute}}Changed(false);
+    {%- endfor %}
+    {% endif %}
+  }
+
  public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
