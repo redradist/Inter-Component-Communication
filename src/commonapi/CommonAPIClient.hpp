@@ -172,9 +172,6 @@ class CommonAPIClient
   virtual void disconnected(Proxy<> &) = 0;
 
  private:
-  std::shared_ptr< CommonAPIClient > holder_ = std::shared_ptr< CommonAPIClient >(this, [](CommonAPIClient*) {
-                                                                                          // NOTE(redra): Nothing need to do. Just create holder for responses and broadcasts
-                                                                                        });
   bool is_inited_ = false;
 
   /************************************************************

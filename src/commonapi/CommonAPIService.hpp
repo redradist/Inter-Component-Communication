@@ -100,9 +100,6 @@ class CommonAPIService
   }
 
  private:
-  std::shared_ptr< CommonAPIService > holder_ = std::shared_ptr< CommonAPIService >(this, [](CommonAPIService*) {
-                                                                                            // NOTE(redra): Nothing need to do. Just create holder for whatever you want
-                                                                                          });
   bool is_registered_ = false;
   std::string domain_;
   std::string instance_;
