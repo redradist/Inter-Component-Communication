@@ -25,6 +25,7 @@
 #include <memory>
 #include <functional>
 #include <icc/IComponent.hpp>
+#include <icc/coroutine/TaskScheduler.hpp>
 #include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
@@ -48,7 +49,10 @@ using v{{type_collection.major}}::{{type_collection.type}};
 
 class {{class_name}}
   : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault > {
+  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault >
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  , public icc::coroutine::TaskScheduler
+#endif {
  protected:
   {{class_name}}()
     : icc::IComponent(nullptr)

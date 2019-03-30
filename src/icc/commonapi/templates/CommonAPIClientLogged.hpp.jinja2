@@ -24,6 +24,7 @@
 #include <functional>
 #include <boost/optional.hpp>
 #include <icc/IComponent.hpp>
+#include <icc/coroutine/TaskScheduler.hpp>
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
@@ -50,7 +51,10 @@ template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
   : public virtual icc::IComponent
   , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
-                                            Logger > {
+                                            Logger >
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  , public icc::coroutine::TaskScheduler
+#endif {
  protected:
   {{class_name}}()
     : icc::IComponent(nullptr)
