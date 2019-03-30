@@ -4,9 +4,9 @@
 #include <experimental/coroutine>
 #include <chrono>
 
-#include <coroutine/Task.hpp>
-#include <coroutine/Timer.hpp>
-#include <coroutine/TaskScheduler.hpp>
+#include <icc/coroutine/Task.hpp>
+#include <icc/coroutine/Timer.hpp>
+#include <icc/coroutine/TaskScheduler.hpp>
 
 std::promise<int> promise;
 std::future<int> compute_value2() {

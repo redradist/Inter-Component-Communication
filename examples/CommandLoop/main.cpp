@@ -3,12 +3,12 @@
 //
 
 #include <iostream>
-#include <IComponent.hpp>
-#include <Event.hpp>
-#include <Timer.hpp>
-#include <command/Builder.hpp>
-#include <command/Command.hpp>
-#include <command/CommandLoop.hpp>
+#include <icc/IComponent.hpp>
+#include <icc/Event.hpp>
+#include <icc/Timer.hpp>
+#include <icc/command/Builder.hpp>
+#include <icc/command/Command.hpp>
+#include <icc/command/CommandLoop.hpp>
 
 class ConnectionHFP
     : public icc::command::Command {

@@ -6,8 +6,8 @@
 #define ICC_FORECAST_HPP
 
 #include <functional>
-#include "Event.hpp"
-#include "Attribute.hpp"
+#include "icc/Event.hpp"
+#include "icc/Attribute.hpp"
 
 class Forecast {
  public:

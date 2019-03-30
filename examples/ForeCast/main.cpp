@@ -3,11 +3,11 @@
 //
 
 #include <iostream>
-#include <IComponent.hpp>
-#include <Event.hpp>
-#include <Timer.hpp>
-#include <localbus/IService.hpp>
-#include <localbus/IClient.hpp>
+#include <icc/IComponent.hpp>
+#include <icc/Event.hpp>
+#include <icc/Timer.hpp>
+#include <icc/localbus/IService.hpp>
+#include <icc/localbus/IClient.hpp>
 #include "Forecast.hpp"
 
 class WeatherStation

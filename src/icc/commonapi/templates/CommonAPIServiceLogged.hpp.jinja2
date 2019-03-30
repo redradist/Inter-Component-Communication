@@ -1,0 +1,239 @@
+{%- set service_version = interface.major -%}
+{%- set service_name = interface.name -%}
+{%- set package_fs = interface.package_name.replace('.', '/') -%}
+{%- set package_ns = interface.package_name.replace('.', '::') -%}
+{%- set type_collections = interface.type_collections -%}
+{%- set methods = interface.methods -%}
+{%- set broadcasts = interface.broadcasts -%}
+{%- set attributes = interface.attributes -%}
+{%- set is_settable_attribute = interface.is_settable_attribute -%}
+{%- set class_name = service_name+'Service' -%}
+/**
+ * @file {{class_name}}.hpp
+ * @date {{date}}
+ * @brief It is an auto-generated file.
+ * It contains wrappers on receiving requests
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
+
+#ifndef _{{class_name.upper()}}_HPP_
+#define _{{class_name.upper()}}_HPP_
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <functional>
+#include <icc/IComponent.hpp>
+#include <v{{service_version}}/{{package_fs}}/{{service_name}}StubDefault.hpp>
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+#include <v{{type_collection.major}}/{{type_collection.path}}.hpp>
+{%- endfor %}
+{%- endif %}
+#include <icc/commonapi/CommonAPIService.hpp>
+
+namespace icc {
+
+namespace commonapi {
+
+using v{{service_version}}::{{package_ns}}::{{service_name}};
+using v{{service_version}}::{{package_ns}}::{{service_name}}Stub;
+using v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault;
+{%- if type_collections is not none %}
+{%- for type_collection in type_collections %}
+using v{{type_collection.major}}::{{type_collection.type}};
+{%- endfor %}
+{%- endif %}
+
+template< typename Logger = icc::logger::DummyLogger >
+class {{class_name}}
+  : public virtual icc::IComponent
+  , public icc::commonapi::CommonAPIService< {{service_name}}StubDefault,
+                                             Logger > {
+ protected:
+  {{class_name}}()
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >() {
+  }
+
+  {{class_name}}(const std::string &_domain,
+                 const std::string &_instance)
+    : icc::IComponent(nullptr)
+    , icc::commonapi::CommonAPIService< {{service_name}}StubDefault, Logger >(
+        _domain,
+        _instance) {
+  }
+
+ public:
+  {%- if methods is not none and methods|length > 0 %}
+  /***************************************
+   * Below methods for receiving requests
+   **************************************/
+  {%- for method in methods %}
+  {%- if method.description is not none %}
+  /**{% for description in method.description.splitlines() %}
+   * {{description}}
+   {% endfor %}*/
+  {%- endif %}
+  void {{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
+  {%- if method.inputs is not none and method.inputs|length > 0 -%}
+  {{- ", " -}}{%- for input in method.inputs -%}
+    {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- endif -%}
+  {%- if method.outputs is not none -%}
+  {{- ", " -}}{{service_name}}Stub::{{method.name}}Reply_t _reply
+  {%- endif -%}
+  ) override;
+  {%- endfor %}
+  {% endif %}
+  {%- if attributes is not none and attributes|length > 0 %}
+  /***************************************
+   * Below setters of attributes
+   **************************************/
+  {%- for attribute in attributes %}
+  void set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) override;
+  {%- if not attribute.is_read_only %}
+  void set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) override;
+  {%- endif %}
+  {% endfor %}
+  {%- endif %}
+  {%- if broadcasts is not none and broadcasts|length > 0 %}
+  /***************************************
+   * Below fire of broadcasts
+   **************************************/
+  {%- for broadcast in broadcasts %}
+  void fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+      {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+    {%- endfor -%}
+    {%- endif -%}
+    {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers = nullptr' if broadcast.is_selective else '' -}}
+  ) override;
+  {% endfor %}
+  {%- endif %}
+ protected:
+  {%- if methods is not none and methods|length > 0 %}
+  /***************************************
+   * Below methods for receiving requests in IComponent thread
+   **************************************/
+  {%- for method in methods %}
+  virtual void request{{method}}(const std::shared_ptr<CommonAPI::ClientId> _client
+  {%- if method.inputs is not none and method.inputs|length > 0 -%}
+  {{- ", " -}}{%- for input in method.inputs -%}
+    {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+  {%- endfor -%}
+  {%- endif -%}
+  {%- if method.outputs is not none -%}
+  {{- ", " -}}{{service_name}}Stub::{{method.name}}Reply_t _reply) {
+  {%- else -%}
+  ) {
+  {%- endif %}
+    // Default implementation.
+    // If you need you may override request{{method}}
+    // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of request{{method}}");
+  }
+  {%- endfor %}
+  {%- endif %}
+  {%- if attributes is not none and attributes|length > 0 and is_settable_attribute %}
+  /***************************************
+   * Below queries for setters of attributes
+   **************************************/
+  {%- for attribute in attributes %}
+  {%- if not attribute.is_read_only %}
+  virtual void querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
+    // Default implementation.
+    // If you need you may override querySet{{attribute}}Attribute
+    // This method will be called in thread of IComponent
+    Logger::warning("querySet{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_client, _{{attribute.name}});
+  }
+  {%- endif %}
+  {%- endfor %}
+  {%- endif %}
+};
+{% if methods is not none and methods|length > 0 %}
+{%- for method in methods %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> _client
+{%- if method.inputs is not none and method.inputs|length > 0 %}
+{{- ", " -}}{%- for input in method.inputs -%}
+    {{input.type}} _{{input.name}}{{ ", " if not loop.last }}
+{%- endfor -%}
+{%- endif -%}
+{%- if method.outputs is not none -%}
+{{ ", "}}{{service_name}}Stub::{{method.name}}Reply_t _reply
+{%- endif -%}
+) {
+  invoke([=] {
+    Logger::debug("request{{method}} is called");
+    request{{method}}(_client
+    {%- if method.inputs is not none and method.inputs|length > 0 -%}
+    {{ ", " }}{%- for input in method.inputs -%}
+      _{{input.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    {%- endif -%}
+    {%- if method.outputs is not none %}
+    {{- ", " -}} _reply
+    {%- endif -%}
+    );
+  });
+}
+{% endfor %}
+{%- endif %}
+{%- if attributes is not none and attributes|length > 0 %}
+{%- for attribute in attributes %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) {
+  invoke([=] {
+    Logger::debug("set{{attribute}}Attribute({{attribute.type}} _{{attribute.name}}) is called");
+    {{service_name}}StubDefault::set{{attribute}}Attribute(_{{attribute.name}});
+  });
+}
+{%- if not attribute.is_read_only %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::set{{attribute}}Attribute(const std::shared_ptr<CommonAPI::ClientId> _client, {{attribute.type}} _{{attribute.name}}) {
+  invoke([=] {
+    Logger::debug("querySet{{attribute}}Attribute is called");
+    querySet{{attribute}}Attribute(_client, _{{attribute.name}});
+  });
+}
+{%- endif %}
+{% endfor %}
+{%- endif %}
+{%- if broadcasts is not none and broadcasts|length > 0 %}
+{%- for broadcast in broadcasts %}
+template< typename Logger >
+inline
+void {{class_name}}< Logger >::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+  {%- if broadcast.parameters is not none -%}
+  {%- for parameter in broadcast.parameters -%}
+    {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+  {%- endfor -%}
+  {%- endif -%}
+  {{- 'const std::shared_ptr<CommonAPI::ClientIdList> _receivers' if broadcast.is_selective else '' -}}
+) {
+  invoke([=] {
+    Logger::debug("fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }} is called");
+    {{service_name}}StubDefault::fire{{broadcast}}{{ 'Selective' if broadcast.is_selective else 'Event' }}(
+    {%- if broadcast.parameters is not none -%}
+    {%- for parameter in broadcast.parameters -%}
+      _{{parameter.name}}{{ ", " if not loop.last or broadcast.is_selective }}
+    {%- endfor -%}
+    {%- endif -%}
+    {{- '_receivers' if broadcast.is_selective else '' -}});
+  });
+}
+{% endfor %}
+{%- endif %}
+}
+
+}
+
+#endif  // _{{class_name.upper()}}_HPP_
