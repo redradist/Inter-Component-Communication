@@ -16,7 +16,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <icc/IComponent.hpp>
-#include <icc/helpers/hash_helpers.hpp>
+#include <icc/_private/helpers/hash_helpers.hpp>
 
 namespace icc {
 

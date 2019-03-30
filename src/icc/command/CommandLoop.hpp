@@ -14,7 +14,7 @@
 #include <future>
 #include <icc/IComponent.hpp>
 #include <icc/Event.hpp>
-#include <icc/helpers/memory_helpers.hpp>
+#include <icc/_private/helpers/memory_helpers.hpp>
 #include "ICommandLoop.hpp"
 
 namespace icc {

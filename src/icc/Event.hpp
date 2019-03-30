@@ -17,7 +17,7 @@
 #include <utility>
 #include <algorithm>
 #include <mutex>
-#include <icc/helpers/memory_helpers.hpp>
+#include <icc/_private/helpers/memory_helpers.hpp>
 #include "IComponent.hpp"
 
 namespace icc {
