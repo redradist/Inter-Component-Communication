@@ -7,6 +7,7 @@
  */
 
 #include <thread>
+#include <icc/localbus/LocalBus.hpp>
 #include "Task.hpp"
 #include "ThreadPool.hpp"
 
@@ -43,20 +44,20 @@ ThreadPool::getPool(const unsigned int _numThreads) {
 }
 
 void ThreadPool::push(std::function<void(void)> _task) {
-  std::lock_guard<std::recursive_mutex> lock(mutex_);
-  auto serviceMetaData = services_meta_data_.top();
-  services_meta_data_.pop();
-  serviceMetaData.number_of_tasks_++;
-  services_meta_data_.push(serviceMetaData);
-  serviceMetaData.worker_->get_io_service().post([=] () mutable {
-    _task();
-    {
-      std::lock_guard<std::recursive_mutex> lock(mutex_);
-      auto serviceMetaData = std::move(services_meta_data_.top());
-      services_meta_data_.pop();
-      serviceMetaData.number_of_tasks_--;
-      services_meta_data_.push(std::move(serviceMetaData));
-    }
+  icc::localbus::LocalBus::getBus().push([this, _task] {
+    auto serviceMetaData = services_meta_data_.top();
+    services_meta_data_.pop();
+    serviceMetaData.number_of_tasks_++;
+    services_meta_data_.push(serviceMetaData);
+    serviceMetaData.worker_->get_io_service().post([this, _task] () mutable {
+      _task();
+      icc::localbus::LocalBus::getBus().push([this] {
+        auto serviceMetaData = services_meta_data_.top();
+        services_meta_data_.pop();
+        serviceMetaData.number_of_tasks_--;
+        services_meta_data_.push(std::move(serviceMetaData));
+      });
+    });
   });
 }
 

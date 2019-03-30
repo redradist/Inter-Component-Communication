@@ -49,7 +49,6 @@ class ThreadPool {
   void push(std::function<void(void)> _task);
 
  protected:
-  std::recursive_mutex mutex_;
   std::vector<std::thread> thread_pool_;
   std::vector<std::shared_ptr<boost::asio::io_service>> services_;
   std::priority_queue<IoServiceMetaData,
