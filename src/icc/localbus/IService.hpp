@@ -14,7 +14,7 @@
 #include <type_traits>
 #include <icc/IComponent.hpp>
 #include <icc/helpers/memory_helpers.hpp>
-#include "ProcessBus.hpp"
+#include "LocalBus.hpp"
 
 namespace icc {
 

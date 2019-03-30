@@ -1,15 +1,15 @@
 /**
- * @file ProcessBus.hpp
+ * @file LocalBus.hpp
  * @author Denis Kotov
  * @date 25 Jun 2017
- * @brief Contains ProcessBus class.
+ * @brief Contains LocalBus class.
  * It is a broker pattern. Used to control registration
  * and connection of services
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef ICC_PROCESSBUS_HPP
-#define ICC_PROCESSBUS_HPP
+#ifndef ICC_LOCALBUS_HPP
+#define ICC_LOCALBUS_HPP
 
 #include <algorithm>
 #include <typeinfo>
@@ -34,7 +34,7 @@ class IClient;
 template<typename _Interface>
 class IService;
 
-class ProcessBus
+class LocalBus
     : public virtual IComponent {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
@@ -45,11 +45,11 @@ class ProcessBus
 
  public:
   /**
-   * This function is used for getting ProcessBus
+   * This function is used for getting LocalBus
    * It is used like Singleton pattern
-   * @return ProcessBus
+   * @return LocalBus
    */
-  static ProcessBus &getBus();
+  static LocalBus &getBus();
 
  public:
   /**
@@ -469,7 +469,7 @@ class ProcessBus
 
  protected:
   /**
-   * Helper function for finding service in ProcessBus tables
+   * Helper function for finding service in LocalBus tables
    * @tparam _Interface Interface type for searching
    * @param _serviceName Service name for searching
    * @return Service std::shared_ptr<IService<_Interface>>
@@ -493,12 +493,12 @@ class ProcessBus
   }
 
  private:
-  ProcessBus();
-  ProcessBus(const ProcessBus &) = delete;
-  ProcessBus & operator=(const ProcessBus &) = delete;
-  ProcessBus(ProcessBus &&) = delete;
-  ProcessBus & operator=(ProcessBus &&) = delete;
-  virtual ~ProcessBus();
+  LocalBus();
+  LocalBus(const LocalBus &) = delete;
+  LocalBus & operator=(const LocalBus &) = delete;
+  LocalBus(LocalBus &&) = delete;
+  LocalBus & operator=(LocalBus &&) = delete;
+  virtual ~LocalBus();
 
  private:
   std::thread thread_;
@@ -510,4 +510,4 @@ class ProcessBus
 
 }
 
-#endif //ICC_PROCESSBUS_HPP
+#endif //ICC_LOCALBUS_HPP
