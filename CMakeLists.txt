@@ -14,6 +14,8 @@ set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE ICC_SOURCE_FILES src/*.cpp)
 add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${ICC_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME}
+                           PUBLIC ${ICC_INCLUDE_DIR}
+                           PRIVATE ${ICC_INCLUDE_DIR}/_private)
 target_link_libraries(${PROJECT_NAME} boost_system
                                       pthread)
