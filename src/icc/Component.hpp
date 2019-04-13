@@ -19,13 +19,13 @@
 
 namespace icc {
 
-class IComponent {
+class Component {
  private:
   /**
    * Default constructor.
    * Only with this constructor object will be owner of service_.
    */
-  IComponent()
+  Component()
       : owner_of_service_(true),
         service_(std::make_shared<boost::asio::io_service>()),
         worker_(new boost::asio::io_service::work(*service_)) {
@@ -36,8 +36,8 @@ class IComponent {
    * Delegate constructor.
    * Use only in case if you want to be an OWNER of event loop !!
    */
-  IComponent(std::nullptr_t)
-      : IComponent() {
+  Component(std::nullptr_t)
+      : Component() {
   }
 
   /**
@@ -45,7 +45,7 @@ class IComponent {
    * Owner of this pointer is not we
    * @param _eventLoop Event loop that will be used
    */
-  IComponent(boost::asio::io_service *_eventLoop)
+  Component(boost::asio::io_service *_eventLoop)
       : service_(std::shared_ptr<boost::asio::io_service>(_eventLoop,
                                                           [=](boost::asio::io_service *) {
                                                             // NOTE(redra): Nothing need to do. Owner of this pointer is not we
@@ -57,7 +57,7 @@ class IComponent {
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  IComponent(std::shared_ptr<boost::asio::io_service> _eventLoop)
+  Component(std::shared_ptr<boost::asio::io_service> _eventLoop)
       : service_(_eventLoop),
         worker_(new boost::asio::io_service::work(*service_)) {
   }
@@ -66,7 +66,7 @@ class IComponent {
    * Used to share event loop of parent object
    * @param _parent Parent compenent that will share event loop
    */
-  IComponent(IComponent *_parent)
+  Component(Component *_parent)
       : service_(_parent->getEventLoop()),
         worker_(new boost::asio::io_service::work(*service_)),
         parent_(_parent) {
@@ -77,7 +77,7 @@ class IComponent {
    * Used to share event loop of parent object
    * @param _parent Parent compenent that will share event loop
    */
-  IComponent(std::shared_ptr<IComponent> _parent)
+  Component(std::shared_ptr<Component> _parent)
       : service_(_parent->getEventLoop()),
         worker_(new boost::asio::io_service::work(*service_)),
         parent_(_parent.get()) {
@@ -87,13 +87,13 @@ class IComponent {
   /**
    * Disable ability to copy Component class
    */
-  IComponent(IComponent const &) = delete;
-  IComponent &operator=(IComponent const &) = delete;
+  Component(Component const &) = delete;
+  Component &operator=(Component const &) = delete;
 
   /**
    * Destructor used for removing children or waiting end of event loop
    */
-  virtual ~IComponent() = 0;
+  virtual ~Component() = 0;
 
  public:
   /**
@@ -149,7 +149,7 @@ class IComponent {
    * Override this method if you need to track finishing of child classes
    * @param _child Child that was removed
    */
-  virtual void onChildExit(IComponent * _child) {
+  virtual void onChildExit(Component * _child) {
     // NOTE(redra): Default implementation doing nothing
   }
 
@@ -166,7 +166,7 @@ class IComponent {
    * Method that allow to add _child component to the vector
    * @param _child Component that will be added
    */
-  virtual void addChild(IComponent *_child) {
+  virtual void addChild(Component *_child) {
     if (_child) {
       invoke([=] {
         if (worker_) {
@@ -180,7 +180,7 @@ class IComponent {
    * Method that allow to delete _child component from the vector
    * @param _child Component that will be deleted
    */
-  virtual void removeChild(IComponent *_child) {
+  virtual void removeChild(Component *_child) {
     if (_child) {
       invoke([=] {
         if (worker_) {
@@ -202,15 +202,15 @@ class IComponent {
   std::unique_ptr<boost::asio::io_service::work> worker_;
 
  private:
-  IComponent *parent_ = nullptr;
-  std::vector<IComponent *> children_;
+  Component *parent_ = nullptr;
+  std::vector<Component *> children_;
 };
 
 /**
  * Destructor used for removing children or waiting end of event loop
  */
 inline
-IComponent::~IComponent() {
+Component::~Component() {
 }
 
 }

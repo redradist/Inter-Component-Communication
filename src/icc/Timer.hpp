@@ -13,7 +13,7 @@
 #include <chrono>
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include "IComponent.hpp"
+#include "Component.hpp"
 #include "ITimerListener.hpp"
 #include "Event.hpp"
 
