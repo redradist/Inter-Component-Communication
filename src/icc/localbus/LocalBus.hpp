@@ -15,7 +15,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
-#include <icc/IComponent.hpp>
+#include <icc/Component.hpp>
 #include <icc/_private/helpers/hash_helpers.hpp>
 
 namespace icc {
@@ -35,7 +35,7 @@ template<typename _Interface>
 class IService;
 
 class LocalBus
-    : public virtual IComponent {
+    : public virtual Component {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;
   using tListOfClients = std::unordered_map<void*, std::function<void*(void)>>;
@@ -245,8 +245,8 @@ class LocalBus
                  const std::string & _serviceName,
                  Event<_R(_Args...)> _Interface::*_event,
                  _R(_Client::*_callback)(_Args...)) {
-    static_assert(std::is_base_of<IComponent, _Client>::value,
-                  "IComponent is not a base class of _Client");
+    static_assert(std::is_base_of<Component, _Client>::value,
+                  "Component is not a base class of _Client");
     invoke([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
@@ -304,7 +304,7 @@ class LocalBus
                    const std::string & _serviceName,
                    Event<_R(_Args...)> _Interface::*_event,
                    _R(_Client::*_callback)(_Args...)) {
-    static_assert(std::is_base_of<IComponent, _Client>::value,
+    static_assert(std::is_base_of<Component, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
     invoke([this, _client, _serviceName, _event, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
@@ -362,8 +362,8 @@ class LocalBus
                  const std::string & _serviceName,
                  Attribute<_Values...> _Interface::*_attribute,
                  void(_Client::*_callback)(_Arg)) {
-    static_assert(std::is_base_of<IComponent, _Client>::value,
-                  "IComponent is not a base class of _Client");
+    static_assert(std::is_base_of<Component, _Client>::value,
+                  "Component is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
       auto service = this->getService<_Interface>(_serviceName);
       if (service) {
@@ -425,7 +425,7 @@ class LocalBus
                    const std::string & _serviceName,
                    Attribute<_Values...> _Interface::*_attribute,
                    void(_Client::*_callback)(_Arg)) {
-    static_assert(std::is_base_of<IComponent, _Client>::value,
+    static_assert(std::is_base_of<Component, _Client>::value,
                   "IClient<_Interface> is not a base class of _Client");
     invoke([this, _client, _serviceName, _attribute, _callback] {
       auto service = this->getService<_Interface>(_serviceName);

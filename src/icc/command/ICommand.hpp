@@ -10,7 +10,7 @@
 #define ICC_ICOMMAND_HPP
 
 #include <memory>
-#include <icc/IComponent.hpp>
+#include <icc/Component.hpp>
 #include "ICommandData.hpp"
 #include "ICommandHandler.hpp"
 #include "State.hpp"
@@ -43,9 +43,9 @@ class ICommand
     CommandResult             result_;
   };
 
-  class IListener : public virtual IComponent {
+  class IListener : public virtual Component {
    public:
-    IListener() : IComponent(nullptr) {}
+    IListener() : Component(nullptr) {}
     /**
      * Method proved by derived class to listen results of command
      */
@@ -154,8 +154,8 @@ class ICommand
    */
   template<typename _Listener>
   void unsubscribe(_Listener *_listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Listener>::value,
+                  "_listener is not derived from Component");
     static_assert(std::is_base_of<IListener, _Listener>::value,
                   "_listener is not derived from ICommand::IListener");
     if (_listener) {
@@ -169,8 +169,8 @@ class ICommand
    */
   template<typename _Listener>
   void unsubscribe(std::shared_ptr<_Listener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Listener>::value,
+                  "_listener is not derived from Component");
     static_assert(std::is_base_of<IListener, _Listener>::value,
                   "_listener is not derived from ICommand::IListener");
     if (_listener) {

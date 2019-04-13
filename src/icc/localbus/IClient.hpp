@@ -13,7 +13,7 @@
 
 #include <utility>
 #include <type_traits>
-#include <icc/IComponent.hpp>
+#include <icc/Component.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
 #include "LocalBus.hpp"
 

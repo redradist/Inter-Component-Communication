@@ -12,7 +12,7 @@
 #include <queue>
 #include <mutex>
 #include <boost/asio/io_service.hpp>
-#include <icc/IComponent.hpp>
+#include <icc/Component.hpp>
 
 namespace icc {
 

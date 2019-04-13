@@ -15,7 +15,7 @@ namespace icc {
 namespace localbus {
 
 LocalBus::LocalBus()
-  : IComponent(nullptr) {
+  : Component(nullptr) {
   thread_ = std::thread([=]() {
     exec();
   });
