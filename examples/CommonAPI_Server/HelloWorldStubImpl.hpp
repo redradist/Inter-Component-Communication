@@ -7,9 +7,10 @@
 
 #include <CommonAPI/DBus/CommonAPIDBus.hpp>
 #include <CommonAPI/CommonAPI.hpp>
+#include <icc/Component.hpp>
+#include <icc/coroutine/Task.hpp>
 #include "HelloWorldService.hpp"
 #include "HelloWorldClient.hpp"
-#include "HelloWorld2Client.hpp"
 
 class DummyLogger2 {
  public:
@@ -39,6 +40,10 @@ class HelloWorldStubImpl
   void requestSayHello(const std::shared_ptr<CommonAPI::ClientId> _client,
                        std::string  const & _name,
                        sayHelloReply_t _return) override;
+//  icc::coroutine::Task<void>
+//  requestSayHelloCoro(const std::shared_ptr<CommonAPI::ClientId> _client,
+//      std::string const & _name,
+//      sayHelloReply_t _reply) override;
   void requestSetSettings(const std::shared_ptr<CommonAPI::ClientId> _client,
                           std::vector< int32_t >  const & _setting,
                           setSettingsReply_t _reply) override;

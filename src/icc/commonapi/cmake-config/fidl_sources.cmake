@@ -8,7 +8,7 @@ function(add_fidl_sources TARGET FIDL_FILES SERVICE_OR_CLIENT)
         get_filename_component(FIDL_NAME_WITH_EXTENTION ${FIDL} NAME)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
-        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/commonapi/interface_hierarchical_path.py
+        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/icc/commonapi/interface_hierarchical_path.py
                 ${FIDL}
                 OUTPUT_VARIABLE HIERARCHIC_PATHS)
         string(REGEX MATCHALL "([^;]*);"
