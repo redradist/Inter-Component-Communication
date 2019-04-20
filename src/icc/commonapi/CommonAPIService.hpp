@@ -22,7 +22,7 @@ namespace commonapi {
 template< typename Service,
           typename Logger = icc::logger::DummyLogger >
 class CommonAPIService
-    : public virtual IComponent
+    : public virtual Component
     , public Service
     , public virtual Logger
     , public icc::helpers::virtual_enable_shared_from_this< CommonAPIService<Service, Logger> >{
@@ -30,13 +30,13 @@ class CommonAPIService
                 "Service does not derived from CommonAPI::Stub");
  protected:
   CommonAPIService()
-    : IComponent(nullptr) {
+    : Component(nullptr) {
     Logger::debug("Constructor CommonAPIService()");
   }
 
   CommonAPIService(const std::string &_domain,
                    const std::string &_instance)
-    : IComponent(nullptr)
+    : Component(nullptr)
     , domain_(_domain)
     , instance_(_instance) {
     Logger::debug("Constructor CommonAPIService(const std::string &_domain, const std::string &_instance)");

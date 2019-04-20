@@ -25,7 +25,7 @@ namespace commonapi {
 template< template< typename ... _AttributeExtensions > class Proxy,
           typename Logger = icc::logger::DummyLogger >
 class CommonAPIClient
-    : public virtual IComponent
+    : public virtual Component
     , public Proxy<>
     , public virtual Logger
     , public icc::helpers::virtual_enable_shared_from_this< CommonAPIClient<Proxy, Logger> > {
@@ -33,7 +33,7 @@ class CommonAPIClient
                 "Proxy does not derived from CommonAPI::Proxy");
  public:
   CommonAPIClient()
-    : IComponent(nullptr)
+    : Component(nullptr)
     , Proxy<>(nullptr) {
     Logger::debug("CommonAPIClient()");
     is_inited_ = false;
@@ -41,7 +41,7 @@ class CommonAPIClient
 
   CommonAPIClient(const std::string &_domain,
                   const std::string &_instance)
-    : IComponent(nullptr)
+    : Component(nullptr)
     , Proxy<>([=]() {
       std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
       auto proxy = runtime->buildProxy<Proxy>(_domain, _instance);
@@ -60,7 +60,7 @@ class CommonAPIClient
 
  protected:
   CommonAPIClient(const std::shared_ptr<CommonAPIClient> _client)
-    : IComponent(_client->getEventLoop())
+    : Component(_client->getEventLoop())
     , Proxy<>([=]() {
       return _client;
     }()) {
@@ -129,6 +129,8 @@ class CommonAPIClient
   void initClient(const std::string & _domain,
                   const std::string & _instance) {
     invoke([=] {
+      Logger::debug("initClient(_domain=%s, _instance=%s)",
+                    _domain.c_str(), _instance.c_str());
       if (!is_inited_) {
         Logger::warning("CommonAPIClient is already inited !!!");
         Logger::warning("Deinit CommonAPIClient first !?");
@@ -151,6 +153,8 @@ class CommonAPIClient
   void reinitClient(const std::string & _domain,
                     const std::string & _instance) {
     invoke([=] {
+      Logger::debug("reinitClient(_domain=%s, _instance=%s)",
+                    _domain.c_str(), _instance.c_str());
       deinitClient();
       initClient(_domain, _instance);
     });
@@ -161,6 +165,7 @@ class CommonAPIClient
    */
   void deinitClient() {
     invoke([=] {
+      Logger::debug("deinitClient");
       disconnected(*this);
       *this = nullptr;
       is_inited_ = false;

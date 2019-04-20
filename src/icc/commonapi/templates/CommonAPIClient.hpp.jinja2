@@ -2,6 +2,7 @@
 {%- set client_name = interface.name -%}
 {%- set package_fs = interface.package_name.replace('.', '/') -%}
 {%- set package_ns = interface.package_name.replace('.', '::') -%}
+{%- set type_collections = interface.type_collections -%}
 {%- set methods = interface.methods -%}
 {%- set broadcasts = interface.broadcasts -%}
 {%- set attributes = interface.attributes -%}
@@ -31,6 +32,7 @@
 #include <v{{type_collection.major}}/{{type_collection.path}}.hpp>
 {%- endfor %}
 {%- endif %}
+#include <icc/logger/DummyLogger.hpp>
 #include <icc/commonapi/CommonAPIClient.hpp>
 
 namespace icc {
@@ -46,29 +48,32 @@ using v{{type_collection.major}}::{{type_collection.type}};
 {%- endfor %}
 {%- endif %}
 
+template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
-  : public virtual icc::IComponent
-  , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy >
+  : public virtual icc::Component
+  , public icc::commonapi::CommonAPIClient< {{client_name}}Proxy,
+                                            Logger >
 #if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
-  , public icc::coroutine::TaskScheduler
-#endif {
+  , public virtual icc::coroutine::TaskScheduler
+#endif
+{
  protected:
   {{class_name}}()
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >() {
+    : icc::Component(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >() {
   }
 
   {{class_name}}(const std::string &_domain,
                  const std::string &_instance)
-    : icc::IComponent(nullptr)
-    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(
+    : icc::Component(nullptr)
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(
         _domain,
         _instance) {
   }
 
   {{class_name}}(std::shared_ptr<{{class_name}}> _client)
-    : icc::IComponent(_client.get())
-    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy >(_client) {
+    : icc::Component(_client.get())
+    , icc::commonapi::CommonAPIClient< {{client_name}}Proxy, Logger >(_client) {
   }
 
   ~{{class_name}}() {
@@ -95,6 +100,20 @@ class {{class_name}}
    * {{description}}
    {% endfor %}*/
   {%- endif %}
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  icc::coroutine::Task<CommonAPI::CallStatus>
+  request{{method}}Coro(
+      {%- for input in method.inputs -%}
+        {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+      {%- endfor -%},
+      CommonAPI::CallStatus &_internalCallStatus,
+      {%- if method.outputs is not none -%}
+        {%- for output in method.outputs -%}
+          {{output.type}} & _{{output.name}}{{ ", " if not loop.last }}
+        {%- endfor -%}
+      {%- endif -%},
+      const CommonAPI::CallInfo *_info = nullptr);
+#endif
   {% if method.outputs is not none -%}
   std::future<CommonAPI::CallStatus>{{" "}}
   {%- else -%}
@@ -126,12 +145,33 @@ class {{class_name}}
   {%- endfor %}
   {% endif %}
  protected:
+  void connected({{client_name}}Proxy<> &) override {
+    Logger::debug("{{client_name}}Proxy is connected !!");
+  }
+  void disconnected({{client_name}}Proxy<> &) override {
+    Logger::debug("{{client_name}}Proxy is disconnected !!");
+  }
+
   {%- if methods is not none and methods|length > 0 %}
   /*******************************************************************
    * Below methods for receiving responses on corresponding request
    ******************************************************************/
   {%- for method in methods %}
   {%- if method.outputs is not none %}
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  virtual icc::coroutine::Task<void> response{{method}}Coro(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
+    {%- if method.outputs is not none -%}
+      {%- for output in method.outputs -%}
+        {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+  ) {
+    // Default implementation.
+    // If you need you may override response{{method}}
+    // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of response{{method}}Coro");
+  }
+#endif
   virtual void response{{method}}(const CommonAPI::CallStatus& _callStatus{{ ", " if method.outputs }}
     {%- if method.outputs is not none -%}
       {%- for output in method.outputs -%}
@@ -142,6 +182,7 @@ class {{class_name}}
     // Default implementation.
     // If you need you may override response{{method}}
     // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of response{{method}}");
   }
   {%- endif %}
   {%- endfor %}
@@ -157,16 +198,31 @@ class {{class_name}}
    * {{description}}
    {% endfor %}*/
   {%- endif %}
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  virtual icc::coroutine::Task<void> informationOn{{broadcast}}Coro(
+    {%- if broadcast.parameters is not none -%}
+      {%- for parameter in broadcast.parameters -%}
+        {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+    {%- endif -%}
+    ) {
+    // Default implementation.
+    // If you need you may override informationOn{{broadcast}}Coro
+    // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of informationOn{{broadcast}}Coro");
+  }
+#endif
   virtual void informationOn{{broadcast}}(
     {%- if broadcast.parameters is not none -%}
       {%- for parameter in broadcast.parameters -%}
-          {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+        {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
       {%- endfor -%}
     {%- endif -%}
   ) {
     // Default implementation.
     // If you need you may override informationOn{{broadcast}}
     // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of informationOn{{broadcast}}");
   }
   {%- endfor %}
   {% endif %}
@@ -181,10 +237,19 @@ class {{class_name}}
    * {{description}}
    {% endfor %}*/
   {%- endif %}
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+  virtual icc::coroutine::Task<void> on{{attribute}}ChangedCoro({{attribute.type}} const & _{{attribute.name}}) {
+    // Default implementation.
+    // If you need you may override on{{attribute}}ChangedCoro
+    // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of on{{attribute}}ChangedCoro");
+  }
+#endif
   virtual void on{{attribute}}Changed({{attribute.type}} const & _{{attribute.name}}) {
     // Default implementation.
-    // If you need you may override on{{attribute}}
+    // If you need you may override on{{attribute}}Changed
     // This method will be called in thread of IComponent
+    Logger::warning("Default implementation of on{{attribute}}Changed");
   }
   {%- endfor %}
   {% endif %}
@@ -208,17 +273,54 @@ class {{class_name}}
 };
 {% if methods is not none and methods|length > 0 %}
 {%- for method in methods %}
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+template< typename Logger >
+inline icc::coroutine::Task<CommonAPI::CallStatus>
+{{class_name}}< Logger >::request{{method}}Coro(
+  {%- for input in method.inputs -%}
+    {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
+  {%- endfor -%},
+  CommonAPI::CallStatus &_internalCallStatus,
+  {%- if method.outputs is not none -%}
+    {%- for output in method.outputs -%}
+      {{output.type}} & _{{output.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+  {%- endif -%},
+  const CommonAPI::CallInfo *_info) {
+  const CommonAPI::CallStatus kCallStatus = co_await std::async(std::launch::async,
+  [&] () mutable {
+    CommonAPI::CallStatus callStatus;
+    this->{{method.name}}(
+      {%- for input in method.inputs -%}
+        _{{input.name}}{{ ", " if not loop.last }}
+      {%- endfor -%},
+      callStatus,
+      {%- if method.outputs is not none -%}
+        {%- for output in method.outputs -%}
+          _{{output.name}}{{ ", " if not loop.last }}
+        {%- endfor -%}
+      {%- endif -%},
+      _info
+    );
+    return std::move(callStatus);
+  });
+  co_return std::move(kCallStatus);
+}
+#endif
+
 {%- if method.outputs is not none %}
+template< typename Logger >
 inline std::future<CommonAPI::CallStatus>
-{{class_name}}::request{{method}}(
+{{class_name}}< Logger >::request{{method}}(
 {%- if method.inputs is not none -%}
 {%- for input in method.inputs -%}
     {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
 {%- endfor -%}
 {%- endif -%}
 ) {
-  std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
-  return getProxy()->{{method.name}}Async(
+  Logger::debug("request{{method}} is called");
+  std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
+  return this->{{method.name}}Async(
     {%- if method.inputs is not none and method.inputs|length > 0 -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{ ", " if not loop.last }}
@@ -232,6 +334,15 @@ inline std::future<CommonAPI::CallStatus>
     if (auto client = weakClient.lock()) {
       push([=] {
         if (auto client = weakClient.lock()) {
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+          startCoroutine(
+              response{{method}}Coro(_callStatus{{ ", " if method.outputs }}
+              {%- for output in method.outputs -%}
+              _{{output.name}}{{ ", " if not loop.last }}
+              {%- endfor -%}
+              )
+          );
+#endif
           response{{method}}(_callStatus{{ ", " if method.outputs }}
           {%- for output in method.outputs -%}
               _{{output.name}}{{ ", " if not loop.last }}
@@ -243,16 +354,18 @@ inline std::future<CommonAPI::CallStatus>
   });
 }
 {%- else %}
+template< typename Logger >
 inline CommonAPI::CallStatus
-{{class_name}}::request{{method}}(
+{{class_name}}< Logger >::request{{method}}(
 {%- if method.inputs is not none -%}
 {%- for input in method.inputs -%}
     {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
 {%- endfor -%}
 {%- endif -%}
 ) {
+  Logger::debug("request{{method}} is called");
   CommonAPI::CallStatus callStatus;
-  getProxy()->{{method.name}}(
+  this->{{method.name}}(
     {%- if method.inputs is not none -%}
     {%- for input in method.inputs -%}
         _{{input.name}}{{", "}}
@@ -267,13 +380,18 @@ inline CommonAPI::CallStatus
 
 {%- if broadcasts is not none and broadcasts|length > 0 %}
 {%- for broadcast in broadcasts %}
+template< typename Logger >
 inline
-void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
+void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) {
   invoke([=] {
+    Logger::debug("notifyOn{{broadcast}}Update is called");
     if (isNotify) {
-      if (!on_{{broadcast.lower()}}_update_) {
-        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
-        on_{{broadcast.lower()}}_update_ = getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
+      if (on_{{broadcast.lower()}}_update_) {
+        Logger::warning("{{broadcast}} is already subscribed !!");
+      } else {
+        Logger::debug("Subscribing on {{broadcast}} ...");
+        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
+        on_{{broadcast.lower()}}_update_ = this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().subscribe(
         [=] (
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
@@ -284,6 +402,17 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
           if (auto client = weakClient.lock()) {
             push([=] {
               if (auto client = weakClient.lock()) {
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+                startCoroutine(
+                  informationOn{{broadcast}}Coro(
+                  {%- if broadcast.parameters is not none -%}
+                  {%- for parameter in broadcast.parameters -%}
+                      _{{parameter.name}}{{ ", " if not loop.last }}
+                  {%- endfor -%}
+                  {%- endif -%}
+                  )
+                );
+#endif
                 informationOn{{broadcast}}(
                 {%- if broadcast.parameters is not none -%}
                 {%- for parameter in broadcast.parameters -%}
@@ -297,8 +426,11 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
         });
       }
     } else {
-      if (on_{{broadcast.lower()}}_update_) {
-        getProxy()->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_.get());
+      if (!on_{{broadcast.lower()}}_update_) {
+        Logger::warning("{{broadcast}} is not subscribed !!");
+      } else {
+        Logger::debug("Unsubscribing on {{broadcast}} ...");
+        this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_.get());
         on_{{broadcast.lower()}}_update_.reset();
       }
     }
@@ -309,26 +441,39 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
 
 {%- if attributes is not none and attributes|length > 0 %}
 {%- for attribute in attributes %}
+template< typename Logger >
 inline
-void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
+void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify) {
   invoke([=] {
+    Logger::debug("notifyOn{{attribute}}Update is called");
     if (isNotify) {
-      if (!on_{{attribute.lower()}}_changed_) {
-        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy>> weakClient = this->shared_from_this();
-        on_{{attribute.lower()}}_changed_ = getProxy()->get{{attribute}}Attribute().getChangedEvent().subscribe(
+      if (on_{{attribute.lower()}}_changed_) {
+        Logger::warning("{{attribute}} is already subscribed !!");
+      } else {
+        Logger::debug("Subscribing on {{attribute}} ...");
+        std::weak_ptr<CommonAPIClient<{{client_name}}Proxy, Logger>> weakClient = this->shared_from_this();
+        on_{{attribute.lower()}}_changed_ = this->get{{attribute}}Attribute().getChangedEvent().subscribe(
         [=] ({{attribute.type}} const & _{{attribute.name}}) {
           if (auto client = weakClient.lock()) {
             push([=] {
               if (auto client = weakClient.lock()) {
+#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+                startCoroutine(
+                    on{{attribute}}ChangedCoro(_{{attribute.name}})
+                );
+#endif
                 on{{attribute}}Changed(_{{attribute.name}});
               }
-           });
+            });
           }
         });
       }
     } else {
-      if (on_{{attribute.lower()}}_changed_) {
-        getProxy()->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_.get());
+      if (!on_{{attribute.lower()}}_changed_) {
+        Logger::warning("{{attribute}} is not subscribed !!");
+      } else {
+        Logger::debug("Unsubscribing on {{attribute}} ...");
+        this->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_.get());
         on_{{attribute.lower()}}_changed_.reset();
       }
     }

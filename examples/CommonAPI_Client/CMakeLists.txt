@@ -12,8 +12,8 @@ project(CommonAPI_Client)
 set(CMAKE_CXX_STANDARD  11 )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++11")
 
-set(COMMONAPI_GENERATOR $ENV{HOME}/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
-set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
+set(COMMONAPI_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
+set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
 
 include(../../src/icc/commonapi/cmake-config/wrapper_generator.cmake)
 
@@ -24,6 +24,7 @@ include_directories(../../src)
 include_directories(/usr/local/include/CommonAPI-3.1)
 include_directories(/usr/local/lib/dbus-1.0/include)
 include_directories(/usr/include/dbus-1.0)
+include_directories(/home/redra/Projects/Automotive/dbus-1.11.12/build)
 include_directories(${CMAKE_SOURCE_DIR}/cmake-build-debug/src-gen)
 include_directories(
         $ENV{HOME}/Projects/Automotive/capicxx-core-runtime/include

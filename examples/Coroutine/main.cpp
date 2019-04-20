@@ -29,27 +29,27 @@ icc::coroutine::Task<void> compute_value4() {
   co_return;
 }
 
-icc::coroutine::Task<void> compute_value() {
+icc::coroutine::Task<void> create_task0() {
   auto value0 = co_await compute_value2();
   auto value1 = co_await compute_value3();
-  std::cout << "Start timer in compute_value" << std::endl;
+  std::cout << "Start timer in create_task0" << std::endl;
   co_await std::chrono::seconds(1);
-  std::cout << "Finished timer in compute_value" << std::endl;
+  std::cout << "Finished timer in create_task0" << std::endl;
   co_await compute_value4();
   std::cout << "Task is finihed. Computed value is "
             << (value0 + value1) << std::endl;
 }
 
-icc::coroutine::Task<void> compute_value10() {
-  std::cout << "Start timer in compute_value10" << std::endl;
+icc::coroutine::Task<void> create_task1() {
+  std::cout << "Start timer in create_task1" << std::endl;
   co_await std::chrono::seconds(4);
-  std::cout << "Finished timer in compute_value10" << std::endl;
+  std::cout << "Finished timer in create_task1" << std::endl;
 }
 
-icc::coroutine::Task<void> compute_value8() {
-  std::cout << "Start timer in compute_value8" << std::endl;
+icc::coroutine::Task<void> create_task2() {
+  std::cout << "Start timer in create_task2" << std::endl;
   co_await std::chrono::seconds(2);
-  std::cout << "Finished timer in compute_value8" << std::endl;
+  std::cout << "Finished timer in create_task2" << std::endl;
   co_await std::chrono::seconds(1);
 }
 
@@ -64,9 +64,9 @@ int main() {
   });
   auto service = std::make_shared<boost::asio::io_service>();
   auto & sheduler = icc::coroutine::TaskScheduler::getDefaultTaskSheduler(service.get());
-  sheduler.startCoroutine(compute_value());
-  sheduler.startCoroutine(compute_value10());
-  sheduler.startCoroutine(compute_value8());
+  sheduler.startCoroutine(create_task0());
+  sheduler.startCoroutine(create_task1());
+  sheduler.startCoroutine(create_task2());
   service->run();
   worker0.join();
   worker1.join();

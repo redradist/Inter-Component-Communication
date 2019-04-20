@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_COMPILER "/usr/local/bin/clang" )
-set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+set(CMAKE_C_COMPILER "/usr/bin/clang-9" )
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-9")
 add_definitions(-D__STRICT_ANSI__)
 
 project(CoroutineExample)
@@ -11,8 +11,8 @@ project(CoroutineExample)
 set(CMAKE_CXX_FLAGS "-fcoroutines-ts -stdlib=libc++")
 
 include_directories(../../src)
-include_directories(/usr/local/lib/boost/include)
-link_directories(/usr/local/lib/boost/lib)
+include_directories(/usr/local/boost_1_69_0/include)
+link_directories(/usr/local/boost_1_69_0/lib)
 
 link_directories(/usr/local/lib)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)

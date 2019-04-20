@@ -17,19 +17,23 @@ namespace logger {
 
 class DummyLogger {
  public:
-  inline void debug(const std::string & _str) {
+  template <typename ... TArgs>
+  inline void debug(const std::string & _str, TArgs && ... args) {
     // Dummy implementation
   }
 
-  inline void info(const std::string & _str) {
+  template <typename ... TArgs>
+  inline void info(const std::string & _str, TArgs && ... args) {
     // Dummy implementation
   }
 
-  inline void warning(const std::string & _str) {
+  template <typename ... TArgs>
+  inline void warning(const std::string & _str, TArgs && ... args) {
     // Dummy implementation
   }
 
-  inline void error(const std::string & _str) {
+  template <typename ... TArgs>
+  inline void error(const std::string & _str, TArgs && ... args) {
     // Dummy implementation
   }
 };
