@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.7)
-#set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER "/usr/bin/clang-9" )
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-9")
-#add_definitions(-D__STRICT_ANSI__)
+add_definitions(-D__STRICT_ANSI__)
 
 project(CommonAPI_Server)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcoroutines-ts -stdlib=libc++ -pthread -std=c++2a")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(COMMONAPI_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
 set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
 
