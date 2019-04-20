@@ -12,7 +12,7 @@
 #if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
 #include <boost/asio/io_service.hpp>
-#include <IComponent.hpp>
+#include <icc/Component.hpp>
 #include "Task.hpp"
 
 namespace icc {
@@ -20,7 +20,7 @@ namespace icc {
 namespace coroutine {
 
 class TaskScheduler
-    : public virtual icc::IComponent {
+    : public virtual icc::Component {
  public:
   TaskScheduler();
 
