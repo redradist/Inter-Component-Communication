@@ -13,9 +13,9 @@
 #include <type_traits>
 #include <boost/optional.hpp>
 #include <CommonAPI/CommonAPI.hpp>
+#include <icc/_private/helpers/memory_helpers.hpp>
 #include <icc/Component.hpp>
 #include <icc/commonapi/exceptions/CommonAPIClientError.hpp>
-#include <icc/_private/helpers/memory_helpers.hpp>
 #include <icc/logger/DummyLogger.hpp>
 
 namespace icc {

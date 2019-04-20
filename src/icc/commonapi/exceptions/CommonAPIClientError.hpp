@@ -9,8 +9,8 @@
 #ifndef COMMONAPI_CLIENT_COMMONAPICLIENTERROR_HPP
 #define COMMONAPI_CLIENT_COMMONAPICLIENTERROR_HPP
 
-#include <icc/exceptions/ICCException.hpp>
 #include <string>
+#include <icc/exceptions/ICCException.hpp>
 
 namespace icc {
 

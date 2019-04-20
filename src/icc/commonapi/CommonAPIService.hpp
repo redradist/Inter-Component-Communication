@@ -10,9 +10,9 @@
 #define ICC_COMMONAPISERVICE_HPP
 
 #include <CommonAPI/CommonAPI.hpp>
-#include <icc/Component.hpp>
 #include <icc/_private/helpers/concept_base_of_template.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
+#include <icc/Component.hpp>
 #include <icc/logger/DummyLogger.hpp>
 
 namespace icc {
