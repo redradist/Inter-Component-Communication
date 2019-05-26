@@ -1,0 +1,171 @@
+/**
+ * @file lock_free_queue.hpp
+ * @author Denis Kotov
+ * @date 11 May 2019
+ * @brief Contains helper LockFreeQueue for multiple providers and multiple consumers
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
+
+#ifndef ICC_THREAD_SAFE_QUEUE_HPP
+#define ICC_THREAD_SAFE_QUEUE_HPP
+
+#include <new>
+#include <atomic>
+#include <type_traits>
+#include <mutex>
+#include <condition_variable>
+
+namespace icc {
+
+namespace _private {
+
+namespace containers {
+
+template<typename TItem>
+class ThreadSafeQueue {
+ public:
+  ThreadSafeQueue() = default;
+
+  virtual ~ThreadSafeQueue() {
+    TItem item;
+    while (tryPop(item));
+  }
+
+  template<typename TAddItem>
+  void push(TAddItem &&item) {
+    if (!tryPush(std::forward<TAddItem>(item))) {
+      throw std::bad_alloc();
+    }
+  }
+
+  template<typename TAddItem>
+  bool tryPush(TAddItem &&item) noexcept {
+    auto *itemPtr = new(std::nothrow) TItem(std::forward<TAddItem>(item));
+    if (itemPtr == nullptr) {
+      return false;
+    }
+    auto *addNodePtr = new(std::nothrow) QueueNode();
+    if (addNodePtr == nullptr) {
+      delete itemPtr;
+      return false;
+    }
+    addNodePtr->item_ptr_ = itemPtr;
+    std::unique_lock<std::mutex> lock{mtx_};
+    if (back_item_ == nullptr) {
+      addNodePtr->next_item_ = back_item_;
+      back_item_ = addNodePtr;
+      front_item_ = addNodePtr;
+    } else {
+      addNodePtr->next_item_ = back_item_->next_item_;
+      back_item_->next_item_ = addNodePtr;
+      back_item_ = addNodePtr;
+    }
+    ++item_count_;
+    cond_var_.notify_one();
+    return true;
+  }
+
+  TItem pop() {
+    static_assert(std::is_copy_assignable<TItem>::value,
+                  "TItem is not copy assignable !!");
+    TItem item;
+    std::unique_lock<std::mutex> lock{mtx_};
+    if (!tryPop(lock, item)) {
+      throw "No items !!";
+    }
+    return item;
+  }
+
+  bool tryPop(TItem &item) {
+    static_assert(std::is_copy_assignable<TItem>::value,
+                  "TItem is not copy assignable !!");
+    std::unique_lock<std::mutex> lock{mtx_};
+    return tryPop(lock, item);
+  }
+
+  TItem waitPop() {
+    static_assert(std::is_copy_assignable<TItem>::value,
+                  "TItem is not copy assignable !!");
+    TItem item;
+    std::unique_lock<std::mutex> lock{mtx_};
+    while (execute_ && !tryPop(lock, item)) {
+      cond_var_.wait(lock, [this, &lock] {
+        return !execute_ || !empty(lock);
+      });
+    }
+    return item;
+  }
+
+  void start() {
+    std::unique_lock<std::mutex> lock{mtx_};
+    execute_ = true;
+  }
+
+  void stop() {
+    std::unique_lock<std::mutex> lock{mtx_};
+    execute_ = false;
+    cond_var_.notify_all();
+  }
+
+  bool empty() const {
+    std::unique_lock<std::mutex> lock{mtx_};
+    return empty(lock);
+  }
+
+  unsigned count() const {
+    std::unique_lock<std::mutex> lock{mtx_};
+    return count(lock);
+  }
+
+ private:
+  struct QueueNode {
+    TItem *item_ptr_ = nullptr;
+    QueueNode *next_item_ = nullptr;
+  };
+
+  bool empty(std::unique_lock<std::mutex> &lock) const {
+    return item_count_ == 0;
+  }
+
+  unsigned count(std::unique_lock<std::mutex> &lock) const {
+    return item_count_;
+  }
+
+  bool tryPop(std::unique_lock<std::mutex> &lock, TItem &item) {
+    if (!execute_ || front_item_ == nullptr) {
+      return false;
+    } else {
+      QueueNode *const kPrevFrontNode = front_item_;
+      TItem *const kItemPtr = front_item_->item_ptr_;
+      if (kPrevFrontNode == back_item_) {
+        front_item_ = nullptr;
+        back_item_ = nullptr;
+      } else {
+        QueueNode *const kNextFrontNode = front_item_->next_item_;
+        front_item_ = kNextFrontNode;
+      }
+      ++item_count_;
+      lock.unlock();
+      delete kPrevFrontNode;
+      item = *kItemPtr;
+      delete kItemPtr;
+      return true;
+    }
+  }
+
+  std::condition_variable cond_var_;
+  std::mutex mtx_;
+
+  bool execute_ = true;
+  unsigned item_count_{0};
+  QueueNode *front_item_ = nullptr;
+  QueueNode *back_item_ = nullptr;
+};
+
+}
+
+}
+
+}
+
+#endif //ICC_THREAD_SAFE_QUEUE_HPP
