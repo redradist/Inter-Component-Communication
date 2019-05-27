@@ -109,8 +109,8 @@ class Timer : public Event<void(const TimerEvents &)> {
    */
   template<typename _Listener>
   void addListener(_Listener *_listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Listener>::value,
+                  "_listener is not derived from Component");
     static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
@@ -124,8 +124,8 @@ class Timer : public Event<void(const TimerEvents &)> {
    */
   template<typename _Listener>
   void addListener(std::shared_ptr<_Listener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
-                  "_listener is not derived from IComponent");
+    static_assert(std::is_base_of<Component, _Listener>::value,
+                  "_listener is not derived from Component");
     static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
     if (_listener) {
@@ -139,7 +139,7 @@ class Timer : public Event<void(const TimerEvents &)> {
    */
   template<typename _Listener>
   void removeListener(_Listener *_listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
+    static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");
@@ -154,7 +154,7 @@ class Timer : public Event<void(const TimerEvents &)> {
    */
   template<typename _Listener>
   void removeListener(std::shared_ptr<_Listener> _listener) {
-    static_assert(std::is_base_of<IComponent, _Listener>::value,
+    static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from IComponent");
     static_assert(std::is_base_of<ITimerListener, _Listener>::value,
                   "_listener is not derived from ITimerLisener");

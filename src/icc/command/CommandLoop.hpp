@@ -1,3 +1,5 @@
+#include <utility>
+
 /**
  * @file CommandLoop.hpp
  * @author Denis Kotov
@@ -48,16 +50,18 @@ class CommandLoop
    * Owner of this pointer is not we
    * @param _eventLoop Event loop that will be used
    */
-  CommandLoop(boost::asio::io_service *_eventLoop)
-      : Component(_eventLoop) {
+  template <typename TService>
+  CommandLoop(TService *_service)
+      : Component(_service) {
   }
 
   /**
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  CommandLoop(std::shared_ptr<boost::asio::io_service> _eventLoop)
-      : Component(_eventLoop) {
+  template <typename TService>
+  CommandLoop(std::shared_ptr<TService> _service)
+      : Component(_service) {
   }
 
   /**
@@ -73,7 +77,7 @@ class CommandLoop
    * @param _parent Parent compenent that will share event loop
    */
   CommandLoop(std::shared_ptr<Component> _parent)
-      : Component(_parent) {
+      : Component(std::move(_parent)) {
   }
 
  public:

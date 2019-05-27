@@ -19,6 +19,7 @@ include_directories(
 
 link_directories(/usr/local/lib/boost/lib)
 link_directories(/usr/local/lib)
+link_directories(/usr/local/boost_1_69_0/lib)
 
 set(SOURCE_FILES    main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)

@@ -1,3 +1,5 @@
+#include <utility>
+
 /**
  * @file IComponent.hpp
  * @author Denis Kotov
@@ -15,7 +17,9 @@
 #include <memory>
 #include <thread>
 #include <algorithm>
-#include <boost/asio/io_service.hpp>
+#include "EventLoop.hpp"
+#include <icc/_private/containers/ThreadSafeQueue.hpp>
+#include <boost/asio/io_context.hpp>
 
 namespace icc {
 
@@ -26,9 +30,8 @@ class Component {
    * Only with this constructor object will be owner of service_.
    */
   Component()
-      : owner_of_service_(true),
-        service_(std::make_shared<boost::asio::io_service>()),
-        worker_(new boost::asio::io_service::work(*service_)) {
+    : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
+    , channel_(event_loop_->createChannel()) {
   }
 
  public:
@@ -41,25 +44,40 @@ class Component {
   }
 
   /**
+   * Constructor for initializing with creation of event loop.
+   */
+  template <typename TService>
+  Component()
+      : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
+      , channel_(event_loop_->createChannel()) {
+  }
+
+  /**
    * Constructor for initializing within event loop created outside.
    * Owner of this pointer is not we
-   * @param _eventLoop Event loop that will be used
+   * @param _service Service for creating event loop that will be used
    */
-  Component(boost::asio::io_service *_eventLoop)
-      : service_(std::shared_ptr<boost::asio::io_service>(_eventLoop,
-                                                          [=](boost::asio::io_service *) {
-                                                            // NOTE(redra): Nothing need to do. Owner of this pointer is not we
-                                                          })),
-        worker_(new boost::asio::io_service::work(*service_)) {
+  template <typename TService>
+  Component(TService *_service)
+    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
+  }
+
+  /**
+   * Constructor for initializing within event loop created outside.
+   * Owner of this pointer is not we
+   * @param _eventLoop Service for creating event loop that will be used
+   */
+  template <typename TService>
+  Component(std::shared_ptr<TService> _service)
+    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
   }
 
   /**
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  Component(std::shared_ptr<boost::asio::io_service> _eventLoop)
-      : service_(_eventLoop),
-        worker_(new boost::asio::io_service::work(*service_)) {
+  Component(std::shared_ptr<IEventLoop::IChannel> _channel)
+    : channel_(std::move(_channel)) {
   }
 
   /**
@@ -67,9 +85,8 @@ class Component {
    * @param _parent Parent compenent that will share event loop
    */
   Component(Component *_parent)
-      : service_(_parent->getEventLoop()),
-        worker_(new boost::asio::io_service::work(*service_)),
-        parent_(_parent) {
+    : channel_(_parent->getChannel())
+    , parent_(_parent) {
     _parent->addChild(this);
   }
 
@@ -78,9 +95,8 @@ class Component {
    * @param _parent Parent compenent that will share event loop
    */
   Component(std::shared_ptr<Component> _parent)
-      : service_(_parent->getEventLoop()),
-        worker_(new boost::asio::io_service::work(*service_)),
-        parent_(_parent.get()) {
+    : channel_(_parent->getChannel())
+    , parent_(_parent.get()) {
     _parent->addChild(this);
   }
 
@@ -100,8 +116,16 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (worker_ && owner_of_service_) {
-      service_->run();
+    if (event_loop_) {
+      channel_ = event_loop_->createChannel();
+      event_loop_->run();
+    }
+  }
+
+  virtual void stop() {
+    channel_.reset();
+    if (event_loop_) {
+      event_loop_->stop();
     }
   }
 
@@ -110,14 +134,12 @@ class Component {
    */
   virtual void exit() {
     invoke([=] {
-      if (worker_) {
-        worker_.reset(nullptr);
-        for (auto &child : children_) {
-          child->exit();
-        }
-        if (parent_) {
-          parent_->removeChild(this);
-        }
+      stop();
+      for (auto &child : children_) {
+        child->exit();
+      }
+      if (parent_) {
+        parent_->removeChild(this);
       }
     });
   }
@@ -127,8 +149,8 @@ class Component {
    * @param _task Task that will be executed
    */
   virtual void push(std::function<void(void)> _task) {
-    if (worker_) {
-      service_->post(_task);
+    if (channel_) {
+      channel_->push(std::move(_task));
     }
   }
 
@@ -139,8 +161,8 @@ class Component {
    * @param _task Task that will be executed
    */
   virtual void invoke(std::function<void(void)> _task) {
-    if (worker_) {
-      service_->dispatch(_task);
+    if (channel_) {
+      channel_->invoke(std::move(_task));
     }
   }
 
@@ -157,9 +179,9 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
-  virtual std::shared_ptr<boost::asio::io_service>
-  getEventLoop() const {
-    return service_;
+  virtual std::shared_ptr<IEventLoop::IChannel>
+  getChannel() const {
+    return channel_;
   }
 
   /**
@@ -169,9 +191,7 @@ class Component {
   virtual void addChild(Component *_child) {
     if (_child) {
       invoke([=] {
-        if (worker_) {
-          children_.push_back(_child);
-        }
+        children_.push_back(_child);
       });
     }
   }
@@ -183,23 +203,20 @@ class Component {
   virtual void removeChild(Component *_child) {
     if (_child) {
       invoke([=] {
-        if (worker_) {
-          auto childIter = std::find(children_.begin(),
-                                     children_.end(),
-                                     _child);
-          if (childIter != children_.end()) {
-            children_.erase(childIter);
-            onChildExit(_child);
-          }
+        auto childIter = std::find(children_.begin(),
+                                   children_.end(),
+                                   _child);
+        if (childIter != children_.end()) {
+          children_.erase(childIter);
+          onChildExit(_child);
         }
       });
     }
   }
 
  protected:
-  bool owner_of_service_ = false;
-  std::shared_ptr<boost::asio::io_service> service_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IEventLoop> event_loop_;
+  std::shared_ptr<IEventLoop::IChannel> channel_;
 
  private:
   Component *parent_ = nullptr;

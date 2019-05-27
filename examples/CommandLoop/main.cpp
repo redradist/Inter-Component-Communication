@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by redra on 21.07.17.
 //
@@ -9,6 +11,99 @@
 #include <icc/command/Builder.hpp>
 #include <icc/command/Command.hpp>
 #include <icc/command/CommandLoop.hpp>
+#include <icc/EventLoop.hpp>
+
+namespace icc {
+
+template <>
+class EventLoop<boost::asio::io_service>
+    : public std::enable_shared_from_this<EventLoop<boost::asio::io_service>>
+    , public IEventLoop {
+ public:
+  class Channel : public IEventLoop::IChannel {
+   public:
+    Channel(std::shared_ptr<EventLoop> eventLoop)
+        : event_loop_{std::move(eventLoop)} {
+    }
+
+    void push(Action _action) override {
+      if (event_loop_) {
+        event_loop_->push(std::move(_action));
+      }
+    }
+
+    void invoke(Action _action) override {
+      if (event_loop_) {
+        event_loop_->invoke(std::move(_action));
+      }
+    }
+
+   private:
+    std::shared_ptr<EventLoop> event_loop_;
+  };
+
+  EventLoop(boost::asio::io_service *_service)
+    : execute_{true}
+    , service_(std::shared_ptr<boost::asio::io_service>(_service,
+      [=](boost::asio::io_service *) {
+        // NOTE(redra): Nothing need to do. Owner of this pointer is not we
+      }))
+    , worker_(new boost::asio::io_service::work(*service_)) {
+  }
+
+  EventLoop(std::shared_ptr<boost::asio::io_service> _service)
+    : execute_{true}
+    , service_(std::move(_service))
+    , worker_(new boost::asio::io_service::work(*service_)) {
+  }
+
+  void push(Action _action) {
+    if (execute_.load()) {
+      service_->post(std::move(_action));
+    }
+  }
+
+  void invoke(Action _action) {
+    if (execute_.load()) {
+      service_->dispatch(_action);
+    }
+  }
+
+  void run() override {
+    bool stopState = false;
+    if (execute_.compare_exchange_strong(stopState, true)) {
+      queue_thread_id_.store(std::this_thread::get_id());
+      service_->run();
+    }
+  }
+
+  void stop() override {
+    bool executeState = true;
+    if (execute_.compare_exchange_strong(executeState, false)) {
+      worker_.reset(nullptr);
+    }
+  }
+
+  std::shared_ptr<IChannel> createChannel() override {
+    return std::make_shared<Channel>(shared_from_this());
+  }
+
+  std::thread::id getThreadId() const override {
+    return queue_thread_id_.load(std::memory_order_acquire);
+  }
+
+  bool isRun() const override {
+    return execute_.load(std::memory_order_acquire);
+  }
+
+ private:
+  std::atomic_bool execute_{false};
+  std::atomic<std::thread::id> queue_thread_id_;
+  std::shared_ptr<boost::asio::io_service> service_;
+  std::unique_ptr<boost::asio::io_service::work> worker_;
+};
+
+}
 
 class ConnectionHFP
     : public icc::command::Command {
@@ -33,7 +128,7 @@ class ConnectionBTProfiles
  private:
   friend class icc::command::Builder;
   ConnectionBTProfiles(boost::asio::io_service *_eventLoop)
-    : icc::IComponent(_eventLoop) {
+    : icc::Component(_eventLoop) {
     setMode(icc::command::LoopMode::MultiCommand |
             icc::command::LoopMode::Transaction);
     pushBack(std::make_shared<ConnectionHFP>());
@@ -67,7 +162,7 @@ class Connect
  private:
   friend class icc::command::Builder;
   Connect(boost::asio::io_service *_eventLoop)
-    : icc::IComponent(_eventLoop) {
+    : icc::Component(_eventLoop) {
   }
 
  public:
@@ -97,7 +192,7 @@ int main() {
     mainLoop->startCommand();
     // Start event loop
     service_.run();
-  } catch (icc::command::CommandStateAssert ex) {
+  } catch (icc::command::CommandStateAssert & ex) {
     std::cout << "ex is " << ex.what() << std::endl;
     std::cout << "command is " << ex.getCommand()->getCommandType() << std::endl;
   }
