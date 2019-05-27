@@ -1,6 +1,10 @@
-//
-// Created by redra on 13.05.19.
-//
+/**
+ * @file ThreadSafeQueueTests.hpp
+ * @author Denis Kotov
+ * @date 13 May 2019
+ * @brief Contains tests for ThreadSafeQueue class
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #include <gtest/gtest.h>
 #include <atomic>

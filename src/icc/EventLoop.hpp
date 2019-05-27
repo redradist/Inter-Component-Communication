@@ -1,7 +1,16 @@
-
-//
-// Created by redra on 26.05.19.
-//
+/**
+ * @file EventLoop.hpp
+ * @author Denis Kotov
+ * @date 26 May 2019
+ * @brief
+ * Contains IEventLoop:
+ * It is interface for implementing Event Loops
+ * Contains EventLoop<ThreadSafeQueueAction>:
+ * It is default implementation of IEventLoop interface
+ * based on ThreadSafeQueue. This implementation is used in Component as
+ * default EventLoop
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_EVENTLOOP_HPP
 #define ICC_EVENTLOOP_HPP

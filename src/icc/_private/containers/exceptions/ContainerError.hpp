@@ -1,8 +1,8 @@
 /**
- * @file CommandNotFound.hpp
+ * @file ContainerError.hpp
  * @author Denis Kotov
  * @date 15 Mar 2018
- * @brief Contains exception for Not Found Command for ICC library
+ * @brief Contains exception for errors in containers of ICC library
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 

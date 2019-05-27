@@ -1,5 +1,5 @@
 /**
- * @file thread_safe_queue.hpp
+ * @file ThreadSafeQueue.hpp
  * @author Denis Kotov
  * @date 11 May 2019
  * @brief Contains helper ThreadSafeQueue for multiple providers and multiple consumers
