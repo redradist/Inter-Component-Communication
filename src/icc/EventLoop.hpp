@@ -1,3 +1,4 @@
+
 //
 // Created by redra on 26.05.19.
 //
@@ -8,39 +9,94 @@
 #include <atomic>
 #include <thread>
 #include <functional>
-
+#include <utility>
 #include <icc/_private/helpers/thread_safe_queue.hpp>
-#include "IChannel.hpp"
 
 namespace icc {
 
 using Action = std::function<void(void)>;
 
-class IEventLoop : public IChannel {
- public:
-  virtual void exec() = 0;
-  virtual void stop() = 0;
-  virtual std::thread::id getThreadId() const = 0;
-  virtual bool isExec() const = 0;
-};
-
-template <typename TQueue>
+template <typename TService>
 class EventLoop;
 
-using TThreadSafeQueue = icc::_private::containers::ThreadSafeQueue<Action>;
+class IEventLoop {
+ public:
+  template <typename TService>
+  static std::shared_ptr<IEventLoop>
+  createEventLoop() {
+    return std::make_shared<EventLoop<TService>>();
+  }
+
+  template <typename TService>
+  static std::shared_ptr<IEventLoop>
+  createEventLoop(TService *_service) {
+    return std::make_shared<EventLoop<TService>>(_service);
+  }
+
+  template <typename TService>
+  static std::shared_ptr<IEventLoop>
+  createEventLoop(std::shared_ptr<TService> _service) {
+    return std::make_shared<EventLoop<TService>>(_service);
+  }
+
+  template <typename TService>
+  static std::shared_ptr<IEventLoop>
+  createEventLoop(std::unique_ptr<TService> _service) {
+    return std::make_shared<EventLoop<TService>>(_service);
+  }
+
+  class IChannel {
+   public:
+    virtual void push(Action _action) = 0;
+    virtual void invoke(Action _action) = 0;
+  };
+
+  virtual void run() = 0;
+  virtual void stop() = 0;
+  virtual std::shared_ptr<IChannel> createChannel() = 0;
+  virtual std::thread::id getThreadId() const = 0;
+  virtual bool isRun() const = 0;
+};
+
+using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
 
 template <>
-class EventLoop<TThreadSafeQueue> : public IEventLoop {
+class EventLoop<ThreadSafeQueueAction> final
+    : public std::enable_shared_from_this<EventLoop<ThreadSafeQueueAction>>
+    , public IEventLoop {
  public:
-  void push(Action _action) override {
-    if (execute_.load()) {
+  class Channel : public IEventLoop::IChannel {
+   public:
+    Channel(std::shared_ptr<EventLoop> eventLoop)
+      : event_loop_{std::move(eventLoop)} {
+    }
+
+    void push(Action _action) override {
+      if (event_loop_) {
+        event_loop_->push(std::move(_action));
+      }
+    }
+
+    void invoke(Action _action) override {
+      if (event_loop_) {
+        event_loop_->invoke(std::move(_action));
+      }
+    }
+
+   private:
+    std::shared_ptr<EventLoop> event_loop_;
+  };
+
+  void push(Action _action) {
+    if (run_.load(std::memory_order_acquire)) {
       queue_->push(std::move(_action));
     }
   }
 
-  void invoke(Action _action) override {
-    if (execute_.load()) {
-      if (queue_thread_id_.load() == std::this_thread::get_id()) {
+  void invoke(Action _action) {
+    if (run_.load(std::memory_order_acquire)) {
+      if (queue_thread_id_.load(std::memory_order_acquire) ==
+          std::this_thread::get_id()) {
         _action();
       } else {
         queue_->push(std::move(_action));
@@ -48,38 +104,41 @@ class EventLoop<TThreadSafeQueue> : public IEventLoop {
     }
   }
 
-  void exec() override {
-    bool stopExecute = false;
-    if (execute_.compare_exchange_strong(stopExecute, true)) {
-      while (true) {
-        Action action = std::move(queue_->waitPop());
-        if (!execute_.load()) {
-          break;
+  void run() override {
+    bool stopState = false;
+    if (run_.compare_exchange_strong(stopState, true)) {
+       do {
+        Action action = queue_->waitPop();
+        if (action) {
+          action();
         }
-        action();
-      }
+      } while (run_.load(std::memory_order_acquire));
     }
   }
 
   void stop() override {
-    bool startExecute = true;
-    if (execute_.compare_exchange_strong(startExecute, false)) {
+    bool executeState = true;
+    if (run_.compare_exchange_strong(executeState, false)) {
       queue_->stop();
     }
+  }
+
+  std::shared_ptr<IChannel> createChannel() override {
+    return std::make_shared<Channel>(shared_from_this());
   }
 
   std::thread::id getThreadId() const override {
     return queue_thread_id_.load(std::memory_order_acquire);
   }
 
-  bool isExec() const override {
-    return execute_.load(std::memory_order_acquire);
+  bool isRun() const override {
+    return run_.load(std::memory_order_acquire);
   }
 
  private:
-  std::atomic_bool execute_{false};
+  std::atomic_bool run_{false};
   std::atomic<std::thread::id> queue_thread_id_;
-  std::unique_ptr<TThreadSafeQueue> queue_{new TThreadSafeQueue()};
+  std::unique_ptr<ThreadSafeQueueAction> queue_{new ThreadSafeQueueAction()};
 };
 
 }

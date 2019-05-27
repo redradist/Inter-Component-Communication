@@ -1,8 +1,8 @@
 /**
- * @file lock_free_queue.hpp
+ * @file thread_safe_queue.hpp
  * @author Denis Kotov
  * @date 11 May 2019
- * @brief Contains helper LockFreeQueue for multiple providers and multiple consumers
+ * @brief Contains helper ThreadSafeQueue for multiple providers and multiple consumers
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 

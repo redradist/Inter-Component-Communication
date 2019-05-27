@@ -30,8 +30,8 @@ class Component {
    * Only with this constructor object will be owner of service_.
    */
   Component()
-    : event_loop_(std::make_shared<EventLoop<TThreadSafeQueue>>())
-    , channel_(event_loop_) {
+    : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
+    , channel_(event_loop_->createChannel()) {
   }
 
  public:
@@ -46,30 +46,28 @@ class Component {
   /**
    * Constructor for initializing within event loop created outside.
    * Owner of this pointer is not we
-   * @param _eventLoop Event loop that will be used
+   * @param _service Service for creating event loop that will be used
    */
   template <typename TService>
   Component(TService *_service)
-    : event_loop_(std::make_shared<EventLoop<TService>>(_service))
-    , channel_(event_loop_) {
+    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
   }
 
   /**
    * Constructor for initializing within event loop created outside.
    * Owner of this pointer is not we
-   * @param _eventLoop Event loop that will be used
+   * @param _eventLoop Service for creating event loop that will be used
    */
   template <typename TService>
   Component(std::shared_ptr<TService> _service)
-    : event_loop_(std::make_shared<EventLoop<TService>>(_service))
-    , channel_(event_loop_) {
+    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
   }
 
   /**
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  Component(std::shared_ptr<IChannel> _channel)
+  Component(std::shared_ptr<IEventLoop::IChannel> _channel)
     : channel_(std::move(_channel)) {
   }
 
@@ -110,11 +108,13 @@ class Component {
    */
   virtual void exec() {
     if (event_loop_) {
-      event_loop_->exec();
+      channel_ = event_loop_->createChannel();
+      event_loop_->run();
     }
   }
 
   virtual void stop() {
+    channel_.reset();
     if (event_loop_) {
       event_loop_->stop();
     }
@@ -140,7 +140,9 @@ class Component {
    * @param _task Task that will be executed
    */
   virtual void push(std::function<void(void)> _task) {
-    channel_->push(std::move(_task));
+    if (channel_) {
+      channel_->push(std::move(_task));
+    }
   }
 
   /**
@@ -150,7 +152,9 @@ class Component {
    * @param _task Task that will be executed
    */
   virtual void invoke(std::function<void(void)> _task) {
-    channel_->invoke(std::move(_task));
+    if (channel_) {
+      channel_->invoke(std::move(_task));
+    }
   }
 
  protected:
@@ -166,7 +170,7 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
-  virtual std::shared_ptr<IChannel>
+  virtual std::shared_ptr<IEventLoop::IChannel>
   getChannel() const {
     return channel_;
   }
@@ -203,7 +207,7 @@ class Component {
 
  protected:
   std::shared_ptr<IEventLoop> event_loop_;
-  std::shared_ptr<IChannel> channel_;
+  std::shared_ptr<IEventLoop::IChannel> channel_;
 
  private:
   Component *parent_ = nullptr;

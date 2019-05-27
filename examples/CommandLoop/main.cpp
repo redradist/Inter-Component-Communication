@@ -16,8 +16,32 @@
 namespace icc {
 
 template <>
-class EventLoop<boost::asio::io_service> : public IEventLoop {
+class EventLoop<boost::asio::io_service>
+    : public std::enable_shared_from_this<EventLoop<boost::asio::io_service>>
+    , public IEventLoop {
  public:
+  class Channel : public IEventLoop::IChannel {
+   public:
+    Channel(std::shared_ptr<EventLoop> eventLoop)
+        : event_loop_{std::move(eventLoop)} {
+    }
+
+    void push(Action _action) override {
+      if (event_loop_) {
+        event_loop_->push(std::move(_action));
+      }
+    }
+
+    void invoke(Action _action) override {
+      if (event_loop_) {
+        event_loop_->invoke(std::move(_action));
+      }
+    }
+
+   private:
+    std::shared_ptr<EventLoop> event_loop_;
+  };
+
   EventLoop(boost::asio::io_service *_service)
     : execute_{true}
     , service_(std::shared_ptr<boost::asio::io_service>(_service,
@@ -33,38 +57,42 @@ class EventLoop<boost::asio::io_service> : public IEventLoop {
     , worker_(new boost::asio::io_service::work(*service_)) {
   }
 
-  void push(Action _action) override {
+  void push(Action _action) {
     if (execute_.load()) {
       service_->post(std::move(_action));
     }
   }
 
-  void invoke(Action _action) override {
+  void invoke(Action _action) {
     if (execute_.load()) {
       service_->dispatch(_action);
     }
   }
 
-  void exec() override {
-    bool stopExecute = false;
-    if (execute_.compare_exchange_strong(stopExecute, true)) {
+  void run() override {
+    bool stopState = false;
+    if (execute_.compare_exchange_strong(stopState, true)) {
       queue_thread_id_.store(std::this_thread::get_id());
       service_->run();
     }
   }
 
   void stop() override {
-    bool startExecute = true;
-    if (execute_.compare_exchange_strong(startExecute, false)) {
+    bool executeState = true;
+    if (execute_.compare_exchange_strong(executeState, false)) {
       worker_.reset(nullptr);
     }
+  }
+
+  std::shared_ptr<IChannel> createChannel() override {
+    return std::make_shared<Channel>(shared_from_this());
   }
 
   std::thread::id getThreadId() const override {
     return queue_thread_id_.load(std::memory_order_acquire);
   }
 
-  bool isExec() const override {
+  bool isRun() const override {
     return execute_.load(std::memory_order_acquire);
   }
 
