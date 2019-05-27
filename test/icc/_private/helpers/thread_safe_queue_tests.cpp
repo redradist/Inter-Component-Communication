@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <atomic>
 #include <thread>
-#include <icc/_private/helpers/thread_safe_queue.hpp>
+#include <icc/_private/containers/ThreadSafeQueue.hpp>
 
 template <typename TItem>
 using ThreadSafeQueue = icc::_private::containers::ThreadSafeQueue<TItem>;

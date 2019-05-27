@@ -15,6 +15,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "icc/_private/containers/exceptions/ContainerError.hpp"
+
 namespace icc {
 
 namespace _private {
@@ -71,7 +73,7 @@ class ThreadSafeQueue {
     TItem item;
     std::unique_lock<std::mutex> lock{mtx_};
     if (!tryPop(lock, item)) {
-      throw "No items !!";
+      throw ContainerError("No items !!");
     }
     return item;
   }

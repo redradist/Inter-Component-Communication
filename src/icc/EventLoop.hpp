@@ -10,7 +10,7 @@
 #include <thread>
 #include <functional>
 #include <utility>
-#include <icc/_private/helpers/thread_safe_queue.hpp>
+#include <icc/_private/containers/ThreadSafeQueue.hpp>
 
 namespace icc {
 

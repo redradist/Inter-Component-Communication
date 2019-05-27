@@ -18,7 +18,7 @@
 #include <thread>
 #include <algorithm>
 #include "EventLoop.hpp"
-#include <icc/_private/helpers/thread_safe_queue.hpp>
+#include <icc/_private/containers/ThreadSafeQueue.hpp>
 #include <boost/asio/io_context.hpp>
 
 namespace icc {
@@ -41,6 +41,15 @@ class Component {
    */
   Component(std::nullptr_t)
       : Component() {
+  }
+
+  /**
+   * Constructor for initializing with creation of event loop.
+   */
+  template <typename TService>
+  Component()
+      : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
+      , channel_(event_loop_->createChannel()) {
   }
 
   /**
