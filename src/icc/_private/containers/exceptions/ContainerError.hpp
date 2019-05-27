@@ -6,8 +6,8 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef COMMONAPI_CLIENT_COMMONAPICLIENTERROR_HPP
-#define COMMONAPI_CLIENT_COMMONAPICLIENTERROR_HPP
+#ifndef ICC_CONTAINER_ERROR_HPP
+#define ICC_CONTAINER_ERROR_HPP
 
 #include <string>
 #include <icc/exceptions/ICCException.hpp>
@@ -42,4 +42,4 @@ class ContainerError : public icc::ICCException {
 
 }
 
-#endif //COMMONAPI_CLIENT_COMMONAPICLIENTERROR_HPP
+#endif //ICC_CONTAINER_ERROR_HPP
