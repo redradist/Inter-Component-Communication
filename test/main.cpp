@@ -1,5 +1,5 @@
 /**
- * @file ThreadSafeQueueTests.hpp
+ * @file main.cpp
  * @author Denis Kotov
  * @date 27 May 2019
  * @brief Default launcher of Google Test Framework
