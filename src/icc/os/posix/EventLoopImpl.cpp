@@ -23,8 +23,8 @@
 #include <sys/timerfd.h>
 #include <sys/fcntl.h>
 
-#include <icc/os/Timer.hpp>
 #include "EventLoopImpl.hpp"
+#include "TimerImpl.hpp"
 
 namespace icc {
 
@@ -42,14 +42,14 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
   }
 }
 
-std::shared_ptr<Timer> EventLoop::EventLoopImpl::createTimer() {
+std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   const int kTimerFd = timerfd_create(CLOCK_MONOTONIC, 0);
-  auto timer = new Timer(OSObject{kTimerFd});
-  function_wrapper<void(const OSObject&)> callback(&Timer::onTimerExpired, timer);
+  auto timer = new Timer::TimerImpl(OSObject{kTimerFd});
+  function_wrapper<void(const OSObject&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
   registerObjectEvents(OSObject{kTimerFd}, OSObjectEventType::READ, callback);
-  return std::shared_ptr<Timer>(timer,
-  [this, callback](Timer* timer) {
-    unregisterObjectEvents(*timer->timer_object_, OSObjectEventType::READ, callback);
+  return std::shared_ptr<Timer::TimerImpl>(timer,
+  [this, callback](Timer::TimerImpl* timer) {
+    unregisterObjectEvents(timer->timer_object_, OSObjectEventType::READ, callback);
   });
 }
 

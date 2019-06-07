@@ -6,7 +6,9 @@
 #define POSIX_EVENTLOOPIMPL_HPP
 
 #include <icc/os/EventLoop.hpp>
+
 #include "OSObject.hpp"
+#include "TimerImpl.hpp"
 
 namespace icc {
 
@@ -24,7 +26,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::thread::id getThreadId() const override;
   bool isRun() const override;
 
-  std::shared_ptr<Timer> createTimer();
+  std::shared_ptr<Timer::TimerImpl> createTimerImpl();
 
   void registerObjectEvents(const OSObject & osObject,
                             const OSObjectEventType & eventType,

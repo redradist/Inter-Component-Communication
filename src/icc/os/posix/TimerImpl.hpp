@@ -9,7 +9,10 @@
 #include <chrono>
 
 #include <icc/ITimerListener.hpp>
-#include "EventLoop.hpp"
+#include <icc/os/EventLoop.hpp>
+#include <icc/os/Timer.hpp>
+
+#include "OSObject.hpp"
 
 namespace icc {
 
@@ -17,7 +20,7 @@ namespace os {
 
 struct OSObject;
 
-class Timer {
+class Timer::TimerImpl {
  public:
   enum : int32_t {
     /**
@@ -30,8 +33,7 @@ class Timer {
     OneTime = 0,
   };
 
-  static std::shared_ptr<Timer> createTimer();
-  ~Timer();
+  ~TimerImpl();
 
   /**
    * Enable continuous mode
@@ -65,10 +67,10 @@ class Timer {
   friend class EventLoop;
   struct InternalData;
 
-  explicit Timer(const OSObject & timerObject);
+  explicit TimerImpl(const OSObject & timerObject);
   void onTimerExpired(const OSObject & fd);
 
-  OSObject * const timer_object_ = nullptr;
+  OSObject timer_object_{-1};
   std::atomic_int32_t counter_{OneTime};
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
 };

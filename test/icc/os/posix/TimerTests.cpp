@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 #include <atomic>
 #include <thread>
-#include <icc/os/Timer.hpp>
+#include <icc/os/posix/TimerImpl.hpp>
 
 struct TimerTest : testing::Test
 {

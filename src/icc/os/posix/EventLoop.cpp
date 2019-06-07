@@ -3,9 +3,12 @@
 //
 
 #include <utility>
+
 #include <icc/os/EventLoop.hpp>
-#include <icc/os/posix/EventLoopImpl.hpp>
+#include <icc/os/Timer.hpp>
+
 #include "OSObject.hpp"
+#include "EventLoopImpl.hpp"
 
 namespace icc {
 
@@ -55,7 +58,7 @@ bool EventLoop::isRun() const {
 }
 
 std::shared_ptr<Timer> EventLoop::createTimer() {
-  return impl_ptr_->createTimer();
+  return std::shared_ptr<Timer>(new Timer(impl_ptr_->createTimerImpl()));
 }
 
 void EventLoop::registerObjectEvents(const OSObject & osObject,
