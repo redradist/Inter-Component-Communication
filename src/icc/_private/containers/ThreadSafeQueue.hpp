@@ -159,7 +159,7 @@ class ThreadSafeQueue {
   std::mutex mtx_;
 
   bool execute_ = true;
-  unsigned item_count_{0};
+  unsigned item_count_ = 0;
   QueueNode *front_item_ = nullptr;
   QueueNode *back_item_ = nullptr;
 };
