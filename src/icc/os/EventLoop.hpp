@@ -20,11 +20,11 @@ namespace icc {
 
 namespace os {
 
-struct OSObject;
-enum class OSObjectEventType;
-
 template <typename T>
 using function_wrapper = icc::_private::helpers::function_wrapper<T>;
+
+struct OSObject;
+enum class OSObjectEventType;
 
 class Timer;
 
