@@ -9,13 +9,9 @@ namespace icc {
 
 namespace os {
 
-namespace posix {
-
 class Socket {
 
 };
-
-}
 
 }
 

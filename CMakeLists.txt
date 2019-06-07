@@ -13,11 +13,11 @@ project(ICC)
 set(CMAKE_CXX_STANDARD 11)
 set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-file(GLOB_RECURSE ICC_SOURCE_FILES src/*.cpp)
+file(GLOB_RECURSE ICC_SOURCE_FILES src/*.c src/*.cpp)
 add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
-target_link_libraries(${PROJECT_NAME} boost_system pthread)
+target_link_libraries(${PROJECT_NAME} pthread)
 
 #add_subdirectory(test)

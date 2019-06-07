@@ -1,5 +1,3 @@
-#include <utility>
-
 /**
  * @file IComponent.hpp
  * @author Denis Kotov
@@ -14,6 +12,7 @@
 #ifndef ICC_COMPONENT_HPP
 #define ICC_COMPONENT_HPP
 
+#include <utility>
 #include <memory>
 #include <thread>
 #include <algorithm>

@@ -20,53 +20,71 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "EventLoop.hpp"
+#include "icc/os/Timer.hpp"
+#include "icc/os/EventLoop.hpp"
+#include "OSObject.hpp"
 
 namespace icc {
 
 namespace os {
 
-namespace posix {
-
 struct EventLoop::InternalEvent {
-  int fd_;
-  void (*callback_)(int);
+  OSObject object_;
+  icc::_private::helpers::function_wrapper<void(int)> callback_;
 
-  InternalEvent(const int fd, void(*callback)(int))
-      : fd_{fd}, callback_{std::move(callback)} {
+  InternalEvent(const OSObject fd, icc::_private::helpers::function_wrapper<void(int)> callback)
+      : object_{fd}, callback_{std::move(callback)} {
   }
 };
 
-struct EventLoop::FdInfo {
-  FdInfo(const int fd)
-      : fd_{fd} {
+struct EventLoop::ListenerInfo {
+  ListenerInfo(const OSObject fd)
+      : object_{fd} {
   }
 
-  FdInfo(const int fd, std::vector<void (*)(int)> callbacks)
-      : fd_{fd}, callbacks_{std::move(callbacks)} {
+  ListenerInfo(const OSObject fd, std::vector<icc::_private::helpers::function_wrapper<void(int)>> callbacks)
+      : object_{fd}, callbacks_{std::move(callbacks)} {
   }
 
-  int fd_;
-  std::vector<void (*)(int)> callbacks_;
+  OSObject object_;
+  std::vector<icc::_private::helpers::function_wrapper<void(int)>> callbacks_;
 };
 
 EventLoop & EventLoop::getDefaultInstance() {
-  static EventLoop eventLoop;
+  static EventLoop eventLoop(nullptr);
   return eventLoop;
 }
 
-EventLoop::EventLoop(std::nullptr_t) {
+std::shared_ptr<EventLoop> EventLoop::createEventLoop() {
+  return std::shared_ptr<EventLoop>(new EventLoop());
+}
+
+EventLoop::EventLoop()
+  : event_loop_object_{new EventLoop::OSObject{-1}} {
+}
+
+EventLoop::EventLoop(std::nullptr_t)
+  : EventLoop() {
   event_loop_thread_ = std::thread(&EventLoop::run, this);
 }
 
 EventLoop::~EventLoop() {
+  stop();
   if (event_loop_thread_.joinable()) {
     event_loop_thread_.join();
   }
 }
 
-std::shared_ptr<EventLoop> EventLoop::createInstance() {
-  return std::shared_ptr<EventLoop>(new EventLoop());
+std::shared_ptr<Timer> EventLoop::createTimer() {
+  const int kTimerFd = timerfd_create(CLOCK_MONOTONIC, 0);
+  auto timer = new Timer(EventLoop::OSObject{kTimerFd});
+  icc::_private::helpers::function_wrapper<void(int)> callback(
+      &Timer::onTimerExpired, timer);
+  registerObjectEvents(EventLoop::OSObject{kTimerFd}, ListenerEventType::READ, callback);
+  return std::shared_ptr<Timer>(timer,
+  [this, callback](Timer* timer) {
+    unregisterObjectEvents(*timer->timer_object_, ListenerEventType::READ, callback);
+  });
 }
 
 std::shared_ptr<IEventLoop::IChannel> EventLoop::createChannel() {
@@ -74,7 +92,7 @@ std::shared_ptr<IEventLoop::IChannel> EventLoop::createChannel() {
 }
 
 std::thread::id EventLoop::getThreadId() const {
-
+  return event_loop_thread_id_.load(std::memory_order_acquire);
 }
 
 bool EventLoop::isRun() const {
@@ -82,168 +100,181 @@ bool EventLoop::isRun() const {
 }
 
 void EventLoop::run() {
-  event_loop_fd_ = eventfd(0, O_NONBLOCK);
-  if (event_loop_fd_ == -1) {
+  event_loop_object_->fd_ = eventfd(0, O_NONBLOCK);
+  if (event_loop_object_->fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
-    // throw
-    return;
+    throw "Error !!";
   }
+  event_loop_thread_id_.store(std::this_thread::get_id(), std::memory_order_release);
   execute_.store(true, std::memory_order_release);
+  {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
+    addFdTo(lock, read_listeners_, add_read_listeners_);
+    addFdTo(lock, write_listeners_, add_write_listeners_);
+    addFdTo(lock, error_listeners_, add_error_listeners_);
+    removeFdFrom(lock, read_listeners_, remove_read_listeners_);
+    removeFdFrom(lock, write_listeners_, remove_write_listeners_);
+    removeFdFrom(lock, error_listeners_, remove_error_listeners_);
+  }
   while (execute_.load(std::memory_order_acquire)) {
     fd_set readFds;
     fd_set writeFds;
     fd_set errorFds;
 
     int maxFd = 0;
-    maxFd = std::max(maxFd, event_loop_fd_);
-    FD_SET(event_loop_fd_, &readFds);
-    initFds(read_fds_, readFds, maxFd);
-    initFds(write_fds_, writeFds, maxFd);
-    initFds(error_fds_, errorFds, maxFd);
+    maxFd = std::max(maxFd, event_loop_object_->fd_);
+    FD_SET(event_loop_object_->fd_, &readFds);
+    initListenObjects(read_listeners_, readFds, maxFd);
+    initListenObjects(write_listeners_, writeFds, maxFd);
+    initListenObjects(error_listeners_, errorFds, maxFd);
 
     select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
     if (!execute_.load(std::memory_order_acquire)) {
-      eventfd_write(event_loop_fd_, 0);
+      eventfd_write(event_loop_object_->fd_, 0);
       break;
     }
 
     handleLoopEvents(readFds);
-    handleFdsEvents(read_fds_, readFds);
-    handleFdsEvents(write_fds_, writeFds);
-    handleFdsEvents(error_fds_, errorFds);
+    handleListenersEvents(read_listeners_, readFds);
+    handleListenersEvents(write_listeners_, writeFds);
+    handleListenersEvents(error_listeners_, errorFds);
   }
 }
 
 void EventLoop::stop() {
-  execute_.store(false, std::memory_order_release);
-  eventfd_write(event_loop_fd_, 1);
+  if (event_loop_object_->fd_ != -1) {
+    execute_.store(false, std::memory_order_release);
+    eventfd_write(event_loop_object_->fd_, 1);
+  }
 }
 
 void EventLoop::addFdTo(std::lock_guard<std::mutex> &lock,
-                        std::vector<FdInfo> &fds,
-                        const std::vector<InternalEvent> &addFds) {
-  if (!addFds.empty()) {
-    for (auto &fdInfo : addFds) {
-      auto foundFd = findFdIn(fdInfo.fd_, fds);
-      if (foundFd != fds.end()) {
+                        std::vector<ListenerInfo> &listeners,
+                        const std::vector<InternalEvent> &addListeners) {
+  if (!addListeners.empty()) {
+    for (auto &fdInfo : addListeners) {
+      auto foundFd = findFdIn(fdInfo.object_, listeners);
+      if (foundFd != listeners.end()) {
         foundFd->callbacks_.push_back(fdInfo.callback_);
         auto erased = std::unique(foundFd->callbacks_.begin(), foundFd->callbacks_.end());
         foundFd->callbacks_.erase(erased, foundFd->callbacks_.end());
       } else {
-        fds.emplace_back(fdInfo.fd_, std::vector<void (*)(int)>{fdInfo.callback_});
+        listeners.emplace_back(fdInfo.object_, std::vector<icc::_private::helpers::function_wrapper<void(int)>>{fdInfo.callback_});
       }
     }
   }
 }
 
 void EventLoop::removeFdFrom(std::lock_guard<std::mutex> &lock,
-                             std::vector<FdInfo> &fds,
-                             const std::vector<InternalEvent> &removeFds) {
-  if (!removeFds.empty()) {
-    for (auto &fdInfo : removeFds) {
-      auto foundFd = findFdIn(fdInfo.fd_, fds);
-      if (foundFd != fds.end()) {
+                             std::vector<ListenerInfo> &listeners,
+                             const std::vector<InternalEvent> &removeListeners) {
+  if (!removeListeners.empty()) {
+    for (auto &fdInfo : removeListeners) {
+      auto foundFd = findFdIn(fdInfo.object_, listeners);
+      if (foundFd != listeners.end()) {
         auto itemToRemove = std::remove(foundFd->callbacks_.begin(), foundFd->callbacks_.end(), fdInfo.callback_);
         foundFd->callbacks_.erase(itemToRemove);
         if (foundFd->callbacks_.empty()) {
-          fds.erase(foundFd);
+          listeners.erase(foundFd);
         }
       }
     }
   }
 }
 
-void EventLoop::initFds(std::vector<FdInfo> &fds,
-                        fd_set &fdSet,
-                        int &maxFd) const {
+void EventLoop::initListenObjects(std::vector<ListenerInfo> &fds,
+                                  fd_set &fdSet,
+                                  int &maxFd) const {
   for (const auto &fdInfo : fds) {
-    FD_SET(fdInfo.fd_, &fdSet);
-    if (fdInfo.fd_ > maxFd) {
-      maxFd = fdInfo.fd_;
+    FD_SET(fdInfo.object_.fd_, &fdSet);
+    if (fdInfo.object_.fd_ > maxFd) {
+      maxFd = fdInfo.object_.fd_;
     }
   }
 }
 
 void EventLoop::handleLoopEvents(fd_set fdSet) {
-  if (FD_ISSET(event_loop_fd_, &fdSet)) {
+  if (FD_ISSET(event_loop_object_->fd_, &fdSet)) {
     std::lock_guard<std::mutex> lock(internal_mtx_);
     eventfd_t updatedEvent;
-    eventfd_read(event_loop_fd_, &updatedEvent);
+    eventfd_read(event_loop_object_->fd_, &updatedEvent);
     if (updatedEvent > 0) {
-      addFdTo(lock, read_fds_, add_read_fds_);
-      addFdTo(lock, write_fds_, add_write_fds_);
-      addFdTo(lock, error_fds_, add_error_fds_);
-      removeFdFrom(lock, read_fds_, remove_read_fds_);
-      removeFdFrom(lock, write_fds_, remove_write_fds_);
-      removeFdFrom(lock, error_fds_, remove_error_fds_);
-      eventfd_write(event_loop_fd_, 0);
+      addFdTo(lock, read_listeners_, add_read_listeners_);
+      addFdTo(lock, write_listeners_, add_write_listeners_);
+      addFdTo(lock, error_listeners_, add_error_listeners_);
+      removeFdFrom(lock, read_listeners_, remove_read_listeners_);
+      removeFdFrom(lock, write_listeners_, remove_write_listeners_);
+      removeFdFrom(lock, error_listeners_, remove_error_listeners_);
+      eventfd_write(event_loop_object_->fd_, 0);
     }
   }
 }
 
-void EventLoop::handleFdsEvents(std::vector<FdInfo> &fds, fd_set &fdSet) {
+void EventLoop::handleListenersEvents(std::vector<ListenerInfo> &fds, fd_set &fdSet) {
   for (const auto &fdInfo : fds) {
-    if (FD_ISSET(fdInfo.fd_, &fdSet)) {
+    if (FD_ISSET(fdInfo.object_.fd_, &fdSet)) {
       for (const auto &callback : fdInfo.callbacks_) {
-        callback(fdInfo.fd_);
+        callback(fdInfo.object_.fd_);
       }
     }
   }
 }
 
-std::vector<EventLoop::FdInfo>::iterator
-EventLoop::findFdIn(const int fd, std::vector<FdInfo> &fds) {
+std::vector<EventLoop::ListenerInfo>::iterator
+EventLoop::findFdIn(const OSObject & osObject, std::vector<ListenerInfo> &fds) {
   auto foundFd = std::find_if(fds.begin(), fds.end(),
-                              [fd](const FdInfo &fdInfo) {
-                                return fdInfo.fd_ == fd;
+                              [osObject](const ListenerInfo &fdInfo) {
+                                return fdInfo.object_.fd_ == osObject.fd_;
                               });
   return foundFd;
 }
 
-void EventLoop::registerFdEvents(const int fd,
-                                 const FdEventType eventType,
-                                 void(*callback)(int)) {
+void EventLoop::registerObjectEvents(const OSObject & osObject,
+                                     ListenerEventType eventType,
+                                     icc::_private::helpers::function_wrapper<void(int)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case READ: {
-      add_read_fds_.emplace_back(fd, callback);
+      add_read_listeners_.emplace_back(osObject, callback);
       break;
     }
     case WRITE: {
-      add_write_fds_.emplace_back(fd, callback);
+      add_write_listeners_.emplace_back(osObject, callback);
       break;
     }
     case ERROR: {
-      add_error_fds_.emplace_back(fd, callback);
+      add_error_listeners_.emplace_back(osObject, callback);
       break;
     }
   }
-  eventfd_t updated = 1;
-  eventfd_write(event_loop_fd_, updated);
+  if (event_loop_object_->fd_ != -1) {
+    eventfd_t updated = 1;
+    eventfd_write(event_loop_object_->fd_, updated);
+  }
 }
 
-void EventLoop::unregisterFdEvents(const int fd,
-                                   const FdEventType eventType,
-                                   void(*callback)(int)) {
+void EventLoop::unregisterObjectEvents(const OSObject & osObject,
+                                       ListenerEventType eventType,
+                                       icc::_private::helpers::function_wrapper<void(int)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case READ: {
-      remove_read_fds_.emplace_back(fd, callback);
+      remove_read_listeners_.emplace_back(osObject, callback);
       break;
     }
     case WRITE: {
-      remove_write_fds_.emplace_back(fd, callback);
+      remove_write_listeners_.emplace_back(osObject, callback);
       break;
     }
     case ERROR: {
-      remove_error_fds_.emplace_back(fd, callback);
+      remove_error_listeners_.emplace_back(osObject, callback);
       break;
     }
   }
-  eventfd_t updated = 1;
-  eventfd_write(event_loop_fd_, updated);
-}
-
+  if (event_loop_object_->fd_ != -1) {
+    eventfd_t updated = 1;
+    eventfd_write(event_loop_object_->fd_, updated);
+  }
 }
 
 }
