@@ -9,8 +9,14 @@ namespace icc {
 
 namespace os {
 
-struct EventLoop::OSObject {
+struct OSObject {
   int fd_;
+};
+
+enum class OSObjectEventType {
+  READ,
+  WRITE,
+  ERROR,
 };
 
 }

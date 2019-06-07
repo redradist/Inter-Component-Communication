@@ -29,8 +29,8 @@ std::shared_ptr<Timer> Timer::createTimer() {
   return EventLoop::getDefaultInstance().createTimer();
 }
 
-Timer::Timer(const EventLoop::OSObject & timerObject)
-  : timer_object_{new EventLoop::OSObject{timerObject}} {
+Timer::Timer(const OSObject & timerObject)
+  : timer_object_{new OSObject{timerObject}} {
 }
 
 Timer::~Timer() {
@@ -75,7 +75,7 @@ void Timer::stop() {
 
 }
 
-void Timer::onTimerExpired(const int _) {
+void Timer::onTimerExpired(const OSObject & _) {
   std::cout << "Timer expired !!" << std::endl;
   uint64_t numberExpired;
   read(timer_object_->fd_, &numberExpired, sizeof(numberExpired));

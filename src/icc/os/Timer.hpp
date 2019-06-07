@@ -15,6 +15,8 @@ namespace icc {
 
 namespace os {
 
+struct OSObject;
+
 class Timer {
  public:
   enum : int32_t {
@@ -63,10 +65,10 @@ class Timer {
   friend class EventLoop;
   struct InternalData;
 
-  explicit Timer(const EventLoop::OSObject & timerObject);
-  void onTimerExpired(int fd);
+  explicit Timer(const OSObject & timerObject);
+  void onTimerExpired(const OSObject & fd);
 
-  EventLoop::OSObject * const timer_object_ = nullptr;
+  OSObject * const timer_object_ = nullptr;
   std::atomic_int32_t counter_{OneTime};
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
 };
