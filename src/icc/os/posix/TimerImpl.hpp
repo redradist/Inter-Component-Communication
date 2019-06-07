@@ -22,18 +22,7 @@ struct OSObject;
 
 class Timer::TimerImpl {
  public:
-  enum : int32_t {
-    /**
-     * Should be used for setting continuous mode
-     */
-    Infinite = -1,
-    /**
-     * Should be used for setting one time mode
-     */
-    OneTime = 0,
-  };
-
-  ~TimerImpl();
+  ~TimerImpl() = default;
 
   /**
    * Enable continuous mode
@@ -60,17 +49,17 @@ class Timer::TimerImpl {
     duration_ = _duration;
   }
 
-  void start();
-  void stop();
+  bool start();
+  bool stop();
 
  private:
   friend class EventLoop;
-  struct InternalData;
 
   explicit TimerImpl(const OSObject & timerObject);
-  void onTimerExpired(const OSObject & fd);
+  void onTimerExpired(const OSObject & osObject);
 
   OSObject timer_object_{-1};
+  std::atomic_bool execute_{false};
   std::atomic_int32_t counter_{OneTime};
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
 };

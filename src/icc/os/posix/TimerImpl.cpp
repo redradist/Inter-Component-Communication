@@ -23,14 +23,8 @@ namespace icc {
 
 namespace os {
 
-struct Timer::TimerImpl::InternalData {
-};
-
 Timer::TimerImpl::TimerImpl(const OSObject & timerObject)
   : timer_object_{timerObject} {
-}
-
-Timer::TimerImpl::~TimerImpl() {
 }
 
 /**
@@ -58,31 +52,47 @@ void Timer::TimerImpl::setNumberOfRepetition(const int32_t &number) {
   }
 }
 
-void Timer::TimerImpl::start() {
-  itimerspec ival;
-  ival.it_value.tv_sec = duration_.count() / 1000000000LL;
-  ival.it_value.tv_nsec = duration_.count() % 1000000000LL;
-  ival.it_interval.tv_sec = 0;
-  ival.it_interval.tv_nsec = 0;
-  timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
-}
-
-void Timer::TimerImpl::stop() {
-
-}
-
-void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
-  std::cout << "Timer expired !!" << std::endl;
-  uint64_t numberExpired;
-  read(timer_object_.fd_, &numberExpired, sizeof(numberExpired));
-  std::cout << "Timer expired: numberExpired = " << numberExpired << " !!" << std::endl;
-  if (counter_.load() == Infinite) {
+bool Timer::TimerImpl::start() {
+  bool timerDisabled = false;
+  if (execute_.compare_exchange_strong(timerDisabled, true)) {
     itimerspec ival;
     ival.it_value.tv_sec = duration_.count() / 1000000000LL;
     ival.it_value.tv_nsec = duration_.count() % 1000000000LL;
     ival.it_interval.tv_sec = 0;
     ival.it_interval.tv_nsec = 0;
     timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    return true;
+  }
+  return false;
+}
+
+bool Timer::TimerImpl::stop() {
+  bool timerEnabled = true;
+  if (execute_.compare_exchange_strong(timerEnabled, false)) {
+    itimerspec ival;
+    ival.it_value.tv_sec = 0;
+    ival.it_value.tv_nsec = 0;
+    ival.it_interval.tv_sec = 0;
+    ival.it_interval.tv_nsec = 0;
+    timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    return true;
+  }
+  return false;
+}
+
+void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
+  uint64_t numberExpired;
+  read(timer_object_.fd_, &numberExpired, sizeof(numberExpired));
+  if (execute_.load(std::memory_order_acquire)) {
+    std::cout << "Timer expired: numberExpired = " << numberExpired << " !!" << std::endl;
+    if (counter_.load() == Infinite) {
+      itimerspec ival;
+      ival.it_value.tv_sec = duration_.count() / 1000000000LL;
+      ival.it_value.tv_nsec = duration_.count() % 1000000000LL;
+      ival.it_interval.tv_sec = 0;
+      ival.it_interval.tv_nsec = 0;
+      timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    }
   }
 }
 

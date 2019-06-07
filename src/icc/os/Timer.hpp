@@ -12,8 +12,6 @@ namespace icc {
 
 namespace os {
 
-struct OSObject;
-
 class Timer {
  public:
   enum : int32_t {
@@ -28,7 +26,7 @@ class Timer {
   };
 
   static std::shared_ptr<Timer> createTimer();
-  ~Timer();
+  ~Timer() = default;
 
   /**
    * Enable continuous mode
@@ -52,8 +50,14 @@ class Timer {
    */
   void setInterval(std::chrono::nanoseconds _duration);
 
-  void start();
-  void stop();
+  /**
+   *
+   */
+  bool start();
+  /**
+   *
+   */
+  bool stop();
 
  private:
   friend class EventLoop;

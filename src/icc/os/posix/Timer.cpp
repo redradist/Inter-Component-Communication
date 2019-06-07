@@ -34,19 +34,10 @@ Timer::Timer(std::shared_ptr<TimerImpl> implPtr)
     : impl_ptr_{std::move(implPtr)} {
 }
 
-Timer::~Timer() {
-}
-
-/**
- * Enable continuous mode
- */
 void Timer::enableContinuous() {
   impl_ptr_->enableContinuous();
 }
 
-/**
- * Disable continuous mode
- */
 void Timer::disableContinuous() {
   impl_ptr_->disableContinuous();
 }
@@ -59,12 +50,12 @@ void Timer::setInterval(std::chrono::nanoseconds _duration) {
   impl_ptr_->setInterval(_duration);
 }
 
-void Timer::start() {
-  impl_ptr_->start();
+bool Timer::start() {
+  return impl_ptr_->start();
 }
 
-void Timer::stop() {
-  impl_ptr_->stop();
+bool Timer::stop() {
+  return impl_ptr_->stop();
 }
 
 }
