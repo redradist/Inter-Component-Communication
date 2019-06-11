@@ -28,7 +28,7 @@ class ThreadSafeQueue {
  public:
   ThreadSafeQueue() = default;
 
-  virtual ~ThreadSafeQueue() {
+  ~ThreadSafeQueue() {
     TItem item;
     while (tryPop(item));
   }
@@ -109,6 +109,11 @@ class ThreadSafeQueue {
       reclaimNode(nodePtr);
     }
     return item;
+  }
+
+  void reset() {
+    std::lock_guard<std::mutex> lock{mtx_};
+    interrupted_ = false;
   }
 
   void interrupt() {

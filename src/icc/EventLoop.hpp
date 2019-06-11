@@ -112,6 +112,7 @@ class EventLoop<ThreadSafeQueueAction> final
   void run() override {
     bool stopState = false;
     if (run_.compare_exchange_strong(stopState, true)) {
+      queue_->reset();
        do {
         Action action = queue_->waitPop();
         if (action) {
