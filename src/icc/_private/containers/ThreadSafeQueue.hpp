@@ -28,7 +28,7 @@ class ThreadSafeQueue {
  public:
   ThreadSafeQueue() = default;
 
-  virtual ~ThreadSafeQueue() {
+  ~ThreadSafeQueue() {
     TItem item;
     while (tryPop(item));
   }
@@ -63,7 +63,7 @@ class ThreadSafeQueue {
       back_item_ = addNodePtr;
     }
     ++item_count_;
-    cond_var_.notify_one();
+    cond_var_.notify_all();
     return true;
   }
 
@@ -82,40 +82,53 @@ class ThreadSafeQueue {
     static_assert(std::is_copy_assignable<TItem>::value,
                   "TItem is not copy assignable !!");
     std::unique_lock<std::mutex> lock{mtx_};
-    return tryPop(lock, item);
+    QueueNode* nodePtr = nullptr;
+    bool result = tryPop(lock, nodePtr);
+    if (nodePtr) {
+      item = *nodePtr->item_ptr_;
+      lock.unlock();
+      reclaimNode(nodePtr);
+    }
+    return result;
   }
 
   TItem waitPop() {
     static_assert(std::is_copy_assignable<TItem>::value,
                   "TItem is not copy assignable !!");
-    TItem item;
     std::unique_lock<std::mutex> lock{mtx_};
-    while (execute_ && !tryPop(lock, item)) {
+    TItem item;
+    QueueNode* nodePtr = nullptr;
+    while (!interrupted_ && !tryPop(lock, nodePtr)) {
       cond_var_.wait(lock, [this, &lock] {
-        return !execute_ || !empty(lock);
+        return interrupted_ || !empty(lock);
       });
+    }
+    if (nodePtr) {
+      item = *nodePtr->item_ptr_;
+      lock.unlock();
+      reclaimNode(nodePtr);
     }
     return item;
   }
 
-  void start() {
-    std::unique_lock<std::mutex> lock{mtx_};
-    execute_ = true;
+  void reset() {
+    std::lock_guard<std::mutex> lock{mtx_};
+    interrupted_ = false;
   }
 
-  void stop() {
-    std::unique_lock<std::mutex> lock{mtx_};
-    execute_ = false;
+  void interrupt() {
+    std::lock_guard<std::mutex> lock{mtx_};
+    interrupted_ = true;
     cond_var_.notify_all();
   }
 
   bool empty() const {
-    std::unique_lock<std::mutex> lock{mtx_};
+    std::lock_guard<std::mutex> lock{mtx_};
     return empty(lock);
   }
 
   unsigned count() const {
-    std::unique_lock<std::mutex> lock{mtx_};
+    std::lock_guard<std::mutex> lock{mtx_};
     return count(lock);
   }
 
@@ -125,16 +138,16 @@ class ThreadSafeQueue {
     QueueNode *next_item_ = nullptr;
   };
 
-  bool empty(std::unique_lock<std::mutex> &lock) const {
+  bool empty(const std::unique_lock<std::mutex> &lock) const {
     return item_count_ == 0;
   }
 
-  unsigned count(std::unique_lock<std::mutex> &lock) const {
+  unsigned count(const std::unique_lock<std::mutex> &lock) const {
     return item_count_;
   }
 
-  bool tryPop(std::unique_lock<std::mutex> &lock, TItem &item) {
-    if (!execute_ || front_item_ == nullptr) {
+  bool tryPop(const std::unique_lock<std::mutex> &lock, QueueNode *& nodePtr) {
+    if (front_item_ == nullptr) {
       return false;
     } else {
       QueueNode *const kPrevFrontNode = front_item_;
@@ -146,19 +159,22 @@ class ThreadSafeQueue {
         QueueNode *const kNextFrontNode = front_item_->next_item_;
         front_item_ = kNextFrontNode;
       }
-      ++item_count_;
-      lock.unlock();
-      delete kPrevFrontNode;
-      item = *kItemPtr;
-      delete kItemPtr;
+      nodePtr = kPrevFrontNode;
+      --item_count_;
       return true;
     }
+  }
+
+  void reclaimNode(const QueueNode *nodePtr) const {
+    TItem* itemPtr = nodePtr->item_ptr_;
+    delete nodePtr;
+    delete itemPtr;
   }
 
   std::condition_variable cond_var_;
   std::mutex mtx_;
 
-  bool execute_ = true;
+  bool interrupted_ = false;
   unsigned item_count_ = 0;
   QueueNode *front_item_ = nullptr;
   QueueNode *back_item_ = nullptr;

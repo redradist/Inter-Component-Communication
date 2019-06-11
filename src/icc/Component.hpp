@@ -15,10 +15,10 @@
 #include <utility>
 #include <memory>
 #include <thread>
+#include <vector>
 #include <algorithm>
 #include "EventLoop.hpp"
 #include <icc/_private/containers/ThreadSafeQueue.hpp>
-#include <boost/asio/io_context.hpp>
 
 namespace icc {
 
@@ -116,7 +116,6 @@ class Component {
    */
   virtual void exec() {
     if (event_loop_) {
-      channel_ = event_loop_->createChannel();
       event_loop_->run();
     }
   }

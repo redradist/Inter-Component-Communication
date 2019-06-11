@@ -97,25 +97,22 @@ class EventLoop<ThreadSafeQueueAction> final
   };
 
   void push(Action _action) {
-    if (run_.load(std::memory_order_acquire)) {
-      queue_->push(std::move(_action));
-    }
+    queue_->push(std::move(_action));
   }
 
   void invoke(Action _action) {
-    if (run_.load(std::memory_order_acquire)) {
-      if (queue_thread_id_.load(std::memory_order_acquire) ==
-          std::this_thread::get_id()) {
-        _action();
-      } else {
-        queue_->push(std::move(_action));
-      }
+    if (queue_thread_id_.load(std::memory_order_acquire) ==
+        std::this_thread::get_id()) {
+      _action();
+    } else {
+      queue_->push(std::move(_action));
     }
   }
 
   void run() override {
     bool stopState = false;
     if (run_.compare_exchange_strong(stopState, true)) {
+      queue_->reset();
        do {
         Action action = queue_->waitPop();
         if (action) {
@@ -128,7 +125,7 @@ class EventLoop<ThreadSafeQueueAction> final
   void stop() override {
     bool executeState = true;
     if (run_.compare_exchange_strong(executeState, false)) {
-      queue_->stop();
+      queue_->interrupt();
     }
   }
 

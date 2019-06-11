@@ -20,5 +20,3 @@ add_executable(${PROJECT_NAME} ${ICC_TEST_SOURCE_FILES})
 
 # Link test executable against gtest & gtest_main
 target_link_libraries(${PROJECT_NAME} gtest gtest_main ICC)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${PROJECT_NAME})

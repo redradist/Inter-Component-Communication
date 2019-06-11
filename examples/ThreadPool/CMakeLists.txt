@@ -24,7 +24,7 @@ set(SOURCE_FILES    main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
 add_executable(TreadPool ${SOURCE_FILES})
 add_dependencies(TreadPool ICC)
-target_link_libraries(TreadPool boost_system
+target_link_libraries(TreadPool
         pthread
         ICC
         )
