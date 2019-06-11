@@ -103,11 +103,7 @@ class Task {
     return result;
   }
 
-//  explicit operator std::function<TRes(void)>() {
-//    return task_;
-//  }
-
-  static void start(std::function<void(void)> _task) {
+  static void start(std::function<TRes(void)> _task) {
     ThreadPool::getDefaultPool().push(std::move(_task));
   }
 
@@ -206,10 +202,6 @@ class Task<void> {
     if (callback_) {
       callback_();
     }
-  }
-
-  operator std::function<void(void)>() {
-    return task_;
   }
 
   static void start(std::function<void(void)> _task) {

@@ -20,8 +20,6 @@
 #include "EventLoop.hpp"
 #include <icc/_private/containers/ThreadSafeQueue.hpp>
 
-#include <iostream>
-
 namespace icc {
 
 class Component {
@@ -119,7 +117,6 @@ class Component {
   virtual void exec() {
     if (event_loop_) {
       event_loop_->run();
-      std::cout << "Event Loop finished !!" << std::endl;
     }
   }
 
