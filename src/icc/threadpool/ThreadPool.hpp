@@ -11,36 +11,35 @@
 
 #include <queue>
 #include <mutex>
-#include <boost/asio/io_service.hpp>
+
 #include <icc/Component.hpp>
+#include <icc/_private/helpers/memory_helpers.hpp>
 
 namespace icc {
 
-namespace pools {
+namespace threadpool {
 
-class ThreadPool {
-  struct IoServiceMetaData {
-    std::shared_ptr<boost::asio::io_service::work> worker_;
-    size_t number_of_tasks_ = 0;
+using Action = std::function<void(void)>;
+using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
 
-    IoServiceMetaData(std::shared_ptr<boost::asio::io_service> _service) {
-      worker_ = std::make_shared<boost::asio::io_service::work>(*_service);
-    }
-  };
+template <typename T>
+class Task;
 
-  struct IoServicesComparator {
-    bool operator()(const IoServiceMetaData& _first,
-                    const IoServiceMetaData& _second) const {
-      return _first.number_of_tasks_ > _second.number_of_tasks_;
-    }
-  };
-
+class ThreadPool
+    : private icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
  public:
-  ThreadPool(const unsigned int _numThreads);
   ~ThreadPool();
 
-  static ThreadPool & getPool(
-      const unsigned int _numThreads = std::thread::hardware_concurrency());
+  static ThreadPool & getDefaultPool(
+      unsigned _numThreads = std::thread::hardware_concurrency());
+
+  static std::shared_ptr<ThreadPool> getPool(
+      unsigned _numThreads = std::thread::hardware_concurrency());
+
+  template<typename TRes>
+  Task<TRes> createTask(std::function<TRes(void)> _task) {
+    return Task<TRes>(std::move(_task)).setThreadPool(shared_from_this());
+  }
 
   /**
    * Method used to push task for execution
@@ -49,11 +48,11 @@ class ThreadPool {
   void push(std::function<void(void)> _task);
 
  protected:
+  ThreadPool(const unsigned int _numThreads);
+
   std::vector<std::thread> thread_pool_;
-  std::vector<std::shared_ptr<boost::asio::io_service>> services_;
-  std::priority_queue<IoServiceMetaData,
-                      std::vector<IoServiceMetaData>,
-                      IoServicesComparator> services_meta_data_;
+  std::atomic_bool execute_{true};
+  ThreadSafeQueueAction task_queue_;
 };
 
 }

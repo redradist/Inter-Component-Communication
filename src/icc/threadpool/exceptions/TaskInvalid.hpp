@@ -14,7 +14,7 @@
 
 namespace icc {
 
-namespace pools {
+namespace threadpool {
 
 class TaskInvalid : public icc::ICCException {
  public:

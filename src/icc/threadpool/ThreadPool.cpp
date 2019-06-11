@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /**
  * @file ThreadPool.cpp
  * @author Denis Kotov
@@ -7,58 +11,49 @@
  */
 
 #include <thread>
+
 #include <icc/localbus/LocalBus.hpp>
-#include "Task.hpp"
 #include "ThreadPool.hpp"
+#include "Task.hpp"
 
 namespace icc {
 
-namespace pools {
+namespace threadpool {
 
 ThreadPool::ThreadPool(const unsigned int _numThreads) {
   for (int i = 0; i < _numThreads; ++i) {
-    services_.emplace_back(new boost::asio::io_service());
-    services_meta_data_.emplace(services_[i]);
-  }
-  for (int i = 0; i < _numThreads; ++i) {
     thread_pool_.emplace_back([=] {
-      services_[i]->run();
+      do {
+        Action task = task_queue_.waitPop();
+        if (task) {
+          task();
+        }
+      } while (execute_.load(std::memory_order_acquire));
     });
   }
 }
 
 ThreadPool::~ThreadPool() {
-  while (!services_meta_data_.empty()) {
-    services_meta_data_.pop();
-  }
-
+  execute_.store(false, std::memory_order_release);
+  task_queue_.interrupt();
   for (auto & thread : thread_pool_) {
     thread.join();
   }
 }
 
 ThreadPool &
-ThreadPool::getPool(const unsigned int _numThreads) {
+ThreadPool::getDefaultPool(const unsigned _numThreads) {
   static ThreadPool pool(_numThreads);
   return pool;
 }
 
+std::shared_ptr<ThreadPool>
+ThreadPool::getPool(const unsigned _numThreads) {
+  return std::shared_ptr<ThreadPool>(new ThreadPool(_numThreads));
+}
+
 void ThreadPool::push(std::function<void(void)> _task) {
-  icc::localbus::LocalBus::getBus().push([this, _task] {
-    auto serviceMetaData = services_meta_data_.top();
-    services_meta_data_.pop();
-    serviceMetaData.number_of_tasks_++;
-    services_meta_data_.push(serviceMetaData);
-    serviceMetaData.worker_->get_io_service().post([this, _task] () mutable {
-      _task();
-      icc::localbus::LocalBus::getBus().push([this] {
-        auto serviceMetaData = services_meta_data_.top();
-        services_meta_data_.pop();
-        serviceMetaData.number_of_tasks_--;
-        services_meta_data_.push(std::move(serviceMetaData));
-      });
-    });
-  });
+  task_queue_.push(std::move(_task));
 }
 
 }

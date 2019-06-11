@@ -15,7 +15,7 @@
 
 namespace icc {
 
-namespace pools {
+namespace threadpool {
 
 class TaskStateAssert : public icc::ICCException {
  public:
