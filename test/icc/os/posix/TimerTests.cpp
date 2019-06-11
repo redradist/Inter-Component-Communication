@@ -24,8 +24,9 @@ struct TimerTest : testing::Test
 
 TEST_F(TimerTest, TenMillionItems_TenReadThread_OneWriteThread)
 {
-  auto timer = icc::os::posix::Timer::createTimer();
+  auto timer = icc::os::Timer::createTimer();
 
-  timer->start(10000);
+  timer->setInterval(std::chrono::seconds(10));
+  timer->start();
   std::this_thread::sleep_for(std::chrono::seconds(20));
 }

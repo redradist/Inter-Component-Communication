@@ -20,4 +20,4 @@ target_include_directories(${PROJECT_NAME}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
 target_link_libraries(${PROJECT_NAME} pthread)
 
-#add_subdirectory(test)
+add_subdirectory(test)
