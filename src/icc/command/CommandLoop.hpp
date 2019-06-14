@@ -1,5 +1,3 @@
-#include <utility>
-
 /**
  * @file CommandLoop.hpp
  * @author Denis Kotov
@@ -14,6 +12,7 @@
 
 #include <deque>
 #include <future>
+#include <utility>
 #include <icc/Component.hpp>
 #include <icc/Event.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>

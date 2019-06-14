@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 /**
  * @file ThreadPool.cpp
  * @author Denis Kotov
@@ -11,6 +7,7 @@
  */
 
 #include <thread>
+#include <utility>
 
 #include <icc/localbus/LocalBus.hpp>
 #include "ThreadPool.hpp"
