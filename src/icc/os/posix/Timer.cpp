@@ -58,6 +58,30 @@ bool Timer::stop() {
   return impl_ptr_->stop();
 }
 
+void Timer::addListener(std::shared_ptr<ITimerListener> _listener) {
+  if (_listener) {
+    impl_ptr_->addListener(_listener);
+  }
+}
+
+void Timer::addListener(ITimerListener * _listener) {
+  if (_listener) {
+    impl_ptr_->addListener(_listener);
+  }
+}
+
+void Timer::removeListener(std::shared_ptr<ITimerListener> _listener) {
+  if (_listener) {
+    impl_ptr_->removeListener(_listener);
+  }
+}
+
+void Timer::removeListener(ITimerListener * _listener) {
+  if (_listener) {
+    impl_ptr_->removeListener(_listener);
+  }
+}
+
 }
 
 }

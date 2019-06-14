@@ -22,7 +22,7 @@ namespace localbus {
 
 template <typename _Interface>
 class IService
-  : public virtual IComponent,
+  : public virtual Component,
     public _Interface,
     public icc::helpers::virtual_enable_shared_from_this<IService<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
@@ -32,14 +32,14 @@ class IService
    * Default constructor
    */
   IService()
-    : IComponent(nullptr) {
+    : Component(nullptr) {
   }
   /**
    * Constructor which register the service
    * @param _serviceName Service name, should be unique in the process
    */
   IService(const std::string & _serviceName)
-    : IComponent(nullptr) {
+    : Component(nullptr) {
     registerService(_serviceName);
   }
 
@@ -56,7 +56,7 @@ class IService
     invoke([=] {
       if (service_name_.empty() && !_serviceName.empty()) {
         service_name_ = _serviceName;
-        ProcessBus::getBus().registerService(this->shared_from_this(), service_name_);
+        LocalBus::getBus().registerService(this->shared_from_this(), service_name_);
       }
     });
   }
@@ -67,7 +67,7 @@ class IService
   void unregisterService() {
     invoke([=] {
       if (!service_name_.empty()) {
-        ProcessBus::getBus().unregisterService(this->shared_from_this(), service_name_);
+        LocalBus::getBus().unregisterService(this->shared_from_this(), service_name_);
         service_name_.clear();
       }
     });

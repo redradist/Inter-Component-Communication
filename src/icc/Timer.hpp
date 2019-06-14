@@ -11,15 +11,19 @@
 #define ICC_TIMER_HPP
 
 #include <chrono>
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include "Component.hpp"
+#include <icc/Component.hpp>
+#include <icc/Event.hpp>
+#include <icc/os/EventLoop.hpp>
+#include <icc/os/Timer.hpp>
+#include <icc/os/ITimerListener.hpp>
+
 #include "ITimerListener.hpp"
-#include "Event.hpp"
 
 namespace icc {
 
-class Timer : public Event<void(const TimerEvents &)> {
+class Timer
+    : public icc::ITimer
+    , public icc::os::ITimerListener {
  public:
   enum : int32_t {
     /**
@@ -33,74 +37,75 @@ class Timer : public Event<void(const TimerEvents &)> {
   };
 
  public:
-  Timer(boost::asio::io_service * service_)
-      : timer_(*service_) {
+  Timer()
+      : timer_ptr_(icc::os::EventLoop::getDefaultInstance().createTimer()) {
+    timer_ptr_->addListener(this);
   }
 
-  Timer(std::shared_ptr<boost::asio::io_service> service_)
-      : timer_(*service_) {
+  Timer(icc::os::EventLoop * eventLoop)
+      : timer_ptr_(eventLoop->createTimer()) {
+    timer_ptr_->addListener(this);
+  }
+
+  Timer(std::shared_ptr<icc::os::EventLoop> eventLoop)
+      : timer_ptr_(eventLoop->createTimer()) {
+    timer_ptr_->addListener(this);
+  }
+
+  ~Timer() {
+    timer_ptr_->removeListener(this);
+    timer_ptr_->stop();
   }
 
  public:
+  Event<void(const TimerEvents &)> timer_event_;
+
   /**
    * Enable continuous mode
    */
-  void enableContinuous() {
-    counter_ = Infinite;
+  void enableContinuous() override {
+    timer_ptr_->enableContinuous();
   }
 
   /**
    * Disable continuous mode
    */
-  void disableContinuous() {
-    if (Infinite == counter_) {
-      counter_ = OneTime;
-    }
+  void disableContinuous() override {
+    timer_ptr_->disableContinuous();
   }
 
   /**
    * Setting number of repetitions
    * @param number Number of repetition
    */
-  void setNumberOfRepetition(const int32_t &number) {
-    if (number < 0) {
-      counter_ = Infinite;
-    } else {
-      counter_ = number;
-    }
-  }
-
-  /**
-   * Setting interval mode for the timer
-   * @param _duration Timeout duration in boost::posix_time::time_duration
-   */
-  void setInterval(const boost::posix_time::time_duration &_duration) {
-    duration_ = std::chrono::nanoseconds(_duration.total_nanoseconds());
+  void setNumberOfRepetition(const int32_t &number) override {
+    timer_ptr_->setNumberOfRepetition(number);
   }
 
   /**
    * Setting interval mode for the timer
    * @param _duration Timeout duration in std::chrono::nanoseconds
    */
-  void setInterval(const std::chrono::nanoseconds &_duration) {
-    duration_ = _duration;
+  void setInterval(const std::chrono::nanoseconds _duration) override {
+    timer_ptr_->setInterval(_duration);
   }
 
   /**
    * Method is used to start async waiting timer
    */
-  void start() {
-    timer_.expires_from_now(duration_);
-    operator()(TimerEvents::STARTED);
-    timer_.async_wait(std::bind(&Timer::timerExpired, this, std::placeholders::_1));
+  bool start() override {
+    const bool kResult = timer_ptr_->start();
+    timer_event_(TimerEvents::STARTED);
+    return kResult;
   }
 
   /**
    * Method is used to stop waiting timer
    */
-  void stop() {
-    operator()(TimerEvents::STOPPED);
-    timer_.cancel();
+  bool stop() override {
+    const bool kResult = timer_ptr_->stop();
+    timer_event_(TimerEvents::STOPPED);
+    return kResult;
   }
 
   /**
@@ -111,10 +116,10 @@ class Timer : public Event<void(const TimerEvents &)> {
   void addListener(_Listener *_listener) {
     static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from Component");
-    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
-                  "_listener is not derived from ITimerLisener");
+    static_assert(std::is_base_of<icc::ITimerListener, _Listener>::value,
+                  "_listener is not derived from icc::ITimerLisener");
     if (_listener) {
-      this->connect(&_Listener::processEvent, _listener);
+      timer_event_.connect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -126,10 +131,10 @@ class Timer : public Event<void(const TimerEvents &)> {
   void addListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from Component");
-    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
-                  "_listener is not derived from ITimerLisener");
+    static_assert(std::is_base_of<icc::ITimerListener, _Listener>::value,
+                  "_listener is not derived from icc::ITimerLisener");
     if (_listener) {
-      this->connect(&_Listener::processEvent, _listener);
+      timer_event_.connect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -141,10 +146,10 @@ class Timer : public Event<void(const TimerEvents &)> {
   void removeListener(_Listener *_listener) {
     static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
-                  "_listener is not derived from ITimerLisener");
+    static_assert(std::is_base_of<icc::ITimerListener, _Listener>::value,
+                  "_listener is not derived from icc::ITimerLisener");
     if (_listener) {
-      this->disconnect(&_Listener::processEvent, _listener);
+      timer_event_.disconnect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -156,10 +161,10 @@ class Timer : public Event<void(const TimerEvents &)> {
   void removeListener(std::shared_ptr<_Listener> _listener) {
     static_assert(std::is_base_of<Component, _Listener>::value,
                   "_listener is not derived from IComponent");
-    static_assert(std::is_base_of<ITimerListener, _Listener>::value,
-                  "_listener is not derived from ITimerLisener");
+    static_assert(std::is_base_of<icc::ITimerListener, _Listener>::value,
+                  "_listener is not derived from icc::ITimerLisener");
     if (_listener) {
-      this->disconnect(&_Listener::processEvent, _listener);
+      timer_event_.disconnect(&_Listener::processEvent, _listener);
     }
   }
 
@@ -168,22 +173,12 @@ class Timer : public Event<void(const TimerEvents &)> {
    * Method that handle Timer expire event
    * @param _error
    */
-  virtual void timerExpired(const boost::system::error_code &_error) {
-    if (!_error) {
-      operator()(TimerEvents::EXPIRED);
-      if (counter_ > 0) {
-        --counter_;
-      }
-      if (Infinite == counter_ || counter_ > 0) {
-        start();
-      }
-    }
+  void onTimerExpired() override {
+    timer_event_(TimerEvents::EXPIRED);
   }
 
  protected:
-  int32_t counter_ = OneTime;
-  std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
-  boost::asio::steady_timer timer_;
+  std::shared_ptr<icc::os::Timer> timer_ptr_;
 };
 
 }

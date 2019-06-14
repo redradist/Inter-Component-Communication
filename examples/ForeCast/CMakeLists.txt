@@ -24,7 +24,7 @@ set(SOURCE_FILES    main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
 add_executable(Forecast ${SOURCE_FILES})
 add_dependencies(Forecast ICC)
-target_link_libraries(Forecast boost_system
+target_link_libraries(Forecast
         pthread
         ICC
         )

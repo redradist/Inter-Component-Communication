@@ -50,11 +50,10 @@ class EventLoop : public IEventLoop {
                               function_wrapper<void(const OSObject&)> callback);
 
  private:
+  class EventLoopImpl;
+
   EventLoop();
   explicit EventLoop(std::nullptr_t);
-
-  // NOTE(redra): Forward declaration to use pimpl
-  class EventLoopImpl;
   std::unique_ptr<EventLoopImpl> impl_ptr_;
 };
 

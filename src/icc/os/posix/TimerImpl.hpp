@@ -42,15 +42,36 @@ class Timer::TimerImpl {
 
   /**
    * Setting interval mode for the timer
-   * @param _duration Timeout duration in boost::posix_time::time_duration
+   * @param _duration Timeout duration in std::chrono::nanoseconds
    */
-  template<typename _Rep, typename _Period>
-  void setInterval(const std::chrono::duration<_Rep, _Period> &_duration) {
-    duration_ = _duration;
-  }
+  void setInterval(std::chrono::nanoseconds _duration);
 
   bool start();
   bool stop();
+
+  /**
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
+   */
+  void addListener(std::shared_ptr<ITimerListener> _listener);
+
+  /**
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
+   */
+  void addListener(ITimerListener * _listener);
+
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  void removeListener(std::shared_ptr<ITimerListener> _listener);
+
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  void removeListener(ITimerListener * _listener);
 
  private:
   friend class EventLoop;
@@ -58,9 +79,12 @@ class Timer::TimerImpl {
   explicit TimerImpl(const OSObject & timerObject);
   void onTimerExpired(const OSObject & osObject);
 
+  std::mutex mutex_;
   OSObject timer_object_{-1};
   std::atomic_bool execute_{false};
   std::atomic_int32_t counter_{OneTime};
+  std::vector<ITimerListener*> listeners_ptr_;
+  std::vector<std::weak_ptr<ITimerListener>> listeners_;
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
 };
 

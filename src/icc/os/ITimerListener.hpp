@@ -6,24 +6,20 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef ICC_TIMERLISENER_HPP
-#define ICC_TIMERLISENER_HPP
-
-#include "icc/Component.hpp"
+#ifndef ICC_OS_TIMERLISENER_HPP
+#define ICC_OS_TIMERLISENER_HPP
 
 namespace icc {
 
-enum class TimerEvents {
-  STARTED,
-  EXPIRED,
-  STOPPED,
-};
+namespace os {
 
 class ITimerListener {
  public:
-  virtual void processEvent(const TimerEvents &) = 0;
+  virtual void onTimerExpired() = 0;
 };
 
 }
 
-#endif //ICC_TIMERLISENER_HPP
+}
+
+#endif //ICC_OS_TIMERLISENER_HPP

@@ -8,11 +8,17 @@
 #include <memory>
 #include <chrono>
 
+#include <icc/ITimer.hpp>
+
+#include "ITimerListener.hpp"
+
 namespace icc {
 
 namespace os {
 
-class Timer {
+class ITimerListener;
+
+ class Timer : public icc::ITimer {
  public:
   enum : int32_t {
     /**
@@ -31,37 +37,61 @@ class Timer {
   /**
    * Enable continuous mode
    */
-  void enableContinuous();
+  void enableContinuous() override;
 
   /**
    * Disable continuous mode
    */
-  void disableContinuous();
+  void disableContinuous() override;
 
   /**
    * Setting number of repetitions
    * @param number Number of repetition
    */
-  void setNumberOfRepetition(const int32_t &number);
+  void setNumberOfRepetition(const int32_t &number) override;
 
   /**
    * Setting interval mode for the timer
    * @param _duration Timeout duration in boost::posix_time::time_duration
    */
-  void setInterval(std::chrono::nanoseconds _duration);
+  void setInterval(std::chrono::nanoseconds _duration) override;
 
   /**
-   *
+   * Method is used to start async waiting timer
    */
-  bool start();
+  bool start() override;
+
   /**
-   *
+   * Method is used to stop waiting timer
    */
-  bool stop();
+  bool stop() override;
+
+  /**
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
+   */
+  void addListener(std::shared_ptr<ITimerListener> _listener);
+
+  /**
+   * Method is used to add the listener
+   * @param _listener Listener that is being adding
+   */
+  void addListener(ITimerListener * _listener);
+
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  void removeListener(std::shared_ptr<ITimerListener> _listener);
+
+  /**
+   * Method is used to remove the listener
+   * @param _listener Listener that is being removing
+   */
+  void removeListener(ITimerListener * _listener);
 
  private:
   friend class EventLoop;
-  // NOTE(redra): Forward declaration to use pimpl
   class TimerImpl;
 
   explicit Timer(std::shared_ptr<TimerImpl> implPtr);

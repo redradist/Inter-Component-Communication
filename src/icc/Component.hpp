@@ -56,9 +56,12 @@ class Component {
    * Owner of this pointer is not we
    * @param _service Service for creating event loop that will be used
    */
-  template <typename TService>
+  template <typename TService,
+            typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IEventLoop, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IEventLoop::IChannel, TService>::type>>
   Component(TService *_service)
-    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
+    : channel_(IEventLoop::createEventLoop(_service)->createChannel()) {
   }
 
   /**
@@ -66,9 +69,22 @@ class Component {
    * Owner of this pointer is not we
    * @param _eventLoop Service for creating event loop that will be used
    */
-  template <typename TService>
+  template <typename TService,
+            typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IEventLoop, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IEventLoop::IChannel, TService>::type>>
   Component(std::shared_ptr<TService> _service)
-    : channel_(IEventLoop::createEventLoop<TService>(_service)->createChannel()) {
+    : channel_(IEventLoop::createEventLoop(_service)->createChannel()) {
+    static_assert(!std::is_base_of<Component, TService>::value,
+                  "_listener is not derived from IComponent");
+  }
+
+  /**
+   *
+   * @param _eventLoop
+   */
+  Component(std::shared_ptr<IEventLoop> _eventLoop)
+      : channel_(std::move(_eventLoop->createChannel())) {
   }
 
   /**

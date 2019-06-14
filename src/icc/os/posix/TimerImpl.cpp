@@ -52,6 +52,10 @@ void Timer::TimerImpl::setNumberOfRepetition(const int32_t &number) {
   }
 }
 
+void Timer::TimerImpl::setInterval(const std::chrono::nanoseconds _duration) {
+  duration_ = _duration;
+}
+
 bool Timer::TimerImpl::start() {
   bool timerDisabled = false;
   if (execute_.compare_exchange_strong(timerDisabled, true)) {
@@ -80,11 +84,47 @@ bool Timer::TimerImpl::stop() {
   return false;
 }
 
+void Timer::TimerImpl::addListener(std::shared_ptr<ITimerListener> _listener) {
+  if (_listener) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    listeners_.push_back(_listener);
+  }
+}
+
+void Timer::TimerImpl::addListener(ITimerListener * _listener) {
+  if (_listener) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    listeners_ptr_.push_back(_listener);
+  }
+}
+
+void Timer::TimerImpl::removeListener(std::shared_ptr<ITimerListener> _listener) {
+  if (_listener) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto erased = std::remove_if(listeners_.begin(), listeners_.end(),
+    [_listener](const std::weak_ptr<ITimerListener> & weakListener) {
+      bool result = false;
+      if (auto _observer = weakListener.lock()) {
+        result = _observer == _listener;
+      }
+      return result;
+    });
+    listeners_.erase(erased);
+  }
+}
+
+void Timer::TimerImpl::removeListener(ITimerListener * _listener) {
+  if (_listener) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto erased = std::remove(listeners_ptr_.begin(), listeners_ptr_.end(), _listener);
+    listeners_ptr_.erase(erased);
+  }
+}
+
 void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
   uint64_t numberExpired;
   read(timer_object_.fd_, &numberExpired, sizeof(numberExpired));
   if (execute_.load(std::memory_order_acquire)) {
-    std::cout << "Timer expired: numberExpired = " << numberExpired << " !!" << std::endl;
     if (counter_.load() == Infinite) {
       itimerspec ival;
       ival.it_value.tv_sec = duration_.count() / 1000000000LL;
@@ -92,6 +132,24 @@ void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
       ival.it_interval.tv_sec = 0;
       ival.it_interval.tv_nsec = 0;
       timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    }
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      for (auto listener : listeners_ptr_) {
+        listener->onTimerExpired();
+      }
+      for (auto weakListener : listeners_) {
+        if (auto listener = weakListener.lock()) {
+          listener->onTimerExpired();
+        }
+      }
+      for (auto weakListenerIter = listeners_.begin(); weakListenerIter != listeners_.end();) {
+        if (weakListenerIter->expired()) {
+          weakListenerIter = listeners_.erase(weakListenerIter);
+        } else {
+          ++weakListenerIter;
+        }
+      }
     }
   }
 }

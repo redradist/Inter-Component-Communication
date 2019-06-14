@@ -23,7 +23,7 @@ namespace localbus {
 
 template<typename _Interface>
 class IClient
-    : public virtual IComponent,
+    : public virtual Component,
       public icc::helpers::virtual_enable_shared_from_this<IClient<_Interface>> {
   static_assert(std::is_abstract<_Interface>::value,
                 "_Interface is not an abstract class");
@@ -33,9 +33,9 @@ class IClient
    * @param _serviceName Service name, should be unique in the process
    */
   IClient(const std::string &_serviceName)
-      : IComponent(nullptr)
+      : Component(nullptr)
       , service_name_(_serviceName) {
-    ProcessBus::getBus().buildClient(this->shared_from_this(), service_name_);
+    LocalBus::getBus().buildClient(this->shared_from_this(), service_name_);
   }
 
   /**
@@ -62,9 +62,9 @@ class IClient
    */
   template<typename _Callback, typename ... _Values>
   void call(_Callback && _callback, _Values && ... _values) {
-    ProcessBus::getBus().call(service_name_,
-                              std::forward<_Callback>(_callback),
-                              std::forward<_Values>(_values)...);
+    LocalBus::getBus().call(service_name_,
+                            std::forward<_Callback>(_callback),
+                            std::forward<_Values>(_values)...);
   };
 
   /**
@@ -78,9 +78,9 @@ class IClient
            typename _Client,
            typename _Callback>
   void subscribe(_Event && _event, _Client && _client, _Callback && _callback) {
-    ProcessBus::getBus().subscribe(_client, service_name_,
-                                   std::forward<_Event>(_event),
-                                   std::forward<_Callback>(_callback));
+    LocalBus::getBus().subscribe(_client, service_name_,
+                                 std::forward<_Event>(_event),
+                                 std::forward<_Callback>(_callback));
   };
 
   /**
@@ -93,9 +93,9 @@ class IClient
   template<typename _Event,
            typename _Callback>
   void subscribe(_Event && _event, _Callback && _callback) {
-    ProcessBus::getBus().subscribe(this->shared_from_this(), service_name_,
-                                   std::forward<_Event>(_event),
-                                   std::forward<_Callback>(_callback));
+    LocalBus::getBus().subscribe(this->shared_from_this(), service_name_,
+                                 std::forward<_Event>(_event),
+                                 std::forward<_Callback>(_callback));
   };
 
   /**
@@ -109,9 +109,9 @@ class IClient
            typename _Client,
            typename _Callback>
   void unsubscribe(_Event && _event, _Client && _client, _Callback && _callback) {
-    ProcessBus::getBus().unsubscribe(_client, service_name_,
-                                     std::forward<_Event>(_event),
-                                     std::forward<_Callback>(_callback));
+    LocalBus::getBus().unsubscribe(_client, service_name_,
+                                   std::forward<_Event>(_event),
+                                   std::forward<_Callback>(_callback));
   };
 
   /**
@@ -124,9 +124,9 @@ class IClient
   template<typename _Event,
            typename _Callback>
   void unsubscribe(_Event && _event, _Callback && _callback) {
-    ProcessBus::getBus().unsubscribe(this->shared_from_this(), service_name_,
-                                     std::forward<_Event>(_event),
-                                     std::forward<_Callback>(_callback));
+    LocalBus::getBus().unsubscribe(this->shared_from_this(), service_name_,
+                                   std::forward<_Event>(_event),
+                                   std::forward<_Callback>(_callback));
   };
 
  private:
@@ -142,7 +142,7 @@ class IClient
 template<typename _Interface>
 inline
 IClient<_Interface>::~IClient() {
-  ProcessBus::getBus().disassembleClient(this, service_name_);
+  LocalBus::getBus().disassembleClient(this, service_name_);
 }
 
 }
