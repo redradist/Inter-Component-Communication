@@ -3,17 +3,17 @@
  * @author Denis Kotov
  * @date 26 May 2019
  * @brief
- * Contains IEventLoop:
- * It is interface for implementing Event Loops
- * Contains EventLoop<ThreadSafeQueueAction>:
- * It is default implementation of IEventLoop interface
+ * Contains IContext:
+ * It is interface for implementing Context Execution
+ * Contains Context<ThreadSafeQueueAction>:
+ * It is default implementation of IContext interface
  * based on ThreadSafeQueue. This implementation is used in Component as
- * default EventLoop
+ * default Context
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#ifndef ICC_EVENTLOOP_HPP
-#define ICC_EVENTLOOP_HPP
+#ifndef ICC_CONTEXT_HPP
+#define ICC_CONTEXT_HPP
 
 #include <atomic>
 #include <thread>
@@ -26,32 +26,32 @@ namespace icc {
 using Action = std::function<void(void)>;
 
 template <typename TService>
-class EventLoop;
+class Context;
 
-class IEventLoop {
+class IContext {
  public:
   template <typename TService>
-  static std::shared_ptr<IEventLoop>
-  createEventLoop() {
-    return std::make_shared<EventLoop<TService>>();
+  static std::shared_ptr<IContext>
+  createContext() {
+    return std::make_shared<Context<TService>>();
   }
 
   template <typename TService>
-  static std::shared_ptr<IEventLoop>
-  createEventLoop(TService *_service) {
-    return std::make_shared<EventLoop<TService>>(_service);
+  static std::shared_ptr<IContext>
+  createContext(TService *_service) {
+    return std::make_shared<Context<TService>>(_service);
   }
 
   template <typename TService>
-  static std::shared_ptr<IEventLoop>
-  createEventLoop(std::shared_ptr<TService> _service) {
-    return std::make_shared<EventLoop<TService>>(_service);
+  static std::shared_ptr<IContext>
+  createContext(std::shared_ptr<TService> _service) {
+    return std::make_shared<Context<TService>>(_service);
   }
 
   template <typename TService>
-  static std::shared_ptr<IEventLoop>
-  createEventLoop(std::unique_ptr<TService> _service) {
-    return std::make_shared<EventLoop<TService>>(_service);
+  static std::shared_ptr<IContext>
+  createContext(std::unique_ptr<TService> _service) {
+    return std::make_shared<Context<TService>>(_service);
   }
 
   class IChannel {
@@ -70,30 +70,30 @@ class IEventLoop {
 using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
 
 template <>
-class EventLoop<ThreadSafeQueueAction> final
-    : public std::enable_shared_from_this<EventLoop<ThreadSafeQueueAction>>
-    , public IEventLoop {
+class Context<ThreadSafeQueueAction> final
+    : public std::enable_shared_from_this<Context<ThreadSafeQueueAction>>
+    , public IContext {
  public:
-  class Channel : public IEventLoop::IChannel {
+  class Channel : public IContext::IChannel {
    public:
-    Channel(std::shared_ptr<EventLoop> eventLoop)
-      : event_loop_{std::move(eventLoop)} {
+    Channel(std::shared_ptr<Context> context)
+      : context_{std::move(context)} {
     }
 
     void push(Action _action) override {
-      if (event_loop_) {
-        event_loop_->push(std::move(_action));
+      if (context_) {
+        context_->push(std::move(_action));
       }
     }
 
     void invoke(Action _action) override {
-      if (event_loop_) {
-        event_loop_->invoke(std::move(_action));
+      if (context_) {
+        context_->invoke(std::move(_action));
       }
     }
 
    private:
-    std::shared_ptr<EventLoop> event_loop_;
+    std::shared_ptr<Context> context_;
   };
 
   void push(Action _action) {
@@ -149,4 +149,4 @@ class EventLoop<ThreadSafeQueueAction> final
 
 }
 
-#endif //ICC_EVENTLOOP_HPP
+#endif //ICC_CONTEXT_HPP

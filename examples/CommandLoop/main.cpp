@@ -11,7 +11,7 @@
 #include <icc/command/Builder.hpp>
 #include <icc/command/Command.hpp>
 #include <icc/command/CommandLoop.hpp>
-#include <icc/EventLoop.hpp>
+#include <icc/Context.hpp>
 
 namespace icc {
 

@@ -43,7 +43,7 @@ void EventLoop::stop()  {
   impl_ptr_->stop();
 }
 
-std::shared_ptr<IEventLoop::IChannel>
+std::shared_ptr<IContext::IChannel>
 EventLoop::createChannel()  {
   return impl_ptr_->createChannel();
 }

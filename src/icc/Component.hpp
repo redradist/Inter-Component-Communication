@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 #include <algorithm>
-#include "EventLoop.hpp"
+#include "Context.hpp"
 #include <icc/_private/containers/ThreadSafeQueue.hpp>
 
 namespace icc {
@@ -29,8 +29,8 @@ class Component {
    * Only with this constructor object will be owner of service_.
    */
   Component()
-    : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
-    , channel_(event_loop_->createChannel()) {
+    : context_(IContext::createContext<ThreadSafeQueueAction>())
+    , channel_(context_->createChannel()) {
   }
 
  public:
@@ -47,8 +47,8 @@ class Component {
    */
   template <typename TService>
   Component()
-      : event_loop_(IEventLoop::createEventLoop<ThreadSafeQueueAction>())
-      , channel_(event_loop_->createChannel()) {
+      : context_(IContext::createContext<ThreadSafeQueueAction>())
+      , channel_(context_->createChannel()) {
   }
 
   /**
@@ -58,10 +58,10 @@ class Component {
    */
   template <typename TService,
             typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IEventLoop, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IEventLoop::IChannel, TService>::type>>
+            typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
   Component(TService *_service)
-    : channel_(IEventLoop::createEventLoop(_service)->createChannel()) {
+    : channel_(IContext::createContext(_service)->createChannel()) {
   }
 
   /**
@@ -71,27 +71,27 @@ class Component {
    */
   template <typename TService,
             typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IEventLoop, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IEventLoop::IChannel, TService>::type>>
+            typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
+            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
   Component(std::shared_ptr<TService> _service)
-    : channel_(IEventLoop::createEventLoop(_service)->createChannel()) {
+    : channel_(IContext::createContext(_service)->createChannel()) {
     static_assert(!std::is_base_of<Component, TService>::value,
                   "_listener is not derived from IComponent");
   }
 
   /**
    *
-   * @param _eventLoop
+   * @param _context
    */
-  Component(std::shared_ptr<IEventLoop> _eventLoop)
-      : channel_(std::move(_eventLoop->createChannel())) {
+  Component(std::shared_ptr<IContext> _context)
+    : channel_(std::move(_context->createChannel())) {
   }
 
   /**
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  Component(std::shared_ptr<IEventLoop::IChannel> _channel)
+  Component(std::shared_ptr<IContext::IChannel> _channel)
     : channel_(std::move(_channel)) {
   }
 
@@ -131,15 +131,15 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (event_loop_) {
-      event_loop_->run();
+    if (context_) {
+      context_->run();
     }
   }
 
   virtual void stop() {
     channel_.reset();
-    if (event_loop_) {
-      event_loop_->stop();
+    if (context_) {
+      context_->stop();
     }
   }
 
@@ -193,7 +193,7 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
-  virtual std::shared_ptr<IEventLoop::IChannel>
+  virtual std::shared_ptr<IContext::IChannel>
   getChannel() const {
     return channel_;
   }
@@ -229,8 +229,8 @@ class Component {
   }
 
  protected:
-  std::shared_ptr<IEventLoop> event_loop_;
-  std::shared_ptr<IEventLoop::IChannel> channel_;
+  std::shared_ptr<IContext> context_;
+  std::shared_ptr<IContext::IChannel> channel_;
 
  private:
   Component *parent_ = nullptr;
