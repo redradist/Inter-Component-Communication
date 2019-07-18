@@ -13,7 +13,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
-#include <icc/EventLoop.hpp>
+#include <icc/Context.hpp>
 #include <icc/_private/helpers/function_wrapper.hpp>
 
 namespace icc {
@@ -28,7 +28,7 @@ enum class OSObjectEventType;
 
 class Timer;
 
-class EventLoop : public IEventLoop {
+class EventLoop : public IContext {
  public:
   static EventLoop & getDefaultInstance();
   static std::shared_ptr<EventLoop> createEventLoop();

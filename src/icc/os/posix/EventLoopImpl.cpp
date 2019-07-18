@@ -53,7 +53,7 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   });
 }
 
-std::shared_ptr<IEventLoop::IChannel> EventLoop::EventLoopImpl::createChannel() {
+std::shared_ptr<IContext::IChannel> EventLoop::EventLoopImpl::createChannel() {
   return nullptr;
 }
 
