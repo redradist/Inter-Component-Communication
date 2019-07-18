@@ -14,7 +14,7 @@ class WeatherStation
     : public icc::localbus::IService<Forecast>,
       public icc::ITimerListener {
  public:
-  WeatherStation(std::shared_ptr<icc::IEventLoop> _io_service)
+  WeatherStation(std::shared_ptr<icc::IContext> _io_service)
       : icc::Component(_io_service),
         icc::localbus::IService<Forecast>("WeatherStation"),
         timer_() {
@@ -70,7 +70,7 @@ class TestObserver
 class WeatherObserver
     : public icc::localbus::IClient<Forecast> {
  public:
-  WeatherObserver(std::shared_ptr<icc::IEventLoop> _io_service)
+  WeatherObserver(std::shared_ptr<icc::IContext> _io_service)
       : icc::Component(_io_service),
         icc::localbus::IClient<Forecast>("WeatherStation") {
     std::cout << "WeatherObserver" << std::endl;
@@ -107,10 +107,10 @@ class WeatherObserver
 };
 
 int main() {
-  auto defaultEventLoop = icc::IEventLoop::createEventLoop<icc::ThreadSafeQueueAction>();
-  std::shared_ptr<WeatherObserver> observer = std::make_shared<WeatherObserver>(defaultEventLoop);
-  std::shared_ptr<WeatherStation> station = std::make_shared<WeatherStation>(defaultEventLoop);
+  auto defaultContext = icc::IContext::createContext<icc::ThreadSafeQueueAction>();
+  std::shared_ptr<WeatherObserver> observer = std::make_shared<WeatherObserver>(defaultContext);
+  std::shared_ptr<WeatherStation> station = std::make_shared<WeatherStation>(defaultContext);
   // Start event loop
-  defaultEventLoop->run();
+  defaultContext->run();
   return 0;
 }
