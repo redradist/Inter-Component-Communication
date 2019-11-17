@@ -44,12 +44,12 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
 
 std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   const int kTimerFd = timerfd_create(CLOCK_MONOTONIC, 0);
-  auto timer = new Timer::TimerImpl(OSObject{kTimerFd});
-  function_wrapper<void(const OSObject&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
-  registerObjectEvents(OSObject{kTimerFd}, OSObjectEventType::READ, callback);
+  auto timer = new Timer::TimerImpl(Handle{kTimerFd});
+  function_wrapper<void(const Handle&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
+  registerObjectEvents(Handle{kTimerFd}, EventType::READ, callback);
   return std::shared_ptr<Timer::TimerImpl>(timer,
   [this, callback](Timer::TimerImpl* timer) {
-    unregisterObjectEvents(timer->timer_object_, OSObjectEventType::READ, callback);
+    unregisterObjectEvents(timer->timer_object_, EventType::READ, callback);
   });
 }
 
@@ -114,20 +114,20 @@ void EventLoop::EventLoopImpl::stop() {
   }
 }
 
-void EventLoop::EventLoopImpl::registerObjectEvents(const OSObject & osObject,
-                                     const OSObjectEventType & eventType,
-                                     function_wrapper<void(const OSObject&)> callback) {
+void EventLoop::EventLoopImpl::registerObjectEvents(const Handle & osObject,
+                                     const EventType & eventType,
+                                     function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
-    case OSObjectEventType::READ: {
+    case EventType::READ: {
       add_read_listeners_.emplace_back(osObject, callback);
       break;
     }
-    case OSObjectEventType::WRITE: {
+    case EventType::WRITE: {
       add_write_listeners_.emplace_back(osObject, callback);
       break;
     }
-    case OSObjectEventType::ERROR: {
+    case EventType::ERROR: {
       add_error_listeners_.emplace_back(osObject, callback);
       break;
     }
@@ -136,20 +136,20 @@ void EventLoop::EventLoopImpl::registerObjectEvents(const OSObject & osObject,
   eventfd_write(event_loop_object_.fd_, updated);
 }
 
-void EventLoop::EventLoopImpl::unregisterObjectEvents(const OSObject & osObject,
-                                       const OSObjectEventType & eventType,
-                                       function_wrapper<void(const OSObject&)> callback) {
+void EventLoop::EventLoopImpl::unregisterObjectEvents(const Handle & osObject,
+                                       const EventType & eventType,
+                                       function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
-    case OSObjectEventType::READ: {
+    case EventType::READ: {
       remove_read_listeners_.emplace_back(osObject, callback);
       break;
     }
-    case OSObjectEventType::WRITE: {
+    case EventType::WRITE: {
       remove_write_listeners_.emplace_back(osObject, callback);
       break;
     }
-    case OSObjectEventType::ERROR: {
+    case EventType::ERROR: {
       remove_error_listeners_.emplace_back(osObject, callback);
       break;
     }
@@ -169,7 +169,7 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
         auto erased = std::unique(foundFd->callbacks_.begin(), foundFd->callbacks_.end());
         foundFd->callbacks_.erase(erased, foundFd->callbacks_.end());
       } else {
-        listeners.emplace_back(fdInfo.object_, std::vector<function_wrapper<void(const OSObject &)>>{fdInfo.callback_});
+        listeners.emplace_back(fdInfo.object_, std::vector<function_wrapper<void(const Handle &)>>{fdInfo.callback_});
       }
     }
   }
@@ -231,7 +231,7 @@ void EventLoop::EventLoopImpl::handleOSObjectsEvents(std::vector<OSObjectListene
 }
 
 std::vector<EventLoop::EventLoopImpl::OSObjectListeners>::iterator
-EventLoop::EventLoopImpl::findOSObjectIn(const OSObject &osObject, std::vector<OSObjectListeners> &fds) {
+EventLoop::EventLoopImpl::findOSObjectIn(const Handle &osObject, std::vector<OSObjectListeners> &fds) {
   auto foundFd = std::find_if(fds.begin(), fds.end(),
                               [osObject](const OSObjectListeners &fdInfo) {
                                 return fdInfo.object_.fd_ == osObject.fd_;

@@ -7,8 +7,9 @@
 
 #include <icc/os/EventLoop.hpp>
 
-#include "OSObject.hpp"
+#include "os_objects.hpp"
 #include "TimerImpl.hpp"
+#include "SocketImpl.hpp"
 
 namespace icc {
 
@@ -27,13 +28,14 @@ class EventLoop::EventLoopImpl : public IContext {
   bool isRun() const override;
 
   std::shared_ptr<Timer::TimerImpl> createTimerImpl();
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl();
 
-  void registerObjectEvents(const OSObject & osObject,
-                            const OSObjectEventType & eventType,
-                            function_wrapper<void(const OSObject&)> callback);
-  void unregisterObjectEvents(const OSObject & osObject,
-                              const OSObjectEventType & eventType,
-                              function_wrapper<void(const OSObject&)> callback);
+  void registerObjectEvents(const Handle & osObject,
+                            const EventType & eventType,
+                            function_wrapper<void(const Handle&)> callback);
+  void unregisterObjectEvents(const Handle & osObject,
+                              const EventType & eventType,
+                              function_wrapper<void(const Handle&)> callback);
 
  private:
   struct InternalEvent;
@@ -49,13 +51,13 @@ class EventLoop::EventLoopImpl : public IContext {
   void handleLoopEvents(fd_set fdSet);
   void handleOSObjectsEvents(std::vector<OSObjectListeners> &fds, fd_set &fdSet);
   static std::vector<OSObjectListeners>::iterator
-  findOSObjectIn(const OSObject &osObject, std::vector<OSObjectListeners> &fds);
+  findOSObjectIn(const Handle &osObject, std::vector<OSObjectListeners> &fds);
 
   std::atomic_bool execute_{true};
   std::thread event_loop_thread_;
   std::atomic<std::thread::id> event_loop_thread_id_;
   std::mutex internal_mtx_;
-  OSObject event_loop_object_{-1};
+  Handle event_loop_object_{-1};
   std::vector<InternalEvent> add_read_listeners_;
   std::vector<InternalEvent> remove_read_listeners_;
   std::vector<InternalEvent> add_write_listeners_;
@@ -68,25 +70,25 @@ class EventLoop::EventLoopImpl : public IContext {
 };
 
 struct EventLoop::EventLoopImpl::InternalEvent {
-  OSObject object_;
-  function_wrapper<void(const OSObject &)> callback_;
+  Handle object_;
+  function_wrapper<void(const Handle &)> callback_;
 
-  InternalEvent(const OSObject fd, function_wrapper<void(const OSObject &)> callback)
+  InternalEvent(const Handle fd, function_wrapper<void(const Handle &)> callback)
       : object_{fd}, callback_{std::move(callback)} {
   }
 };
 
 struct EventLoop::EventLoopImpl::OSObjectListeners {
-  OSObjectListeners(const OSObject fd)
+  OSObjectListeners(const Handle fd)
       : object_{fd} {
   }
 
-  OSObjectListeners(const OSObject fd, std::vector<function_wrapper<void(const OSObject &)>> callbacks)
+  OSObjectListeners(const Handle fd, std::vector<function_wrapper<void(const Handle &)>> callbacks)
       : object_{fd}, callbacks_{std::move(callbacks)} {
   }
 
-  OSObject object_;
-  std::vector<function_wrapper<void(const OSObject &)>> callbacks_;
+  Handle object_;
+  std::vector<function_wrapper<void(const Handle &)>> callbacks_;
 };
 
 }

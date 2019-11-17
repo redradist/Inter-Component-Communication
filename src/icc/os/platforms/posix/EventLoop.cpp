@@ -5,9 +5,10 @@
 #include <utility>
 
 #include <icc/os/EventLoop.hpp>
-#include <icc/os/Timer.hpp>
+#include <icc/os/timer/Timer.hpp>
+#include <icc/os/networking/Socket.hpp>
 
-#include "OSObject.hpp"
+#include "os_objects.hpp"
 #include "EventLoopImpl.hpp"
 
 namespace icc {
@@ -61,15 +62,19 @@ std::shared_ptr<Timer> EventLoop::createTimer() {
   return std::shared_ptr<Timer>(new Timer(impl_ptr_->createTimerImpl()));
 }
 
-void EventLoop::registerObjectEvents(const OSObject & osObject,
-                                     const OSObjectEventType & eventType,
-                                     function_wrapper<void(const OSObject&)> callback) {
+std::shared_ptr<Socket> EventLoop::createSocket() {
+  return std::shared_ptr<Socket>(new Socket(impl_ptr_->createSocketImpl()));
+}
+
+void EventLoop::registerObjectEvents(const Handle & osObject,
+                                     const EventType & eventType,
+                                     function_wrapper<void(const Handle&)> callback) {
   impl_ptr_->registerObjectEvents(osObject, eventType, std::move(callback));
 }
 
-void EventLoop::unregisterObjectEvents(const OSObject & osObject,
-                                       const OSObjectEventType & eventType,
-                                       function_wrapper<void(const OSObject&)> callback) {
+void EventLoop::unregisterObjectEvents(const Handle & osObject,
+                                       const EventType & eventType,
+                                       function_wrapper<void(const Handle&)> callback) {
   impl_ptr_->unregisterObjectEvents(osObject, eventType, std::move(callback));
 }
 

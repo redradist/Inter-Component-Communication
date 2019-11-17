@@ -16,14 +16,14 @@
 
 #include <icc/os/EventLoop.hpp>
 
-#include "OSObject.hpp"
+#include "os_objects.hpp"
 #include "TimerImpl.hpp"
 
 namespace icc {
 
 namespace os {
 
-Timer::TimerImpl::TimerImpl(const OSObject & timerObject)
+Timer::TimerImpl::TimerImpl(const Handle & timerObject)
   : timer_object_{timerObject} {
 }
 
@@ -121,7 +121,7 @@ void Timer::TimerImpl::removeListener(ITimerListener * _listener) {
   }
 }
 
-void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
+void Timer::TimerImpl::onTimerExpired(const Handle & _) {
   uint64_t numberExpired;
   read(timer_object_.fd_, &numberExpired, sizeof(numberExpired));
   if (execute_.load(std::memory_order_acquire)) {

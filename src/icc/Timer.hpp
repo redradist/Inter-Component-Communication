@@ -14,8 +14,8 @@
 #include <icc/Component.hpp>
 #include <icc/Event.hpp>
 #include <icc/os/EventLoop.hpp>
-#include <icc/os/Timer.hpp>
-#include <icc/os/ITimerListener.hpp>
+#include <icc/os/timer/Timer.hpp>
+#include <icc/os/timer/ITimerListener.hpp>
 
 #include "ITimerListener.hpp"
 

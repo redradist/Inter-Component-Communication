@@ -6,21 +6,19 @@
 #define POSIX_OSOBJECT_HPP
 
 namespace icc {
-
 namespace os {
 
-struct OSObject {
+struct Handle {
   int fd_;
 };
 
-enum class OSObjectEventType {
+enum class EventType {
   READ,
   WRITE,
   ERROR,
 };
 
 }
-
 }
 
 #endif //POSIX_OSOBJECT_HPP
