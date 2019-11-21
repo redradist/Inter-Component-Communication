@@ -42,7 +42,7 @@ class EventLoop : public IContext {
   bool isRun() const override;
 
   std::shared_ptr<Timer> createTimer();
-  std::shared_ptr<Socket> createSocket();
+  std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
 
   void registerObjectEvents(const Handle & osObject,
                             const EventType & eventType,

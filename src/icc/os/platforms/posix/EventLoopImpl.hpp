@@ -7,7 +7,7 @@
 
 #include <icc/os/EventLoop.hpp>
 
-#include "os_objects.hpp"
+#include "Common.hpp"
 #include "TimerImpl.hpp"
 #include "SocketImpl.hpp"
 
@@ -28,7 +28,7 @@ class EventLoop::EventLoopImpl : public IContext {
   bool isRun() const override;
 
   std::shared_ptr<Timer::TimerImpl> createTimerImpl();
-  std::shared_ptr<Socket::SocketImpl> createSocketImpl();
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl(std::string _address, uint16_t _port);
 
   void registerObjectEvents(const Handle & osObject,
                             const EventType & eventType,
@@ -57,7 +57,7 @@ class EventLoop::EventLoopImpl : public IContext {
   std::thread event_loop_thread_;
   std::atomic<std::thread::id> event_loop_thread_id_;
   std::mutex internal_mtx_;
-  Handle event_loop_object_{-1};
+  Handle event_loop_handle_{kInvalidHandle};
   std::vector<InternalEvent> add_read_listeners_;
   std::vector<InternalEvent> remove_read_listeners_;
   std::vector<InternalEvent> add_write_listeners_;

@@ -10,11 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <iostream>
 #include <algorithm>
 #include <memory>
-
 
 #include <inttypes.h>
 #include <unistd.h>
@@ -49,7 +51,36 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   registerObjectEvents(Handle{kTimerFd}, EventType::READ, callback);
   return std::shared_ptr<Timer::TimerImpl>(timer,
   [this, callback](Timer::TimerImpl* timer) {
-    unregisterObjectEvents(timer->timer_object_, EventType::READ, callback);
+    unregisterObjectEvents(timer->timer_handle_, EventType::READ, callback);
+  });
+}
+
+std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string _address, const uint16_t _port) {
+  const int kSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+  if(kSocketFd < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socket = new Socket::SocketImpl(Handle{kSocketFd});
+  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socket);
+  registerObjectEvents(Handle{kSocketFd}, EventType::READ, readCallback);
+  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socket);
+  registerObjectEvents(Handle{kSocketFd}, EventType::WRITE, writeCallback);
+
+  sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(_port);
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  if(connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    perror("connect");
+    return nullptr;
+  }
+
+  return std::shared_ptr<Socket::SocketImpl>(socket,
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
   });
 }
 
@@ -66,8 +97,8 @@ bool EventLoop::EventLoopImpl::isRun() const {
 }
 
 void EventLoop::EventLoopImpl::run() {
-  event_loop_object_.fd_ = eventfd(0, O_NONBLOCK);
-  if (event_loop_object_.fd_ == -1) {
+  event_loop_handle_.fd_ = eventfd(0, O_NONBLOCK);
+  if (event_loop_handle_.fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
     throw "Error !!";
   }
@@ -88,15 +119,15 @@ void EventLoop::EventLoopImpl::run() {
     fd_set errorFds;
 
     int maxFd = 0;
-    maxFd = std::max(maxFd, event_loop_object_.fd_);
-    FD_SET(event_loop_object_.fd_, &readFds);
+    maxFd = std::max(maxFd, event_loop_handle_.fd_);
+    FD_SET(event_loop_handle_.fd_, &readFds);
     initFds(read_listeners_, readFds, maxFd);
     initFds(write_listeners_, writeFds, maxFd);
     initFds(error_listeners_, errorFds, maxFd);
 
     select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
     if (!execute_.load(std::memory_order_acquire)) {
-      eventfd_write(event_loop_object_.fd_, 0);
+      eventfd_write(event_loop_handle_.fd_, 0);
       break;
     }
 
@@ -108,9 +139,9 @@ void EventLoop::EventLoopImpl::run() {
 }
 
 void EventLoop::EventLoopImpl::stop() {
-  if (event_loop_object_.fd_ != -1) {
+  if (event_loop_handle_.fd_ != -1) {
     execute_.store(false, std::memory_order_release);
-    eventfd_write(event_loop_object_.fd_, 1);
+    eventfd_write(event_loop_handle_.fd_, 1);
   }
 }
 
@@ -133,7 +164,7 @@ void EventLoop::EventLoopImpl::registerObjectEvents(const Handle & osObject,
     }
   }
   eventfd_t updated = 1;
-  eventfd_write(event_loop_object_.fd_, updated);
+  eventfd_write(event_loop_handle_.fd_, updated);
 }
 
 void EventLoop::EventLoopImpl::unregisterObjectEvents(const Handle & osObject,
@@ -155,7 +186,7 @@ void EventLoop::EventLoopImpl::unregisterObjectEvents(const Handle & osObject,
     }
   }
   eventfd_t updated = 1;
-  eventfd_write(event_loop_object_.fd_, updated);
+  eventfd_write(event_loop_handle_.fd_, updated);
 }
 
 void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
@@ -204,10 +235,10 @@ void EventLoop::EventLoopImpl::initFds(std::vector<OSObjectListeners> &fds,
 }
 
 void EventLoop::EventLoopImpl::handleLoopEvents(fd_set fdSet) {
-  if (FD_ISSET(event_loop_object_.fd_, &fdSet)) {
+  if (FD_ISSET(event_loop_handle_.fd_, &fdSet)) {
     std::lock_guard<std::mutex> lock(internal_mtx_);
     eventfd_t updatedEvent;
-    eventfd_read(event_loop_object_.fd_, &updatedEvent);
+    eventfd_read(event_loop_handle_.fd_, &updatedEvent);
     if (updatedEvent > 0) {
       addFdTo(lock, read_listeners_, add_read_listeners_);
       addFdTo(lock, write_listeners_, add_write_listeners_);
@@ -215,7 +246,7 @@ void EventLoop::EventLoopImpl::handleLoopEvents(fd_set fdSet) {
       removeFdFrom(lock, read_listeners_, remove_read_listeners_);
       removeFdFrom(lock, write_listeners_, remove_write_listeners_);
       removeFdFrom(lock, error_listeners_, remove_error_listeners_);
-      eventfd_write(event_loop_object_.fd_, 0);
+      eventfd_write(event_loop_handle_.fd_, 0);
     }
   }
 }

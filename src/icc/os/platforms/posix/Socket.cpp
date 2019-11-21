@@ -2,6 +2,8 @@
 // Created by redra on 18.07.19.
 //
 
+#include <utility>
+
 #include <icc/os/EventLoop.hpp>
 #include <icc/os/networking/Socket.hpp>
 
@@ -12,27 +14,27 @@ namespace icc {
 namespace os {
 
 Socket::Socket(std::shared_ptr<SocketImpl> implPtr)
-  : impl_ptr_{implPtr} {
+  : impl_ptr_{std::move(implPtr)} {
 }
 
-std::shared_ptr<Socket> Socket::createSocket() {
-  return EventLoop::getDefaultInstance().createSocket();
+std::shared_ptr<Socket> Socket::createSocket(const std::string _address, const uint16_t _port) {
+  return EventLoop::getDefaultInstance().createSocket(_address, _port);
 }
 
 void Socket::send(std::vector<uint8_t> _data) {
   impl_ptr_->send(_data);
 }
 
-void Socket::sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) {
-  impl_ptr_->sendAsync(_data, _sender);
+std::future<void> Socket::sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) {
+  return impl_ptr_->sendAsync(_data, _sender);
 }
 
-void Socket::receive() {
-  impl_ptr_->receive();
+ChunkData Socket::receive() {
+  return impl_ptr_->receive();
 }
 
-void Socket::receiveAsync(ISocketReceiver & _receiver) {
-  impl_ptr_->receiveAsync(_receiver);
+std::future<ChunkData> Socket::receiveAsync(ISocketReceiver & _receiver) {
+  return impl_ptr_->receiveAsync(_receiver);
 }
 
 void Socket::addListener(std::shared_ptr<ISocketListener> _listener) {

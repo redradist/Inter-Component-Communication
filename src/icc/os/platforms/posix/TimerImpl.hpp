@@ -13,7 +13,7 @@
 #include <icc/os/timer/Timer.hpp>
 
 
-#include "os_objects.hpp"
+#include "Common.hpp"
 
 namespace icc {
 
@@ -81,7 +81,7 @@ class Timer::TimerImpl {
   void onTimerExpired(const Handle & osObject);
 
   std::mutex mutex_;
-  Handle timer_object_{-1};
+  Handle timer_handle_{kInvalidHandle};
   std::atomic_bool execute_{false};
   std::atomic_int32_t counter_{OneTime};
   std::vector<ITimerListener*> listeners_ptr_;

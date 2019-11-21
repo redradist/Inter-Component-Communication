@@ -14,13 +14,13 @@ namespace os {
 
 class Socket : public ISocket {
  public:
-  static std::shared_ptr<Socket> createSocket();
+  static std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
   ~Socket() = default;
 
-  void send(std::vector<uint8_t> _data) override;
-  void sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) override;
-  void receive() override;
-  void receiveAsync(ISocketReceiver & _receiver) override;
+  virtual void send(std::vector<uint8_t> _data) override;
+  virtual std::future<void> sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) override;
+  virtual std::vector<uint8_t> receive() override;
+  virtual std::future<std::vector<uint8_t>> receiveAsync(ISocketReceiver & _receiver) override;
 
   /**
    * Method is used to add the listener
