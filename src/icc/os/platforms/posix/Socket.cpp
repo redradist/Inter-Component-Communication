@@ -22,35 +22,20 @@ std::shared_ptr<Socket> Socket::createSocket(const std::string _address, const u
 }
 
 void Socket::send(std::vector<uint8_t> _data) {
-  impl_ptr_->send(_data);
+  return impl_ptr_->send(_data);
 }
 
-std::future<void> Socket::sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) {
-  return impl_ptr_->sendAsync(_data, _sender);
+std::future<void>
+Socket::sendAsync(std::vector<uint8_t> _data) {
+  return impl_ptr_->sendAsync(_data);
 }
 
-ChunkData Socket::receive() {
+SharedChunkData Socket::receive() {
   return impl_ptr_->receive();
 }
 
-std::future<ChunkData> Socket::receiveAsync(ISocketReceiver & _receiver) {
-  return impl_ptr_->receiveAsync(_receiver);
-}
-
-void Socket::addListener(std::shared_ptr<ISocketListener> _listener) {
-  impl_ptr_->addListener(_listener);
-}
-
-void Socket::addListener(ISocketListener * _listener) {
-  impl_ptr_->addListener(_listener);
-}
-
-void Socket::removeListener(std::shared_ptr<ISocketListener> _listener) {
-  impl_ptr_->removeListener(_listener);
-}
-
-void Socket::removeListener(ISocketListener * _listener) {
-  impl_ptr_->removeListener(_listener);
+std::future<SharedChunkData> Socket::receiveAsync() {
+  return impl_ptr_->receiveAsync();
 }
 
 }

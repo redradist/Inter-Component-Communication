@@ -17,34 +17,10 @@ class Socket : public ISocket {
   static std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
   ~Socket() = default;
 
-  virtual void send(std::vector<uint8_t> _data) override;
-  virtual std::future<void> sendAsync(std::vector<uint8_t> _data, ISocketSender &_sender) override;
-  virtual std::vector<uint8_t> receive() override;
-  virtual std::future<std::vector<uint8_t>> receiveAsync(ISocketReceiver & _receiver) override;
-
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(std::shared_ptr<ISocketListener> _listener) override;
-
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(ISocketListener * _listener) override;
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(std::shared_ptr<ISocketListener> _listener) override;
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(ISocketListener * _listener) override;
+  void send(std::vector<uint8_t> _data) override;
+  std::future<void> sendAsync(std::vector<uint8_t> _data) override;
+  SharedChunkData receive() override;
+  std::future<SharedChunkData> receiveAsync() override;
 
  private:
   friend class EventLoop;

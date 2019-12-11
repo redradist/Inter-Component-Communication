@@ -7,13 +7,15 @@
 
 #include <vector>
 
+#include "SocketTypes.hpp"
+
 namespace icc {
 
 namespace os {
 
 class ISocketReceiver {
  public:
-  virtual void onDataReceived(const std::vector<uint8_t> & _data) = 0;
+  virtual void onDataReceived(SharedChunkData _data) = 0;
 };
 
 }

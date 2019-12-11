@@ -11,7 +11,7 @@ namespace os {
 
 class ISocketSender {
  public:
-  virtual void onDataSent(const std::vector<uint8_t> & _data) = 0;
+  virtual void onDataSent(unsigned _dataId) = 0;
 };
 
 }
