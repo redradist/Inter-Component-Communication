@@ -9,7 +9,7 @@ namespace icc {
 
 namespace os {
 
-class ServerSocket {
+class ServerSocket : public IServerSocket {
 
 };
 

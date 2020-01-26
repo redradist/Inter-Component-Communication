@@ -50,7 +50,8 @@ void Socket::SocketImpl::send(ChunkData _data) {
   }
 }
 
-std::future<void> Socket::SocketImpl::sendAsync(ChunkData _data) {
+std::future<void>
+Socket::SocketImpl::sendAsync(ChunkData _data) {
   std::promise<void> promiseResult{};
   std::future<void> futureResult = promiseResult.get_future();
   std::unique_lock<std::mutex> lock{write_mtx_};
@@ -80,7 +81,8 @@ std::future<void> Socket::SocketImpl::sendAsync(ChunkData _data) {
   return std::move(futureResult);
 }
 
-SharedChunkData Socket::SocketImpl::receive() {
+SharedChunkData
+Socket::SocketImpl::receive() {
   auto chunkPtr = std::make_shared<ChunkData>();
   std::unique_lock<std::mutex> lock{read_mtx_};
   ssize_t recvLen = ::recv(socket_handle_.fd_, receive_buffer_ptr_.get(), RECEIVE_BUFFER_SIZE, 0);
@@ -94,7 +96,8 @@ SharedChunkData Socket::SocketImpl::receive() {
   return chunkPtr;
 }
 
-std::future<SharedChunkData> Socket::SocketImpl::receiveAsync() {
+std::future<SharedChunkData>
+Socket::SocketImpl::receiveAsync() {
   auto promiseResult = std::unique_ptr<std::promise<SharedChunkData>>(new std::promise<SharedChunkData>{});
   auto futureResult = promiseResult->get_future();
   std::unique_lock<std::mutex> lock{read_mtx_};
