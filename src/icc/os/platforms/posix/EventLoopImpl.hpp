@@ -10,6 +10,7 @@
 #include "Common.hpp"
 #include "TimerImpl.hpp"
 #include "SocketImpl.hpp"
+#include "ServerSocketImpl.hpp"
 
 namespace icc {
 
@@ -28,7 +29,9 @@ class EventLoop::EventLoopImpl : public IContext {
   bool isRun() const override;
 
   std::shared_ptr<Timer::TimerImpl> createTimerImpl();
+  std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue);
   std::shared_ptr<Socket::SocketImpl> createSocketImpl(std::string _address, uint16_t _port);
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle & osObject,
                             const EventType & eventType,

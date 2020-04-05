@@ -9,7 +9,6 @@
 #include <future>
 
 #include "SocketTypes.hpp"
-#include "ISocketListener.hpp"
 
 namespace icc {
 

@@ -5,7 +5,6 @@
 #ifndef FORECAST_SOCKET_HPP
 #define FORECAST_SOCKET_HPP
 
-#include "ISocketListener.hpp"
 #include "ISocket.hpp"
 
 namespace icc {

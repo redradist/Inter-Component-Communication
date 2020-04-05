@@ -27,6 +27,7 @@ extern "C" {
 #include <iostream>
 #include <algorithm>
 #include <memory>
+#include <arpa/inet.h>
 
 #include "EventLoopImpl.hpp"
 #include "TimerImpl.hpp"
@@ -73,8 +74,40 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
 #endif
 }
 
+std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
+  const int kServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+  if(kServerSocketFd < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{kServerSocketFd});
+  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(Handle{kServerSocketFd}, EventType::READ, readCallback);
+  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
+                                                       [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+                                                         unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+                                                       });
+
+  sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(_port);
+  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
+  if(::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    perror("bind");
+    return nullptr;
+  }
+
+  ::listen(kServerSocketFd, _numQueue);
+
+  if (setSocketBlockingMode(kServerSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
+
 std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string _address, const uint16_t _port) {
-  const int kSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+  const int kSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
   if(kSocketFd < 0) {
     perror("socket");
     return nullptr;
@@ -94,13 +127,36 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   sockaddr_in addr;
   addr.sin_family = AF_INET;
   addr.sin_port = htons(_port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  if(connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
+  if(::connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
     perror("connect");
     return nullptr;
   }
 
   if (setSocketBlockingMode(kSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
+
+std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
+  if(_socketHandle.fd_ < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
+  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(_socketHandle, EventType::READ, readCallback);
+  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
+  registerObjectEvents(_socketHandle, EventType::WRITE, writeCallback);
+  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
+                                                       [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+                                                         unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
+                                                         unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+                                                       });
+
+  if (setSocketBlockingMode(_socketHandle.fd_, false)) {
     socketPtr->setBlockingMode(false);
   }
   return socketPtr;

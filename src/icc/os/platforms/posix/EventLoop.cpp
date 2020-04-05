@@ -6,6 +6,7 @@
 
 #include <icc/os/EventLoop.hpp>
 #include <icc/os/timer/Timer.hpp>
+#include <icc/os/networking/ServerSocket.hpp>
 #include <icc/os/networking/Socket.hpp>
 
 #include "Common.hpp"
@@ -62,8 +63,16 @@ std::shared_ptr<Timer> EventLoop::createTimer() {
   return std::shared_ptr<Timer>(new Timer(impl_ptr_->createTimerImpl()));
 }
 
+std::shared_ptr<ServerSocket> EventLoop::createServerSocket(const std::string _address, const uint16_t _port, const uint16_t _numQueue) {
+  return std::shared_ptr<ServerSocket>(new ServerSocket(impl_ptr_->createServerSocketImpl(_address, _port, _numQueue)));
+}
+
 std::shared_ptr<Socket> EventLoop::createSocket(const std::string _address, const uint16_t _port) {
   return std::shared_ptr<Socket>(new Socket(impl_ptr_->createSocketImpl(_address, _port)));
+}
+
+std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
+  return std::shared_ptr<Socket>(new Socket(impl_ptr_->createSocketImpl(_socketHandle)));
 }
 
 void EventLoop::registerObjectEvents(const Handle & osObject,

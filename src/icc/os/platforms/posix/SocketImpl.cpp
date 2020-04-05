@@ -59,7 +59,7 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
   static ChunkData chunk;
 
   while (read_requests_available_event_.load(std::memory_order_acquire)) {
-    std::unique_lock<std::mutex> lock{write_mtx_};
+    std::unique_lock<std::mutex> lock{read_mtx_};
     auto & promiseChunk = read_requests_queue_.front();
     bool isRecvError = false;
     do {
