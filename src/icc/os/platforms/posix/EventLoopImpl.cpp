@@ -132,9 +132,9 @@ void EventLoop::EventLoopImpl::run() {
     }
 
     handleLoopEvents(readFds);
-    handleOSObjectsEvents(read_listeners_, readFds);
-    handleOSObjectsEvents(write_listeners_, writeFds);
-    handleOSObjectsEvents(error_listeners_, errorFds);
+    handleHandlesEvents(read_listeners_, readFds);
+    handleHandlesEvents(write_listeners_, writeFds);
+    handleHandlesEvents(error_listeners_, errorFds);
   }
 }
 
@@ -190,7 +190,7 @@ void EventLoop::EventLoopImpl::unregisterObjectEvents(const Handle & osObject,
 }
 
 void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
-                        std::vector<OSObjectListeners> &listeners,
+                        std::vector<HandleListeners> &listeners,
                         const std::vector<InternalEvent> &addListeners) {
   if (!addListeners.empty()) {
     for (auto &fdInfo : addListeners) {
@@ -207,7 +207,7 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
 }
 
 void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
-                             std::vector<OSObjectListeners> &listeners,
+                             std::vector<HandleListeners> &listeners,
                              const std::vector<InternalEvent> &removeListeners) {
   if (!removeListeners.empty()) {
     for (auto &fdInfo : removeListeners) {
@@ -223,13 +223,13 @@ void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
   }
 }
 
-void EventLoop::EventLoopImpl::initFds(std::vector<OSObjectListeners> &fds,
+void EventLoop::EventLoopImpl::initFds(std::vector<HandleListeners> &fds,
                                        fd_set &fdSet,
                                        int &maxFd) const {
   for (const auto &fdInfo : fds) {
-    FD_SET(fdInfo.object_.fd_, &fdSet);
-    if (fdInfo.object_.fd_ > maxFd) {
-      maxFd = fdInfo.object_.fd_;
+    FD_SET(fdInfo.handle_.fd_, &fdSet);
+    if (fdInfo.handle_.fd_ > maxFd) {
+      maxFd = fdInfo.handle_.fd_;
     }
   }
 }
@@ -251,21 +251,21 @@ void EventLoop::EventLoopImpl::handleLoopEvents(fd_set fdSet) {
   }
 }
 
-void EventLoop::EventLoopImpl::handleOSObjectsEvents(std::vector<OSObjectListeners> &fds, fd_set &fdSet) {
+void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet) {
   for (const auto &fdInfo : fds) {
-    if (FD_ISSET(fdInfo.object_.fd_, &fdSet)) {
+    if (FD_ISSET(fdInfo.handle_.fd_, &fdSet)) {
       for (const auto &callback : fdInfo.callbacks_) {
-        callback(fdInfo.object_);
+        callback(fdInfo.handle_);
       }
     }
   }
 }
 
-std::vector<EventLoop::EventLoopImpl::OSObjectListeners>::iterator
-EventLoop::EventLoopImpl::findOSObjectIn(const Handle &osObject, std::vector<OSObjectListeners> &fds) {
+std::vector<EventLoop::EventLoopImpl::HandleListeners>::iterator
+EventLoop::EventLoopImpl::findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds) {
   auto foundFd = std::find_if(fds.begin(), fds.end(),
-                              [osObject](const OSObjectListeners &fdInfo) {
-                                return fdInfo.object_.fd_ == osObject.fd_;
+                              [osObject](const HandleListeners &fdInfo) {
+                                return fdInfo.handle_.fd_ == osObject.fd_;
                               });
   return foundFd;
 }

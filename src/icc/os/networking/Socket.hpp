@@ -19,8 +19,8 @@ class Socket : public ISocket {
 
   void send(std::vector<uint8_t> _data) override;
   std::future<void> sendAsync(std::vector<uint8_t> _data) override;
-  SharedChunkData receive() override;
-  std::future<SharedChunkData> receiveAsync() override;
+  ChunkData receive() override;
+  std::future<ChunkData> receiveAsync() override;
 
  private:
   friend class EventLoop;

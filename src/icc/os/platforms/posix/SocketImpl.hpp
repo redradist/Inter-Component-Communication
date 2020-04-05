@@ -26,8 +26,8 @@ namespace os {
 struct Handle;
 
 struct SendChunk {
-  const unsigned id_;
   ChunkData data_;
+  std::promise<void> promise_;
 };
 
 struct ReceiveChunk {
@@ -40,8 +40,8 @@ class Socket::SocketImpl : public ISocket {
 
   void send(ChunkData _data) override;
   std::future<void> sendAsync(ChunkData _data) override;
-  SharedChunkData receive() override;
-  std::future<SharedChunkData> receiveAsync() override;
+  ChunkData receive() override;
+  std::future<ChunkData> receiveAsync() override;
 
  private:
   friend class EventLoop;
@@ -49,21 +49,26 @@ class Socket::SocketImpl : public ISocket {
   explicit SocketImpl(const Handle & socketHandle);
   void onSocketDataAvailable(const Handle &_);
   void onSocketBufferAvailable(const Handle &_);
-  void notifyAllSendListeners(unsigned _dataId);
 
   Handle socket_handle_{kInvalidHandle};
   std::unique_ptr<uint8_t[]> receive_buffer_ptr_;
-  std::deque<SendChunk> send_chunks_queue_;
+  std::deque<std::pair<ChunkData, std::promise<void>>> send_chunks_queue_;
+  std::atomic_bool send_chunks_available_event_{true};
+  std::deque<std::promise<ChunkData>> read_requests_queue_;
+  std::atomic_bool read_requests_available_event_{true};
+
   std::unordered_map<unsigned, std::promise<void>> async_send_chunk_promises_;
   std::unique_ptr<std::promise<SharedChunkData>> async_receive_chunk_;
   std::atomic<size_t> current_sent_data_size_{0};
   std::atomic_bool data_available_event_{false};
-  std::atomic_bool buffer_available_event_{false};
   unsigned next_send_chunk_id_ = 0;
   unsigned next_receive_chunk_id_ = 0;
   std::mutex write_mtx_;
   std::mutex read_mtx_;
-  std::condition_variable cond_var_;
+  std::condition_variable write_cond_var_;
+  std::condition_variable write_buffer_cond_var_;
+  std::condition_variable read_cond_var_;
+  std::condition_variable read_data_cond_var_;
 };
 
 }

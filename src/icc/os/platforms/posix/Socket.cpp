@@ -30,11 +30,11 @@ Socket::sendAsync(std::vector<uint8_t> _data) {
   return impl_ptr_->sendAsync(_data);
 }
 
-SharedChunkData Socket::receive() {
+ChunkData Socket::receive() {
   return impl_ptr_->receive();
 }
 
-std::future<SharedChunkData> Socket::receiveAsync() {
+std::future<ChunkData> Socket::receiveAsync() {
   return impl_ptr_->receiveAsync();
 }
 

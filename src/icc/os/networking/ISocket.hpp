@@ -19,8 +19,8 @@ class ISocket {
  public:
   virtual void send(ChunkData _data) = 0;
   virtual std::future<void> sendAsync(ChunkData _data) = 0;
-  virtual SharedChunkData receive() = 0;
-  virtual std::future<SharedChunkData> receiveAsync() = 0;
+  virtual ChunkData receive() = 0;
+  virtual std::future<ChunkData> receiveAsync() = 0;
 };
 
 }

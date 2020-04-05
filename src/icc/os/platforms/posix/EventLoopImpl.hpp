@@ -39,19 +39,19 @@ class EventLoop::EventLoopImpl : public IContext {
 
  private:
   struct InternalEvent;
-  struct OSObjectListeners;
+  struct HandleListeners;
 
   void addFdTo(std::lock_guard<std::mutex>& lock,
-               std::vector<OSObjectListeners>& listeners,
+               std::vector<HandleListeners>& listeners,
                const std::vector<InternalEvent>& addListeners);
   void removeFdFrom(std::lock_guard<std::mutex>& lock,
-                    std::vector<OSObjectListeners>& listeners,
+                    std::vector<HandleListeners>& listeners,
                     const std::vector<InternalEvent>& removeListeners);
-  void initFds(std::vector<OSObjectListeners> &fds, fd_set &fdSet, int &maxFd) const;
+  void initFds(std::vector<HandleListeners> &fds, fd_set &fdSet, int &maxFd) const;
   void handleLoopEvents(fd_set fdSet);
-  void handleOSObjectsEvents(std::vector<OSObjectListeners> &fds, fd_set &fdSet);
-  static std::vector<OSObjectListeners>::iterator
-  findOSObjectIn(const Handle &osObject, std::vector<OSObjectListeners> &fds);
+  void handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet);
+  static std::vector<HandleListeners>::iterator
+  findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
 
   std::atomic_bool execute_{true};
   std::thread event_loop_thread_;
@@ -64,9 +64,9 @@ class EventLoop::EventLoopImpl : public IContext {
   std::vector<InternalEvent> remove_write_listeners_;
   std::vector<InternalEvent> add_error_listeners_;
   std::vector<InternalEvent> remove_error_listeners_;
-  std::vector<OSObjectListeners> read_listeners_;
-  std::vector<OSObjectListeners> write_listeners_;
-  std::vector<OSObjectListeners> error_listeners_;
+  std::vector<HandleListeners> read_listeners_;
+  std::vector<HandleListeners> write_listeners_;
+  std::vector<HandleListeners> error_listeners_;
 };
 
 struct EventLoop::EventLoopImpl::InternalEvent {
@@ -78,16 +78,16 @@ struct EventLoop::EventLoopImpl::InternalEvent {
   }
 };
 
-struct EventLoop::EventLoopImpl::OSObjectListeners {
-  OSObjectListeners(const Handle fd)
-      : object_{fd} {
+struct EventLoop::EventLoopImpl::HandleListeners {
+  HandleListeners(const Handle fd)
+      : handle_{fd} {
   }
 
-  OSObjectListeners(const Handle fd, std::vector<function_wrapper<void(const Handle &)>> callbacks)
-      : object_{fd}, callbacks_{std::move(callbacks)} {
+  HandleListeners(const Handle fd, std::vector<function_wrapper<void(const Handle &)>> callbacks)
+      : handle_{fd}, callbacks_{std::move(callbacks)} {
   }
 
-  Handle object_;
+  Handle handle_;
   std::vector<function_wrapper<void(const Handle &)>> callbacks_;
 };
 
