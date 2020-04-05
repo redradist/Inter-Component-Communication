@@ -54,23 +54,47 @@ Socket::SocketImpl::receiveAsync() {
 }
 
 void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
-  if (read_requests_available_event_.load(std::memory_order_acquire)) {
+  static ChunkData chunk{};
+
+  while (read_requests_available_event_.load(std::memory_order_acquire)) {
     std::unique_lock<std::mutex> lock{write_mtx_};
     auto & promiseChunk = read_requests_queue_.front();
-    ChunkData chunkPtr;
-    ssize_t recvLen = ::recv(socket_handle_.fd_, receive_buffer_ptr_.get(), RECEIVE_BUFFER_SIZE, 0);
-    if (recvLen == -1) {
-      printf("errno %d\n", errno);
+    bool isRecvError = false;
+    do {
+      ssize_t recvLen = ::recv(socket_handle_.fd_, receive_buffer_ptr_.get(), RECEIVE_BUFFER_SIZE, 0);
+      if (recvLen > 0) {
+        chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+recvLen);
+      } else if (0 == recvLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+        break;
+      } else {
+         {
+          promiseChunk.set_value(std::move(chunk));
+          break;
+        }
+        promiseChunk.set_exception(
+            std::make_exception_ptr(
+                std::system_error(errno, std::system_category(), "Socket receive error")
+            )
+        );
+      }
+    } while (!is_blocking_);
+    if (isRecvError) {
       promiseChunk.set_exception(
-        std::make_exception_ptr(
-            std::system_error(errno, std::system_category(), "Socket receive error")
-        )
+          std::make_exception_ptr(
+              std::system_error(errno, std::system_category(), "Socket send error")
+          )
       );
-    } else {
-      chunkPtr.insert(chunkPtr.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+recvLen);
-      promiseChunk.set_value(std::move(chunkPtr));
+      chunk.clear();
+      read_requests_queue_.pop_front();
+    } else if (!chunk.empty()) {
+      promiseChunk.set_value(std::move(chunk));
+      chunk.clear();
+      read_requests_queue_.pop_front();
     }
     read_requests_available_event_.store(!read_requests_queue_.empty(), std::memory_order_release);
+    if (is_blocking_) {
+      break;
+    }
   }
 }
 
@@ -79,24 +103,42 @@ void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
 
   while (send_chunks_available_event_.load(std::memory_order_acquire)) {
     std::unique_lock<std::mutex> lock{write_mtx_};
-    currentSentChunkDataSize = 0;
     auto & chunk = send_chunks_queue_.front();
-    while (currentSentChunkDataSize < chunk.first.size()) {
+    bool isSendError = false;
+    do {
       const size_t kDataOffset = currentSentChunkDataSize;
       const size_t kDataSize = chunk.first.size() - kDataOffset;
-      const ssize_t size = ::send(socket_handle_.fd_,
+      const ssize_t sentLen = ::send(socket_handle_.fd_,
                                   chunk.first.data() + kDataOffset,
                                   kDataSize,
                                   0);
-      if (size != kDataSize) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
-          break;
-        }
-        currentSentChunkDataSize += size;
+
+      if (sentLen > 0) {
+        currentSentChunkDataSize += sentLen;
+      } else if (0 == sentLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+        break;
+      } else {
+        isSendError = true;
+        break;
       }
+    } while (!is_blocking_ && currentSentChunkDataSize < chunk.first.size());
+    if (isSendError) {
+      currentSentChunkDataSize = 0;
+      chunk.second.set_exception(
+          std::make_exception_ptr(
+              std::system_error(errno, std::system_category(), "Socket send error")
+          )
+      );
+      send_chunks_queue_.pop_front();
+    } else if (currentSentChunkDataSize == chunk.first.size()) {
+      currentSentChunkDataSize = 0;
+      chunk.second.set_value();
+      send_chunks_queue_.pop_front();
     }
-    chunk.second.set_value();
     send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
+    if (is_blocking_) {
+      break;
+    }
   }
 }
 

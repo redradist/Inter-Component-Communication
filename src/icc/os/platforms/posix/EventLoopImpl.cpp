@@ -6,6 +6,8 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
+extern "C" {
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,17 +15,18 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-#include <iostream>
-#include <algorithm>
-#include <memory>
-
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/eventfd.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/fcntl.h>
+
+}
+
+#include <iostream>
+#include <algorithm>
+#include <memory>
 
 #include "EventLoopImpl.hpp"
 #include "TimerImpl.hpp"
@@ -55,6 +58,21 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   });
 }
 
+bool
+EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
+  if (_fd < 0) return false;
+
+#ifdef _WIN32
+  unsigned long mode = blocking ? 0 : 1;
+  return (ioctlsocket(fd, FIONBIO, &mode) == 0) ? true : false;
+#else
+  int flags = fcntl(_fd, F_GETFL, 0);
+  if (flags == -1) return false;
+  flags = _isBlocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+  return (fcntl(_fd, F_SETFL, flags) == 0) ? true : false;
+#endif
+}
+
 std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string _address, const uint16_t _port) {
   const int kSocketFd = socket(AF_INET, SOCK_STREAM, 0);
   if(kSocketFd < 0) {
@@ -62,11 +80,16 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
     return nullptr;
   }
 
-  auto socket = new Socket::SocketImpl(Handle{kSocketFd});
-  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socket);
+  auto socketRawPtr = new Socket::SocketImpl(Handle{kSocketFd});
+  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
   registerObjectEvents(Handle{kSocketFd}, EventType::READ, readCallback);
-  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socket);
+  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
   registerObjectEvents(Handle{kSocketFd}, EventType::WRITE, writeCallback);
+  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+  });
 
   sockaddr_in addr;
   addr.sin_family = AF_INET;
@@ -77,11 +100,10 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
     return nullptr;
   }
 
-  return std::shared_ptr<Socket::SocketImpl>(socket,
-  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
-  });
+  if (setSocketBlockingMode(kSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
 }
 
 std::shared_ptr<IContext::IChannel> EventLoop::EventLoopImpl::createChannel() {

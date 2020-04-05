@@ -49,7 +49,9 @@ class Socket::SocketImpl : public ISocket {
   explicit SocketImpl(const Handle & socketHandle);
   void onSocketDataAvailable(const Handle &_);
   void onSocketBufferAvailable(const Handle &_);
+  void setBlockingMode(bool isBlocking);
 
+  bool is_blocking_ = true;
   Handle socket_handle_{kInvalidHandle};
   std::unique_ptr<uint8_t[]> receive_buffer_ptr_;
   std::deque<std::pair<ChunkData, std::promise<void>>> send_chunks_queue_;
@@ -70,6 +72,11 @@ class Socket::SocketImpl : public ISocket {
   std::condition_variable read_cond_var_;
   std::condition_variable read_data_cond_var_;
 };
+
+inline
+void Socket::SocketImpl::setBlockingMode(bool isBlocking) {
+  is_blocking_ = isBlocking;
+}
 
 }
 

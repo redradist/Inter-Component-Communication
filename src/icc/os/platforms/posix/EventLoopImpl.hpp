@@ -41,6 +41,7 @@ class EventLoop::EventLoopImpl : public IContext {
   struct InternalEvent;
   struct HandleListeners;
 
+  bool setSocketBlockingMode(int _fd, bool _isBlocking);
   void addFdTo(std::lock_guard<std::mutex>& lock,
                std::vector<HandleListeners>& listeners,
                const std::vector<InternalEvent>& addListeners);
