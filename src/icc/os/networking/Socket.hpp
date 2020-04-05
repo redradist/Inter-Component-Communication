@@ -13,7 +13,7 @@ namespace os {
 
 class Socket : public ISocket {
  public:
-  static std::shared_ptr<ISocket> createSocket(std::string _address, uint16_t _port);
+  static std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
   ~Socket() = default;
 
   void send(std::vector<uint8_t> _data) override;

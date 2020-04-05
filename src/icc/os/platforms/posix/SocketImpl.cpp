@@ -23,7 +23,7 @@ Socket::SocketImpl::SocketImpl(const Handle & socketHandle)
 }
 
 void Socket::SocketImpl::send(ChunkData _data) {
-  sendAsync(_data).wait();
+  sendAsync(_data).get();
 }
 
 std::future<void>
@@ -35,7 +35,7 @@ Socket::SocketImpl::sendAsync(ChunkData _data) {
   send_chunks_queue_.emplace_back(std::move(_data), std::move(promiseResult));
   send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
 
-  return std::move(futureResult);
+  return futureResult;
 }
 
 ChunkData

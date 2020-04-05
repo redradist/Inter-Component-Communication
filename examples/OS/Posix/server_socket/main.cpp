@@ -8,11 +8,11 @@ class ClientSocket : public icc::os::IServerSocketListener {
   void onNewClientSocket(std::shared_ptr<icc::os::Socket> _client) override {
     std::cout << "New client connected ..." << std::endl;
     auto rcvData = _client->receive();
-    std::string nsdasd{"Hid Denis .."};
-    _client->send({nsdasd.begin(), nsdasd.end()});
     for (uint8_t ch : rcvData) {
       std::cout << "Data ch: " << ch << std::endl;
     }
+    std::string nsdasd{"Hid Denis .."};
+    _client->send({nsdasd.begin(), nsdasd.end()});
   }
 };
 
