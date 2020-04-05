@@ -33,6 +33,7 @@ Socket::SocketImpl::sendAsync(ChunkData _data) {
 
   std::unique_lock<std::mutex> lock{write_mtx_};
   send_chunks_queue_.emplace_back(std::move(_data), std::move(promiseResult));
+  send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
 
   return std::move(futureResult);
 }
@@ -49,33 +50,27 @@ Socket::SocketImpl::receiveAsync() {
 
   std::unique_lock<std::mutex> lock{read_mtx_};
   read_requests_queue_.push_back(std::move(promiseResult));
+  read_requests_available_event_.store(!read_requests_queue_.empty(), std::memory_order_release);
 
   return futureResult;
 }
 
 void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
-  static ChunkData chunk{};
+  static ChunkData chunk;
 
   while (read_requests_available_event_.load(std::memory_order_acquire)) {
     std::unique_lock<std::mutex> lock{write_mtx_};
     auto & promiseChunk = read_requests_queue_.front();
     bool isRecvError = false;
     do {
-      ssize_t recvLen = ::recv(socket_handle_.fd_, receive_buffer_ptr_.get(), RECEIVE_BUFFER_SIZE, 0);
-      if (recvLen > 0) {
-        chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+recvLen);
-      } else if (0 == recvLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+      const ssize_t kRecvLen = ::recv(socket_handle_.fd_, receive_buffer_ptr_.get(), RECEIVE_BUFFER_SIZE, 0);
+      if (kRecvLen > 0) {
+        chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+kRecvLen);
+      } else if (0 == kRecvLen || errno == EWOULDBLOCK || errno == EAGAIN) {
         break;
       } else {
-         {
-          promiseChunk.set_value(std::move(chunk));
-          break;
-        }
-        promiseChunk.set_exception(
-            std::make_exception_ptr(
-                std::system_error(errno, std::system_category(), "Socket receive error")
-            )
-        );
+        isRecvError = true;
+        break;
       }
     } while (!is_blocking_);
     if (isRecvError) {
@@ -108,14 +103,14 @@ void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
     do {
       const size_t kDataOffset = currentSentChunkDataSize;
       const size_t kDataSize = chunk.first.size() - kDataOffset;
-      const ssize_t sentLen = ::send(socket_handle_.fd_,
+      const ssize_t kSentLen = ::send(socket_handle_.fd_,
                                   chunk.first.data() + kDataOffset,
                                   kDataSize,
                                   0);
 
-      if (sentLen > 0) {
-        currentSentChunkDataSize += sentLen;
-      } else if (0 == sentLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+      if (kSentLen > 0) {
+        currentSentChunkDataSize += kSentLen;
+      } else if (0 == kSentLen || errno == EWOULDBLOCK || errno == EAGAIN) {
         break;
       } else {
         isSendError = true;
