@@ -8,15 +8,15 @@
 
 extern "C" {
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
+#include <cinttypes>
+#include <netinet/in.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <inttypes.h>
-#include <unistd.h>
 #include <sys/eventfd.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
@@ -126,7 +126,7 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   return socketPtr;
 }
 
-std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string _address, const uint16_t _port) {
+std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
   const int kSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
   if(kSocketFd < 0) {
     perror("socket");

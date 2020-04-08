@@ -45,7 +45,7 @@ class EventLoop : public IContext {
   std::shared_ptr<Timer> createTimer();
   std::shared_ptr<ServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
   std::shared_ptr<ServerSocket> createServerSocket(const Handle & _serverSocketHandle);
-  std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
+  std::shared_ptr<Socket> createSocket(const std::string& _address, uint16_t _port);
   std::shared_ptr<Socket> createSocket(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle & osObject,

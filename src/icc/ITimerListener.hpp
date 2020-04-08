@@ -9,7 +9,7 @@
 #ifndef ICC_TIMERLISENER_HPP
 #define ICC_TIMERLISENER_HPP
 
-#include "icc/Component.hpp"
+#include <icc/Component.hpp>
 
 namespace icc {
 

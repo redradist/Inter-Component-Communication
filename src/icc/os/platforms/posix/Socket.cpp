@@ -17,7 +17,7 @@ Socket::Socket(std::shared_ptr<SocketImpl> implPtr)
   : impl_ptr_{std::move(implPtr)} {
 }
 
-std::shared_ptr<Socket> Socket::createSocket(const std::string _address, const uint16_t _port) {
+std::shared_ptr<Socket> Socket::createSocket(const std::string& _address, const uint16_t _port) {
   return EventLoop::getDefaultInstance().createSocket(_address, _port);
 }
 
