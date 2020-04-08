@@ -70,7 +70,7 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
   int flags = fcntl(_fd, F_GETFL, 0);
   if (flags == -1) return false;
   flags = _isBlocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
-  return (fcntl(_fd, F_SETFL, flags) == 0) ? true : false;
+  return fcntl(_fd, F_SETFL, flags) == 0;
 #endif
 }
 
@@ -203,7 +203,7 @@ void EventLoop::EventLoopImpl::run() {
     initFds(write_listeners_, writeFds, maxFd);
     initFds(error_listeners_, errorFds, maxFd);
 
-    select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
+    ::select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
     if (!execute_.load(std::memory_order_acquire)) {
       eventfd_write(event_loop_handle_.fd_, 0);
       break;
@@ -223,9 +223,10 @@ void EventLoop::EventLoopImpl::stop() {
   }
 }
 
-void EventLoop::EventLoopImpl::registerObjectEvents(const Handle & osObject,
-                                     const EventType & eventType,
-                                     function_wrapper<void(const Handle&)> callback) {
+void EventLoop::EventLoopImpl::registerObjectEvents(
+    const Handle & osObject,
+    const EventType & eventType,
+    function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case EventType::READ: {
@@ -245,9 +246,10 @@ void EventLoop::EventLoopImpl::registerObjectEvents(const Handle & osObject,
   eventfd_write(event_loop_handle_.fd_, updated);
 }
 
-void EventLoop::EventLoopImpl::unregisterObjectEvents(const Handle & osObject,
-                                       const EventType & eventType,
-                                       function_wrapper<void(const Handle&)> callback) {
+void EventLoop::EventLoopImpl::unregisterObjectEvents(
+    const Handle & osObject,
+    const EventType & eventType,
+    function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case EventType::READ: {

@@ -46,9 +46,9 @@ class Socket::SocketImpl : public ISocket {
   bool is_blocking_ = true;
   std::unique_ptr<uint8_t[]> receive_buffer_ptr_;
   std::deque<std::pair<ChunkData, std::promise<void>>> send_chunks_queue_;
-  std::atomic_bool send_chunks_available_event_{true};
+  std::atomic_bool send_chunks_available_event_{false};
   std::deque<std::promise<ChunkData>> read_requests_queue_;
-  std::atomic_bool read_requests_available_event_{true};
+  std::atomic_bool read_requests_available_event_{false};
   std::mutex write_mtx_;
   std::mutex read_mtx_;
 };

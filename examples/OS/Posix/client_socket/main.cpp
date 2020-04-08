@@ -9,9 +9,6 @@ int main() {
   std::string nsdasd{"Hello Denis !!"};
   socket->send({nsdasd.begin(), nsdasd.end()});
   auto rcvData = socket->receive();
-  std::this_thread::sleep_for(std::chrono::seconds(25));
-  for (uint8_t ch : rcvData) {
-    std::cout << "Data ch: " << ch << std::endl;
-  }
+  std::cout << "Data: " << std::string(rcvData.begin(), rcvData.end()) << std::endl;
   return 0;
 }

@@ -6,13 +6,13 @@
 class ClientSocket : public icc::os::IServerSocketListener {
  public:
   void onNewClientSocket(std::shared_ptr<icc::os::Socket> _client) override {
-    std::cout << "New client connected ..." << std::endl;
-    auto rcvData = _client->receive();
-    for (uint8_t ch : rcvData) {
-      std::cout << "Data ch: " << ch << std::endl;
-    }
-    std::string nsdasd{"Hid Denis .."};
-    _client->send({nsdasd.begin(), nsdasd.end()});
+    std::thread([_client] {
+      std::cout << "New client connected ..." << std::endl;
+      auto rcvData = _client->receive();
+      std::cout << "Data: " << std::string(rcvData.begin(), rcvData.end()) << std::endl;
+      std::string response{"Hi, Denis .."};
+      _client->send({response.begin(), response.end()});
+    }).detach();
   }
 };
 
@@ -20,6 +20,6 @@ int main() {
   auto socket = icc::os::ServerSocket::createServerSocket("127.0.0.1", 50000, 10);
   ClientSocket cl;
   socket->addListener(&cl);
-  std::this_thread::sleep_for(std::chrono::seconds(25));
+  std::this_thread::sleep_for(std::chrono::seconds(10));
   return 0;
 }

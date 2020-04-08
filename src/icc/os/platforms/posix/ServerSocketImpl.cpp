@@ -62,7 +62,7 @@ void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
     const int kSock = ::accept(socket_handle_.fd_, nullptr, nullptr);
     if (kSock < 0) {
       perror("accept");
-      continue;
+      break;
     }
     auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{kSock});
     if (clientSocket) {
