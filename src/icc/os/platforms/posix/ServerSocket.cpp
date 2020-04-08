@@ -15,32 +15,18 @@ ServerSocket::ServerSocket(std::shared_ptr<ServerSocketImpl> implPtr)
     : impl_ptr_{std::move(implPtr)} {
 }
 
-std::shared_ptr<IServerSocket> ServerSocket::createServerSocket(const std::string _address, const uint16_t _port, const uint16_t _numQueue) {
+std::shared_ptr<ServerSocket> ServerSocket::createServerSocket(const std::string _address, const uint16_t _port, const uint16_t _numQueue) {
   return EventLoop::getDefaultInstance().createServerSocket(_address, _port, _numQueue);
 }
 
-void ServerSocket::addListener(std::shared_ptr<IServerSocketListener> _listener) {
-  if (_listener) {
-    impl_ptr_->addListener(_listener);
-  }
+std::shared_ptr<Socket>
+ServerSocket::accept() {
+  return impl_ptr_->accept();
 }
 
-void ServerSocket::addListener(IServerSocketListener * _listener) {
-  if (_listener) {
-    impl_ptr_->addListener(_listener);
-  }
-}
-
-void ServerSocket::removeListener(std::shared_ptr<IServerSocketListener> _listener) {
-  if (_listener) {
-    impl_ptr_->removeListener(_listener);
-  }
-}
-
-void ServerSocket::removeListener(IServerSocketListener * _listener) {
-  if (_listener) {
-    impl_ptr_->removeListener(_listener);
-  }
+std::future<std::shared_ptr<Socket>>
+ServerSocket::acceptAsync() {
+  return impl_ptr_->acceptAsync();
 }
 
 const std::vector<std::shared_ptr<Socket>>&

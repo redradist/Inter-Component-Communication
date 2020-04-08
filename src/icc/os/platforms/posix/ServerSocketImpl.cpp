@@ -20,45 +20,25 @@ ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle)
     : socket_handle_{socketHandle} {
 }
 
-void ServerSocket::ServerSocketImpl::addListener(std::shared_ptr<IServerSocketListener> _listener) {
-  if (_listener) {
-    std::lock_guard<std::mutex> lock(mtx_);
-    listeners_.push_back(_listener);
-  }
+std::shared_ptr<Socket>
+ServerSocket::ServerSocketImpl::accept() {
+  return acceptAsync().get();
 }
 
-void ServerSocket::ServerSocketImpl::addListener(IServerSocketListener * _listener) {
-  if (_listener) {
-    std::lock_guard<std::mutex> lock(mtx_);
-    listeners_ptr_.push_back(_listener);
-  }
-}
+std::future<std::shared_ptr<Socket>>
+ServerSocket::ServerSocketImpl::acceptAsync() {
+  auto promiseResult = std::promise<std::shared_ptr<Socket>>{};
+  auto futureResult = promiseResult.get_future();
 
-void ServerSocket::ServerSocketImpl::removeListener(std::shared_ptr<IServerSocketListener> _listener) {
-  if (_listener) {
-    std::lock_guard<std::mutex> lock(mtx_);
-    auto erased = std::remove_if(listeners_.begin(), listeners_.end(),
-                                 [_listener](const std::weak_ptr<IServerSocketListener> & weakListener) {
-                                   bool result = false;
-                                   if (auto _observer = weakListener.lock()) {
-                                     result = _observer == _listener;
-                                   }
-                                   return result;
-                                 });
-    listeners_.erase(erased);
-  }
-}
+  std::lock_guard<std::mutex> lock{mtx_};
+  accept_queue_.emplace_back(std::move(promiseResult));
 
-void ServerSocket::ServerSocketImpl::removeListener(IServerSocketListener * _listener) {
-  if (_listener) {
-    std::lock_guard<std::mutex> lock(mtx_);
-    auto erased = std::remove(listeners_ptr_.begin(), listeners_ptr_.end(), _listener);
-    listeners_ptr_.erase(erased);
-  }
+  return futureResult;
 }
 
 void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
-  do {
+  std::lock_guard<std::mutex> lock{mtx_};
+  while (!accept_queue_.empty() && !is_blocking_) {
     const int kSock = ::accept(socket_handle_.fd_, nullptr, nullptr);
     if (kSock < 0) {
       perror("accept");
@@ -67,24 +47,11 @@ void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
     auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{kSock});
     if (clientSocket) {
       client_sockets_.push_back(clientSocket);
-      std::unique_lock<std::mutex> lock{mtx_};
-      for (auto listener : listeners_ptr_) {
-        listener->onNewClientSocket(clientSocket);
-      }
-      for (auto weakListener : listeners_) {
-        if (auto listener = weakListener.lock()) {
-          listener->onNewClientSocket(clientSocket);
-        }
-      }
-      for (auto weakListenerIter = listeners_.begin(); weakListenerIter != listeners_.end();) {
-        if (weakListenerIter->expired()) {
-          weakListenerIter = listeners_.erase(weakListenerIter);
-        } else {
-          ++weakListenerIter;
-        }
-      }
+      auto & acceptReq = accept_queue_.front();
+      acceptReq.set_value(clientSocket);
+      accept_queue_.pop_front();
     }
-  } while (!is_blocking_);
+  }
 }
 
 }

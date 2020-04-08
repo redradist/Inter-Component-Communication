@@ -60,19 +60,43 @@ bool EventLoop::isRun() const {
 }
 
 std::shared_ptr<Timer> EventLoop::createTimer() {
-  return std::shared_ptr<Timer>(new Timer(impl_ptr_->createTimerImpl()));
+  auto timerImpl = impl_ptr_->createTimerImpl();
+  if (!timerImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<Timer>(new Timer(timerImpl));
 }
 
 std::shared_ptr<ServerSocket> EventLoop::createServerSocket(const std::string _address, const uint16_t _port, const uint16_t _numQueue) {
-  return std::shared_ptr<ServerSocket>(new ServerSocket(impl_ptr_->createServerSocketImpl(_address, _port, _numQueue)));
+  auto serverSocketImpl = impl_ptr_->createServerSocketImpl(_address, _port, _numQueue);
+  if (!serverSocketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<ServerSocket>(new ServerSocket(serverSocketImpl));
+}
+
+std::shared_ptr<ServerSocket> EventLoop::createServerSocket(const Handle & _serverSocketHandle) {
+  auto serverSocketImpl = impl_ptr_->createServerSocketImpl(_serverSocketHandle);
+  if (!serverSocketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<ServerSocket>(new ServerSocket(serverSocketImpl));
 }
 
 std::shared_ptr<Socket> EventLoop::createSocket(const std::string _address, const uint16_t _port) {
-  return std::shared_ptr<Socket>(new Socket(impl_ptr_->createSocketImpl(_address, _port)));
+  auto socketImpl = impl_ptr_->createSocketImpl(_address, _port);
+  if (!socketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<Socket>(new Socket(socketImpl));
 }
 
 std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
-  return std::shared_ptr<Socket>(new Socket(impl_ptr_->createSocketImpl(_socketHandle)));
+  auto socketImpl = impl_ptr_->createSocketImpl(_socketHandle);
+  if (!socketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<Socket>(new Socket(socketImpl));
 }
 
 void EventLoop::registerObjectEvents(const Handle & osObject,

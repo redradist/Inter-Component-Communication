@@ -5,9 +5,9 @@
 #ifndef ICC_SERVERSOCKETIMPL_HPP
 #define ICC_SERVERSOCKETIMPL_HPP
 
+#include <deque>
 #include <atomic>
 #include <icc/os/networking/ServerSocket.hpp>
-#include <icc/os/networking/IServerSocketListener.hpp>
 
 #include "Common.hpp"
 
@@ -21,29 +21,8 @@ class ServerSocket::ServerSocketImpl {
  public:
   ~ServerSocketImpl() = default;
 
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(std::shared_ptr<IServerSocketListener> _listener);
-
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(IServerSocketListener * _listener);
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(std::shared_ptr<IServerSocketListener> _listener);
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(IServerSocketListener * _listener);
+  std::shared_ptr<Socket> accept();
+  std::future<std::shared_ptr<Socket>> acceptAsync();
 
   const std::vector<std::shared_ptr<Socket>>&
   getClientSockets() const;
@@ -58,8 +37,9 @@ class ServerSocket::ServerSocketImpl {
   Handle socket_handle_{kInvalidHandle};
   bool is_blocking_ = false;
   std::vector<std::shared_ptr<Socket>> client_sockets_;
-  std::vector<IServerSocketListener*> listeners_ptr_;
-  std::vector<std::weak_ptr<IServerSocketListener>> listeners_;
+  std::deque<std::promise<std::shared_ptr<Socket>>> accept_queue_;
+  std::atomic_bool is_new_client_available_event_{false};
+
   std::mutex mtx_;
 };
 

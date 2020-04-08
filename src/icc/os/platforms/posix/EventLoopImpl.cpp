@@ -75,7 +75,7 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
 }
 
 std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
-  const int kServerSocketFd = socket(AF_INET, SOCK_STREAM, 0);
+  const int kServerSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
   if(kServerSocketFd < 0) {
     perror("socket");
     return nullptr;
@@ -101,6 +101,26 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   ::listen(kServerSocketFd, _numQueue);
 
   if (setSocketBlockingMode(kServerSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
+
+std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
+  if(_socketHandle.fd_ < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{_socketHandle});
+  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(Handle{_socketHandle}, EventType::READ, readCallback);
+  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
+                                                                   [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+                                                                     unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+                                                                   });
+
+  if (setSocketBlockingMode(_socketHandle.fd_, false)) {
     socketPtr->setBlockingMode(false);
   }
   return socketPtr;

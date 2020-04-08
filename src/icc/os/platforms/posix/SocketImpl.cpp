@@ -58,6 +58,7 @@ Socket::SocketImpl::receiveAsync() {
 void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
   static ChunkData chunk;
 
+  data_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{read_mtx_};
   while (!read_requests_queue_.empty()) {
     auto & promiseChunk = read_requests_queue_.front();
@@ -67,6 +68,7 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
       if (kRecvLen > 0) {
         chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+kRecvLen);
       } else if (0 == kRecvLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+        data_available_event_.store(false, std::memory_order_release);
         break;
       } else {
         isRecvError = true;
@@ -96,6 +98,7 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
 void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
   static size_t currentSentChunkDataSize = 0;
 
+  buffer_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{write_mtx_};
   while (!send_chunks_queue_.empty()) {
     auto & chunk = send_chunks_queue_.front();
@@ -111,6 +114,7 @@ void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
       if (kSentLen > 0) {
         currentSentChunkDataSize += kSentLen;
       } else if (0 == kSentLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+        buffer_available_event_.store(false, std::memory_order_release);
         break;
       } else {
         isSendError = true;

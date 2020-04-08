@@ -9,7 +9,7 @@
 #include <memory>
 #include "IServerSocket.hpp"
 #include "ISocket.hpp"
-#include "IServerSocketListener.hpp"
+#include "Socket.hpp"
 
 namespace icc {
 
@@ -17,30 +17,10 @@ namespace os {
 
 class ServerSocket : public IServerSocket {
  public:
-  static std::shared_ptr<IServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(std::shared_ptr<IServerSocketListener> _listener) override;
+  static std::shared_ptr<ServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
 
-  /**
-   * Method is used to add the listener
-   * @param _listener Listener that is being adding
-   */
-  void addListener(IServerSocketListener * _listener) override;
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(std::shared_ptr<IServerSocketListener> _listener) override;
-
-  /**
-   * Method is used to remove the listener
-   * @param _listener Listener that is being removing
-   */
-  void removeListener(IServerSocketListener * _listener) override;
+  std::shared_ptr<Socket> accept();
+  std::future<std::shared_ptr<Socket>> acceptAsync();
   /**
    * Method is used to return all client sockets
    * @return Client sockets
