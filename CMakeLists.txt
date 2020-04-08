@@ -11,6 +11,10 @@ project(ICC)
 #set(CMAKE_CXX_COMPILER "g++-4.9")
 
 set(CMAKE_CXX_STANDARD 11)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=return-local-addr")
+endif()
 set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE ICC_SOURCE_FILES src/*.c src/*.cpp)

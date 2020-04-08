@@ -23,10 +23,12 @@ namespace os {
 template <typename T>
 using function_wrapper = icc::_private::helpers::function_wrapper<T>;
 
-struct OSObject;
-enum class OSObjectEventType;
+struct Handle;
+enum class EventType;
 
 class Timer;
+class ServerSocket;
+class Socket;
 
 class EventLoop : public IContext {
  public:
@@ -41,13 +43,17 @@ class EventLoop : public IContext {
   bool isRun() const override;
 
   std::shared_ptr<Timer> createTimer();
+  std::shared_ptr<ServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
+  std::shared_ptr<ServerSocket> createServerSocket(const Handle & _serverSocketHandle);
+  std::shared_ptr<Socket> createSocket(std::string _address, uint16_t _port);
+  std::shared_ptr<Socket> createSocket(const Handle & _socketHandle);
 
-  void registerObjectEvents(const OSObject & osObject,
-                            const OSObjectEventType & eventType,
-                            function_wrapper<void(const OSObject&)> callback);
-  void unregisterObjectEvents(const OSObject & osObject,
-                              const OSObjectEventType & eventType,
-                              function_wrapper<void(const OSObject&)> callback);
+  void registerObjectEvents(const Handle & osObject,
+                            const EventType & eventType,
+                            function_wrapper<void(const Handle&)> callback);
+  void unregisterObjectEvents(const Handle & osObject,
+                              const EventType & eventType,
+                              function_wrapper<void(const Handle&)> callback);
 
  private:
   class EventLoopImpl;

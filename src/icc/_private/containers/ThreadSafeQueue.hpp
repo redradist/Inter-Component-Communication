@@ -172,7 +172,7 @@ class ThreadSafeQueue {
   }
 
   std::condition_variable cond_var_;
-  std::mutex mtx_;
+  mutable std::mutex mtx_;
 
   bool interrupted_ = false;
   unsigned item_count_ = 0;

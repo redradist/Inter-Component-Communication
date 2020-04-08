@@ -16,15 +16,15 @@
 
 #include <icc/os/EventLoop.hpp>
 
-#include "OSObject.hpp"
+#include "Common.hpp"
 #include "TimerImpl.hpp"
 
 namespace icc {
 
 namespace os {
 
-Timer::TimerImpl::TimerImpl(const OSObject & timerObject)
-  : timer_object_{timerObject} {
+Timer::TimerImpl::TimerImpl(const Handle & timerObject)
+  : timer_handle_{timerObject} {
 }
 
 /**
@@ -64,7 +64,7 @@ bool Timer::TimerImpl::start() {
     ival.it_value.tv_nsec = duration_.count() % 1000000000LL;
     ival.it_interval.tv_sec = 0;
     ival.it_interval.tv_nsec = 0;
-    timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    timerfd_settime(timer_handle_.fd_, 0, &ival, nullptr);
     return true;
   }
   return false;
@@ -78,7 +78,7 @@ bool Timer::TimerImpl::stop() {
     ival.it_value.tv_nsec = 0;
     ival.it_interval.tv_sec = 0;
     ival.it_interval.tv_nsec = 0;
-    timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+    timerfd_settime(timer_handle_.fd_, 0, &ival, nullptr);
     return true;
   }
   return false;
@@ -121,9 +121,9 @@ void Timer::TimerImpl::removeListener(ITimerListener * _listener) {
   }
 }
 
-void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
+void Timer::TimerImpl::onTimerExpired(const Handle & _) {
   uint64_t numberExpired;
-  read(timer_object_.fd_, &numberExpired, sizeof(numberExpired));
+  read(timer_handle_.fd_, &numberExpired, sizeof(numberExpired));
   if (execute_.load(std::memory_order_acquire)) {
     if (counter_.load() == Infinite) {
       itimerspec ival;
@@ -131,7 +131,7 @@ void Timer::TimerImpl::onTimerExpired(const OSObject & _) {
       ival.it_value.tv_nsec = duration_.count() % 1000000000LL;
       ival.it_interval.tv_sec = 0;
       ival.it_interval.tv_nsec = 0;
-      timerfd_settime(timer_object_.fd_, 0, &ival, nullptr);
+      timerfd_settime(timer_handle_.fd_, 0, &ival, nullptr);
     }
     {
       std::lock_guard<std::mutex> lock(mutex_);

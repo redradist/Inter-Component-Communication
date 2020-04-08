@@ -3,7 +3,7 @@ project(Posix)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(../../../ ${CMAKE_BINARY_DIR}/bin)
+add_subdirectory(../../../.. ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(Posix main.cpp)
 target_link_libraries(Posix ICC)

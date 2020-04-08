@@ -1,6 +1,6 @@
 #include <iostream>
 #include <thread>
-#include <icc/os/Timer.hpp>
+#include <icc/os/timer/Timer.hpp>
 #include <functional>
 
 int main() {

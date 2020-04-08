@@ -9,8 +9,7 @@
 #include <chrono>
 
 #include <icc/ITimer.hpp>
-
-#include "ITimerListener.hpp"
+#include <icc/os/timer/ITimerListener.hpp>
 
 namespace icc {
 
@@ -18,7 +17,7 @@ namespace os {
 
 class ITimerListener;
 
- class Timer : public icc::ITimer {
+class Timer : public icc::ITimer {
  public:
   enum : int32_t {
     /**

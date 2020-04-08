@@ -162,6 +162,7 @@ class Task<void> {
         });
       }
     };
+    return *this;
   }
 
   template<typename _Component>

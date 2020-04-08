@@ -10,15 +10,16 @@
 
 #include <icc/ITimerListener.hpp>
 #include <icc/os/EventLoop.hpp>
-#include <icc/os/Timer.hpp>
+#include <icc/os/timer/Timer.hpp>
 
-#include "OSObject.hpp"
+
+#include "Common.hpp"
 
 namespace icc {
 
 namespace os {
 
-struct OSObject;
+struct Handle;
 
 class Timer::TimerImpl {
  public:
@@ -76,11 +77,11 @@ class Timer::TimerImpl {
  private:
   friend class EventLoop;
 
-  explicit TimerImpl(const OSObject & timerObject);
-  void onTimerExpired(const OSObject & osObject);
+  explicit TimerImpl(const Handle & timerObject);
+  void onTimerExpired(const Handle & osObject);
 
   std::mutex mutex_;
-  OSObject timer_object_{-1};
+  Handle timer_handle_{kInvalidHandle};
   std::atomic_bool execute_{false};
   std::atomic_int32_t counter_{OneTime};
   std::vector<ITimerListener*> listeners_ptr_;

@@ -16,9 +16,9 @@
 #include <functional>
 
 #include <icc/os/EventLoop.hpp>
-#include <icc/os/Timer.hpp>
+#include <icc/os/timer/Timer.hpp>
 
-#include "OSObject.hpp"
+#include "Common.hpp"
 #include "TimerImpl.hpp"
 
 namespace icc {
