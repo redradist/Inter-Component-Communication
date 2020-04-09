@@ -11,7 +11,6 @@
 
 #if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
-#include <boost/asio/io_service.hpp>
 #include <icc/Component.hpp>
 #include "Task.hpp"
 
