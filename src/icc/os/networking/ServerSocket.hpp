@@ -19,8 +19,8 @@ class ServerSocket : public IServerSocket {
  public:
   static std::shared_ptr<ServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
 
-  std::shared_ptr<Socket> accept();
-  std::future<std::shared_ptr<Socket>> acceptAsync();
+  std::shared_ptr<Socket> accept() override;
+  std::future<std::shared_ptr<Socket>> acceptAsync() override;
   /**
    * Method is used to return all client sockets
    * @return Client sockets

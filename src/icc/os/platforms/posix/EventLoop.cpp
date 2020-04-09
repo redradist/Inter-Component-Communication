@@ -37,15 +37,15 @@ EventLoop::~EventLoop() {
   impl_ptr_->stop();
 }
 
-void EventLoop::run()  {
-  impl_ptr_->run();
+void EventLoop::run(ExecPolicy _policy)  {
+  impl_ptr_->run(_policy);
 }
 
 void EventLoop::stop()  {
   impl_ptr_->stop();
 }
 
-std::shared_ptr<IContext::IChannel>
+std::unique_ptr<IContext::IChannel>
 EventLoop::createChannel()  {
   return impl_ptr_->createChannel();
 }

@@ -67,11 +67,14 @@ int main() {
   });
 
   auto service = std::make_shared<icc::Context<icc::ThreadSafeQueueAction>>();
-  auto & sheduler = icc::coroutine::TaskScheduler::getDefaultTaskSheduler(service->createChannel());
-  sheduler.startCoroutine(create_task0());
-  sheduler.startCoroutine(create_task1());
-  sheduler.startCoroutine(create_task2());
-  service->run();
+  {
+    auto sheduler = std::make_shared<icc::coroutine::TaskScheduler>(service->createChannel());
+    sheduler->startCoroutine(create_task0());
+    sheduler->startCoroutine(create_task1());
+    sheduler->startCoroutine(create_task2());
+  }
+
+  service->run(icc::ExecPolicy::UntilWorkers);
   worker0.join();
   worker1.join();
   return 0;

@@ -28,6 +28,11 @@ using Action = std::function<void(void)>;
 template <typename TService>
 class Context;
 
+enum class ExecPolicy {
+  Forever,
+  UntilWorkers,
+};
+
 class IContext {
  public:
   template <typename TService>
@@ -56,16 +61,28 @@ class IContext {
 
   class IChannel {
    public:
+    virtual ~IChannel() = 0;
     virtual void push(Action _action) = 0;
     virtual void invoke(Action _action) = 0;
+    [[nodiscard]]
+    virtual IContext & getContext() const = 0;
   };
 
-  virtual void run() = 0;
+  virtual ~IContext() = 0;
+  virtual void run(ExecPolicy _policy = ExecPolicy::Forever) = 0;
   virtual void stop() = 0;
-  virtual std::shared_ptr<IChannel> createChannel() = 0;
+  virtual std::unique_ptr<IChannel> createChannel() = 0;
   virtual std::thread::id getThreadId() const = 0;
   virtual bool isRun() const = 0;
 };
+
+inline
+IContext::~IContext() {
+}
+
+inline
+IContext::IChannel::~IChannel() {
+}
 
 using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
 
@@ -74,10 +91,19 @@ class Context<ThreadSafeQueueAction> final
     : public std::enable_shared_from_this<Context<ThreadSafeQueueAction>>
     , public IContext {
  public:
+  friend class Channel;
   class Channel : public IContext::IChannel {
    public:
     Channel(std::shared_ptr<Context> context)
       : context_{std::move(context)} {
+      context_->num_of_channels_.fetch_add(1, std::memory_order_acq_rel);
+    }
+
+    ~Channel() {
+      const uint32_t kPrevNumWorkers = context_->num_of_channels_.fetch_sub(1, std::memory_order_acq_rel);
+      if (1 == kPrevNumWorkers) {
+        context_->queue_->interrupt();
+      }
     }
 
     void push(Action _action) override {
@@ -90,6 +116,11 @@ class Context<ThreadSafeQueueAction> final
       if (context_) {
         context_->invoke(std::move(_action));
       }
+    }
+
+    [[nodiscard]]
+    IContext & getContext() const override {
+      return *context_;
     }
 
    private:
@@ -109,16 +140,16 @@ class Context<ThreadSafeQueueAction> final
     }
   }
 
-  void run() override {
-    bool stopState = false;
-    if (run_.compare_exchange_strong(stopState, true)) {
-      queue_->reset();
-       do {
-        Action action = queue_->waitPop();
-        if (action) {
-          action();
-        }
-      } while (run_.load(std::memory_order_acquire));
+  void run(ExecPolicy _policy = ExecPolicy::Forever) override {
+    switch (_policy) {
+      case ExecPolicy::Forever: {
+        runForever();
+      }
+        break;
+      case ExecPolicy::UntilWorkers: {
+        runUntilWorkers();
+      }
+        break;
     }
   }
 
@@ -129,8 +160,8 @@ class Context<ThreadSafeQueueAction> final
     }
   }
 
-  std::shared_ptr<IChannel> createChannel() override {
-    return std::make_shared<Channel>(shared_from_this());
+  std::unique_ptr<IChannel> createChannel() override {
+    return std::unique_ptr<Channel>(new Channel{shared_from_this()});
   }
 
   std::thread::id getThreadId() const override {
@@ -142,7 +173,33 @@ class Context<ThreadSafeQueueAction> final
   }
 
  private:
+  void runForever() {
+    bool stopState = false;
+    if (run_.compare_exchange_strong(stopState, true)) {
+      do {
+        Action action = queue_->waitPop();
+        if (action) {
+          action();
+        }
+      } while (run_.load(std::memory_order_acquire));
+    }
+  }
+
+  void runUntilWorkers() {
+    bool stopState = false;
+    if (run_.compare_exchange_strong(stopState, true)) {
+      do {
+        Action action = queue_->waitPop();
+        if (!queue_->isInterrupt() && action) {
+          action();
+        }
+      } while (run_.load(std::memory_order_acquire) &&
+               num_of_channels_.load(std::memory_order_acquire) > 0);
+    }
+  }
+
   std::atomic_bool run_{false};
+  std::atomic_uint32_t num_of_channels_{0};
   std::atomic<std::thread::id> queue_thread_id_;
   std::unique_ptr<ThreadSafeQueueAction> queue_{new ThreadSafeQueueAction()};
 };

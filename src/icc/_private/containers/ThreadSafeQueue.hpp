@@ -96,6 +96,7 @@ class ThreadSafeQueue {
     static_assert(std::is_copy_assignable<TItem>::value,
                   "TItem is not copy assignable !!");
     std::unique_lock<std::mutex> lock{mtx_};
+    interrupted_ = false;
     TItem item;
     QueueNode* nodePtr = nullptr;
     while (!interrupted_ && !tryPop(lock, nodePtr)) {
@@ -111,9 +112,9 @@ class ThreadSafeQueue {
     return item;
   }
 
-  void reset() {
+  bool isInterrupt() const {
     std::lock_guard<std::mutex> lock{mtx_};
-    interrupted_ = false;
+    return interrupted_;
   }
 
   void interrupt() {

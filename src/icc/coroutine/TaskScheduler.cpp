@@ -18,16 +18,16 @@ TaskScheduler::TaskScheduler()
   : icc::Component(nullptr) {
 }
 
-TaskScheduler::TaskScheduler(std::shared_ptr<IContext::IChannel> _contextChannel)
-  : icc::Component(_contextChannel) {
+TaskScheduler::TaskScheduler(std::unique_ptr<IContext::IChannel> _contextChannel)
+  : icc::Component(std::move(_contextChannel)) {
 }
 
 TaskScheduler::~TaskScheduler() {
 }
 
 TaskScheduler &
-TaskScheduler::getDefaultTaskSheduler(std::shared_ptr<IContext::IChannel> _contextChannel) {
-  static TaskScheduler sheduler(_contextChannel);
+TaskScheduler::getDefaultTaskSheduler(std::unique_ptr<IContext::IChannel> _contextChannel) {
+  static TaskScheduler sheduler(std::move(_contextChannel));
   return sheduler;
 }
 

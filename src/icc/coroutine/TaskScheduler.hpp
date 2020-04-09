@@ -28,21 +28,21 @@ class TaskScheduler
       : icc::Component(_contextChannel) {
   }
 
-  TaskScheduler(std::shared_ptr<IContext::IChannel> _contextChannel);
+  TaskScheduler(std::unique_ptr<IContext::IChannel> _contextChannel);
 
   virtual ~TaskScheduler();
 
-  static TaskScheduler & getDefaultTaskSheduler(std::shared_ptr<IContext::IChannel> _contextChannel);
+  static TaskScheduler & getDefaultTaskSheduler(std::unique_ptr<IContext::IChannel> _contextChannel);
 
   template <typename _R>
   void startCoroutine(Task<_R> & _task) {
-    _task.setContextChannel(getChannel());
+    _task.setContextChannel(getContext().createChannel());
     _task.initialStart();
   }
 
   template <typename _R>
   void startCoroutine(Task<_R> &&_task) {
-    _task.setContextChannel(getChannel());
+    _task.setContextChannel(getContext().createChannel());
     _task.initialStart();
   }
 };

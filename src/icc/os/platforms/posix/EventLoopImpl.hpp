@@ -22,9 +22,9 @@ class EventLoop::EventLoopImpl : public IContext {
   EventLoopImpl(std::nullptr_t);
   ~EventLoopImpl();
 
-  void run() override;
+  void run(ExecPolicy _policy) override;
   void stop() override;
-  std::shared_ptr<IChannel> createChannel() override;
+  std::unique_ptr<IChannel> createChannel() override;
   std::thread::id getThreadId() const override;
   bool isRun() const override;
 

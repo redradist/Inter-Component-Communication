@@ -36,9 +36,9 @@ class EventLoop : public IContext {
   static std::shared_ptr<EventLoop> createEventLoop();
   ~EventLoop();
 
-  void run() override;
+  void run(ExecPolicy _policy) override;
   void stop() override;
-  std::shared_ptr<IChannel> createChannel() override;
+  std::unique_ptr<IChannel> createChannel() override;
   std::thread::id getThreadId() const override;
   bool isRun() const override;
 

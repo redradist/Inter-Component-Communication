@@ -29,8 +29,7 @@ class Component {
    * Only with this constructor object will be owner of service_.
    */
   Component()
-    : context_(IContext::createContext<ThreadSafeQueueAction>())
-    , channel_(context_->createChannel()) {
+    : channel_(IContext::createContext<ThreadSafeQueueAction>()->createChannel()) {
   }
 
  public:
@@ -40,15 +39,6 @@ class Component {
    */
   explicit Component(std::nullptr_t)
       : Component() {
-  }
-
-  /**
-   * Constructor for initializing with creation of event loop.
-   */
-  template <typename TService>
-  Component()
-      : context_(IContext::createContext<ThreadSafeQueueAction>())
-      , channel_(context_->createChannel()) {
   }
 
   /**
@@ -91,7 +81,7 @@ class Component {
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  explicit Component(std::shared_ptr<IContext::IChannel> _channel)
+  explicit Component(std::unique_ptr<IContext::IChannel> _channel)
     : channel_(std::move(_channel)) {
   }
 
@@ -100,7 +90,7 @@ class Component {
    * @param _parent Parent compenent that will share event loop
    */
   explicit Component(Component *_parent)
-    : channel_(_parent->getChannel())
+    : channel_(_parent->getContext().createChannel())
     , parent_(_parent) {
     _parent->addChild(this);
   }
@@ -110,7 +100,7 @@ class Component {
    * @param _parent Parent compenent that will share event loop
    */
   explicit Component(std::shared_ptr<Component> _parent)
-    : channel_(_parent->getChannel())
+    : channel_(_parent->getContext().createChannel())
     , parent_(_parent.get()) {
     _parent->addChild(this);
   }
@@ -131,16 +121,16 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (context_) {
-      context_->run();
+    if (nullptr == parent_) {
+      channel_->getContext().run();
     }
   }
 
   virtual void stop() {
-    channel_.reset();
-    if (context_) {
-      context_->stop();
+    if (nullptr == parent_) {
+      channel_->getContext().stop();
     }
+    channel_.reset();
   }
 
   /**
@@ -193,9 +183,8 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
-  virtual std::shared_ptr<IContext::IChannel>
-  getChannel() const {
-    return channel_;
+  virtual IContext & getContext() const {
+    return channel_->getContext();
   }
 
   /**
@@ -229,8 +218,7 @@ class Component {
   }
 
  protected:
-  std::shared_ptr<IContext> context_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 
  private:
   Component *parent_ = nullptr;

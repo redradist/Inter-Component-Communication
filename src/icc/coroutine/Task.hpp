@@ -70,14 +70,14 @@ class TaskAwaiter {
     });
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
   }
 
  private:
   _AwaitableType &&awaitable_;
   std::thread wait_thread_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -116,14 +116,14 @@ class TaskAwaiter<Task<_R>> {
     });
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
   }
 
  private:
   Task<_R> && awaitable_;
   std::thread wait_thread_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -134,8 +134,8 @@ class TaskPromise {
   TaskPromise() = default;
   ~TaskPromise() = default;
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
   }
 
   std::experimental::suspend_always initial_suspend() { return {}; }
@@ -143,15 +143,15 @@ class TaskPromise {
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
-    awaiter.setContextChannel(channel_);
+    awaiter.setContextChannel(channel_->getContext().createChannel());
     return awaiter;
   }
   template<typename _F>
   auto await_transform(Task<_F> &&_result) {
-    _result.setContextChannel(channel_);
+    _result.setContextChannel(channel_->getContext().createChannel());
     _result.initialStart();
     auto awaiter = TaskAwaiter<Task<_F>>{std::move(_result)};
-    awaiter.setContextChannel(channel_);
+    awaiter.setContextChannel(channel_->getContext().createChannel());
     return awaiter;
   }
   template<typename _F>
@@ -172,7 +172,7 @@ class TaskPromise {
   std::shared_ptr<std::optional<_R>> result_ = std::make_shared<std::optional<_R>>();
   std::shared_ptr<std::mutex> mutex_ = std::make_shared<std::mutex>();
   std::shared_ptr<std::condition_variable> awaiter_ = std::make_shared<std::condition_variable>();
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -226,9 +226,9 @@ class Task {
       : promise_(_promise), result_(promise_.result_), mutex_(promise_.mutex_), awaiter_(promise_.awaiter_) {
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
-    promise_.setContextChannel(channel_);
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
+    promise_.setContextChannel(channel_->getContext().createChannel());
   }
 
   void initialStart() {
@@ -245,7 +245,7 @@ class Task {
   std::shared_ptr<std::optional<_R>> result_;
   std::shared_ptr<std::mutex> mutex_;
   std::shared_ptr<std::condition_variable> awaiter_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 template<>
@@ -259,8 +259,8 @@ class TaskPromise<void> {
   ~TaskPromise() {
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
   }
 
   std::experimental::suspend_always initial_suspend() { return {}; }
@@ -268,15 +268,15 @@ class TaskPromise<void> {
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
-    awaiter.setContextChannel(channel_);
+    awaiter.setContextChannel(channel_->getContext().createChannel());
     return awaiter;
   }
   template<typename _F>
   auto await_transform(Task<_F> &&_result) {
-    _result.setContextChannel(channel_);
+    _result.setContextChannel(channel_->getContext().createChannel());
     _result.initialStart();
     auto awaiter = TaskAwaiter<Task<_F>>{std::move(_result)};
-    awaiter.setContextChannel(channel_);
+    awaiter.setContextChannel(channel_->getContext().createChannel());
     return awaiter;
   }
   template<typename _F>
@@ -295,7 +295,7 @@ class TaskPromise<void> {
   std::shared_ptr<bool> is_ready_ = std::make_shared<bool>();
   std::shared_ptr<std::mutex> mutex_ = std::make_shared<std::mutex>();
   std::shared_ptr<std::condition_variable> awaiter_ = std::make_shared<std::condition_variable>();
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 template<>
@@ -311,7 +311,7 @@ class Task<void> {
         is_ready_(promise_.is_ready_),
         mutex_(_request.mutex_),
         awaiter_(_request.awaiter_),
-        channel_(_request.channel_) {
+        channel_(_request.channel_->getContext().createChannel()) {
   }
 
   Task(Task<void> &&_request)
@@ -338,9 +338,9 @@ class Task<void> {
       : promise_(_promise), is_ready_(promise_.is_ready_), mutex_(promise_.mutex_), awaiter_(promise_.awaiter_) {
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
-    promise_.setContextChannel(channel_);
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
+    promise_.setContextChannel(channel_->getContext().createChannel());
   }
 
   void initialStart() {
@@ -357,7 +357,7 @@ class Task<void> {
   std::shared_ptr<bool> is_ready_;
   std::shared_ptr<std::mutex> mutex_;
   std::shared_ptr<std::condition_variable> awaiter_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 inline
@@ -400,14 +400,14 @@ class TaskAwaiter<Task<void>> {
     });
   }
 
-  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
-    channel_ = _contextChannel;
+  void setContextChannel(std::unique_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = std::move(_contextChannel);
   }
 
  private:
   Task<void> && awaitable_;
   std::thread wait_thread_;
-  std::shared_ptr<IContext::IChannel> channel_;
+  std::unique_ptr<IContext::IChannel> channel_;
 };
 
 }
