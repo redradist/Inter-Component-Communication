@@ -38,7 +38,7 @@ class Component {
    * Delegate constructor.
    * Use only in case if you want to be an OWNER of event loop !!
    */
-  Component(std::nullptr_t)
+  explicit Component(std::nullptr_t)
       : Component() {
   }
 
@@ -60,7 +60,7 @@ class Component {
             typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
-  Component(TService *_service)
+  explicit Component(TService *_service)
     : channel_(IContext::createContext(_service)->createChannel()) {
   }
 
@@ -73,7 +73,7 @@ class Component {
             typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
-  Component(std::shared_ptr<TService> _service)
+  explicit Component(std::shared_ptr<TService> _service)
     : channel_(IContext::createContext(_service)->createChannel()) {
     static_assert(!std::is_base_of<Component, TService>::value,
                   "_listener is not derived from IComponent");
@@ -83,7 +83,7 @@ class Component {
    *
    * @param _context
    */
-  Component(std::shared_ptr<IContext> _context)
+  explicit Component(std::shared_ptr<IContext> _context)
     : channel_(std::move(_context->createChannel())) {
   }
 
@@ -91,7 +91,7 @@ class Component {
    * Constructor for initializing within event loop created outside
    * @param _eventLoop Event loop that will be used
    */
-  Component(std::shared_ptr<IContext::IChannel> _channel)
+  explicit Component(std::shared_ptr<IContext::IChannel> _channel)
     : channel_(std::move(_channel)) {
   }
 
@@ -99,7 +99,7 @@ class Component {
    * Used to share event loop of parent object
    * @param _parent Parent compenent that will share event loop
    */
-  Component(Component *_parent)
+  explicit Component(Component *_parent)
     : channel_(_parent->getChannel())
     , parent_(_parent) {
     _parent->addChild(this);
@@ -109,7 +109,7 @@ class Component {
    * Used to share event loop of parent object
    * @param _parent Parent compenent that will share event loop
    */
-  Component(std::shared_ptr<Component> _parent)
+  explicit Component(std::shared_ptr<Component> _parent)
     : channel_(_parent->getChannel())
     , parent_(_parent.get()) {
     _parent->addChild(this);

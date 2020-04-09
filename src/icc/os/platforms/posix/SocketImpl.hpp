@@ -10,12 +10,10 @@
 #include <vector>
 #include <deque>
 #include <future>
-#include <unordered_map>
 
 #include <icc/ITimerListener.hpp>
 #include <icc/os/EventLoop.hpp>
 #include <icc/os/networking/Socket.hpp>
-#include <bits/unordered_map.h>
 
 #include "Common.hpp"
 

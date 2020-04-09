@@ -3,6 +3,7 @@
 #include <future>
 #include <chrono>
 
+#include <icc/Context.hpp>
 #include <icc/coroutine/Task.hpp>
 #include <icc/coroutine/Timer.hpp>
 #include <icc/coroutine/TaskScheduler.hpp>
@@ -29,6 +30,7 @@ icc::coroutine::Task<void> compute_value4() {
 }
 
 icc::coroutine::Task<void> create_task0() {
+  std::cout << "Start create_task0" << std::endl;
   auto value0 = co_await compute_value2();
   auto value1 = co_await compute_value3();
   std::cout << "Start timer in create_task0" << std::endl;
@@ -40,12 +42,14 @@ icc::coroutine::Task<void> create_task0() {
 }
 
 icc::coroutine::Task<void> create_task1() {
+  std::cout << "Start create_task1" << std::endl;
   std::cout << "Start timer in create_task1" << std::endl;
   co_await std::chrono::seconds(4);
   std::cout << "Finished timer in create_task1" << std::endl;
 }
 
 icc::coroutine::Task<void> create_task2() {
+  std::cout << "Start create_task2" << std::endl;
   std::cout << "Start timer in create_task2" << std::endl;
   co_await std::chrono::seconds(2);
   std::cout << "Finished timer in create_task2" << std::endl;
@@ -61,8 +65,9 @@ int main() {
     std::this_thread::sleep_for(std::chrono::seconds(10));
     promise2.set_value(43);
   });
-  auto service = std::make_shared<boost::asio::io_service>();
-  auto & sheduler = icc::coroutine::TaskScheduler::getDefaultTaskSheduler(service.get());
+
+  auto service = std::make_shared<icc::Context<icc::ThreadSafeQueueAction>>();
+  auto & sheduler = icc::coroutine::TaskScheduler::getDefaultTaskSheduler(service->createChannel());
   sheduler.startCoroutine(create_task0());
   sheduler.startCoroutine(create_task1());
   sheduler.startCoroutine(create_task2());

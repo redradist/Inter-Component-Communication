@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_COMPILER "/usr/bin/clang-9" )
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-9")
+set(CMAKE_C_COMPILER "/usr/bin/clang-10" )
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-10")
 add_definitions(-D__STRICT_ANSI__)
 
 project(CoroutineExample)

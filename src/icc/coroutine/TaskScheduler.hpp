@@ -24,23 +24,26 @@ class TaskScheduler
  public:
   TaskScheduler();
 
-  TaskScheduler(boost::asio::io_service *_eventLoop);
+  template <typename TService>
+  TaskScheduler(TService * _contextChannel)
+      : icc::Component(_contextChannel) {
+  }
 
-  TaskScheduler(std::shared_ptr<boost::asio::io_service> _eventLoop);
+  TaskScheduler(std::shared_ptr<IContext::IChannel> _contextChannel);
 
   virtual ~TaskScheduler();
 
-  static TaskScheduler & getDefaultTaskSheduler(boost::asio::io_service *_eventLoop);
+  static TaskScheduler & getDefaultTaskSheduler(std::shared_ptr<IContext::IChannel> _contextChannel);
 
   template <typename _R>
   void startCoroutine(Task<_R> & _task) {
-    _task.setIOService(getEventLoop());
+    _task.setContextChannel(getChannel());
     _task.initialStart();
   }
 
   template <typename _R>
   void startCoroutine(Task<_R> &&_task) {
-    _task.setIOService(getEventLoop());
+    _task.setContextChannel(getChannel());
     _task.initialStart();
   }
 };

@@ -15,11 +15,12 @@
 #include <iostream>
 #include <vector>
 #include <future>
+#include <memory>
 #include <shared_mutex>
 #include <condition_variable>
-#include <boost/optional.hpp>
-#include <boost/asio/io_service.hpp>
+#include <optional>
 #include <experimental/coroutine>
+#include <icc/Context.hpp>
 
 namespace icc {
 
@@ -43,7 +44,7 @@ class TaskAwaiter {
   TaskAwaiter(TaskAwaiter<_AwaitableType> &&_awaitable)
       : awaitable_(std::move(_awaitable.awaitable_)),
         wait_thread_(std::move(_awaitable.wait_thread_)),
-        worker_(std::move(_awaitable.worker_)) {
+        channel_(std::move(_awaitable.channel_)) {
   }
 
   ~TaskAwaiter() {
@@ -63,20 +64,20 @@ class TaskAwaiter {
   void await_suspend(std::experimental::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
-      worker_->get_io_service().post([_coro]() mutable {
+      channel_->push([_coro]() mutable {
         _coro.resume();
       });
     });
   }
 
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
   }
 
  private:
   _AwaitableType &&awaitable_;
   std::thread wait_thread_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -89,7 +90,7 @@ class TaskAwaiter<Task<_R>> {
   TaskAwaiter(TaskAwaiter<Task<_R>> &&_awaitable)
       : awaitable_(std::move(_awaitable.awaitable_)),
         wait_thread_(std::move(_awaitable.wait_thread_)),
-        worker_(std::move(_awaitable.worker_)) {
+        channel_(std::move(_awaitable.channel_)) {
   }
 
   ~TaskAwaiter() {
@@ -109,20 +110,20 @@ class TaskAwaiter<Task<_R>> {
   void await_suspend(std::experimental::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
-      worker_->get_io_service().post([_coro]() mutable {
+      channel_->push([_coro]() mutable {
         _coro.resume();
       });
     });
   }
 
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
   }
 
  private:
   Task<_R> && awaitable_;
   std::thread wait_thread_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -133,12 +134,8 @@ class TaskPromise {
   TaskPromise() = default;
   ~TaskPromise() = default;
 
-  void setIOService(std::shared_ptr<boost::asio::io_service> _service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(*_service);
-  }
-
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
   }
 
   std::experimental::suspend_always initial_suspend() { return {}; }
@@ -146,19 +143,19 @@ class TaskPromise {
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
-    awaiter.setIOService(worker_->get_io_service());
+    awaiter.setContextChannel(channel_);
     return awaiter;
   }
   template<typename _F>
   auto await_transform(Task<_F> &&_result) {
-    _result.setIOService(worker_->get_io_service());
+    _result.setContextChannel(channel_);
     _result.initialStart();
     auto awaiter = TaskAwaiter<Task<_F>>{std::move(_result)};
-    awaiter.setIOService(worker_->get_io_service());
+    awaiter.setContextChannel(channel_);
     return awaiter;
   }
   template<typename _F>
-  auto await_transform(boost::optional<_F> &&_result) = delete;
+  auto await_transform(std::optional<_F> &&_result) = delete;
   auto get_return_object() {
     return Task<_R>{*this};
   }
@@ -172,10 +169,10 @@ class TaskPromise {
   }
 
  private:
-  std::shared_ptr<boost::optional<_R>> result_ = std::make_shared<boost::optional<_R>>();
+  std::shared_ptr<std::optional<_R>> result_ = std::make_shared<std::optional<_R>>();
   std::shared_ptr<std::mutex> mutex_ = std::make_shared<std::mutex>();
   std::shared_ptr<std::condition_variable> awaiter_ = std::make_shared<std::condition_variable>();
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 template<typename _R>
@@ -191,7 +188,7 @@ class Task {
         result_(_request.result_),
         mutex_(_request.mutex_),
         awaiter_(_request.awaiter_),
-        worker_(std::make_unique<boost::asio::io_service::work>(_request.worker_->get_io_service())) {
+        channel_(_request.channel_) {
   }
 
   Task(Task<_R> &&_request)
@@ -199,7 +196,7 @@ class Task {
         result_(std::move(_request.result_)),
         mutex_(std::move(_request.mutex_)),
         awaiter_(std::move(_request.awaiter_)),
-        worker_(std::move(_request.worker_)) {
+        channel_(std::move(_request.channel_)) {
   }
 
   bool isReady() const {
@@ -214,14 +211,14 @@ class Task {
   }
 
   _R get() const {
-    boost::optional<_R> result;
+    std::optional<_R> result;
     if (*result_) {
       result = *result_;
     } else {
       wait();
       result = *result_;
     }
-    return result.get();
+    return result.value();
   }
 
  protected:
@@ -229,31 +226,26 @@ class Task {
       : promise_(_promise), result_(promise_.result_), mutex_(promise_.mutex_), awaiter_(promise_.awaiter_) {
   }
 
-  void setIOService(std::shared_ptr<boost::asio::io_service> _service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(*_service);
-    promise_.setIOService(_service);
-  }
-
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
-    promise_.setIOService(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
+    promise_.setContextChannel(channel_);
   }
 
   void initialStart() {
-    if (worker_) {
-      worker_->get_io_service().dispatch([=] {
+    if (channel_) {
+      channel_->invoke([=] {
         HandleType::from_promise(promise_).resume();
       });
-      worker_.reset();
+      channel_.reset();
     }
   }
 
  private:
   TaskPromise<_R> &promise_;
-  std::shared_ptr<boost::optional<_R>> result_;
+  std::shared_ptr<std::optional<_R>> result_;
   std::shared_ptr<std::mutex> mutex_;
   std::shared_ptr<std::condition_variable> awaiter_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 template<>
@@ -267,12 +259,8 @@ class TaskPromise<void> {
   ~TaskPromise() {
   }
 
-  void setIOService(std::shared_ptr<boost::asio::io_service> _service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(*_service);
-  }
-
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
   }
 
   std::experimental::suspend_always initial_suspend() { return {}; }
@@ -280,19 +268,19 @@ class TaskPromise<void> {
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
-    awaiter.setIOService(worker_->get_io_service());
+    awaiter.setContextChannel(channel_);
     return awaiter;
   }
   template<typename _F>
   auto await_transform(Task<_F> &&_result) {
-    _result.setIOService(worker_->get_io_service());
+    _result.setContextChannel(channel_);
     _result.initialStart();
     auto awaiter = TaskAwaiter<Task<_F>>{std::move(_result)};
-    awaiter.setIOService(worker_->get_io_service());
+    awaiter.setContextChannel(channel_);
     return awaiter;
   }
   template<typename _F>
-  auto await_transform(boost::optional<_F> &&_result) = delete;
+  auto await_transform(std::optional<_F> &&_result) = delete;
   auto get_return_object();
   void return_void() {
     std::unique_lock<std::mutex> lock(*mutex_);
@@ -307,7 +295,7 @@ class TaskPromise<void> {
   std::shared_ptr<bool> is_ready_ = std::make_shared<bool>();
   std::shared_ptr<std::mutex> mutex_ = std::make_shared<std::mutex>();
   std::shared_ptr<std::condition_variable> awaiter_ = std::make_shared<std::condition_variable>();
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 template<>
@@ -323,7 +311,7 @@ class Task<void> {
         is_ready_(promise_.is_ready_),
         mutex_(_request.mutex_),
         awaiter_(_request.awaiter_),
-        worker_(std::make_unique<boost::asio::io_service::work>(_request.worker_->get_io_service())) {
+        channel_(_request.channel_) {
   }
 
   Task(Task<void> &&_request)
@@ -331,7 +319,7 @@ class Task<void> {
         is_ready_(promise_.is_ready_),
         mutex_(std::move(_request.mutex_)),
         awaiter_(std::move(_request.awaiter_)),
-        worker_(std::move(_request.worker_)) {
+        channel_(std::move(_request.channel_)) {
   }
 
   bool isReady() {
@@ -350,22 +338,17 @@ class Task<void> {
       : promise_(_promise), is_ready_(promise_.is_ready_), mutex_(promise_.mutex_), awaiter_(promise_.awaiter_) {
   }
 
-  void setIOService(std::shared_ptr<boost::asio::io_service> _service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(*_service);
-    promise_.setIOService(_service);
-  }
-
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
-    promise_.setIOService(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
+    promise_.setContextChannel(channel_);
   }
 
   void initialStart() {
-    if (worker_) {
-      worker_->get_io_service().dispatch([=] {
+    if (channel_) {
+      channel_->invoke([=] {
         HandleType::from_promise(promise_).resume();
       });
-      worker_.reset();
+      channel_.reset();
     }
   }
 
@@ -374,7 +357,7 @@ class Task<void> {
   std::shared_ptr<bool> is_ready_;
   std::shared_ptr<std::mutex> mutex_;
   std::shared_ptr<std::condition_variable> awaiter_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 inline
@@ -392,7 +375,7 @@ class TaskAwaiter<Task<void>> {
   TaskAwaiter(TaskAwaiter<Task<void>> &&_awaiter)
       : awaitable_(std::move(_awaiter.awaitable_)),
         wait_thread_(std::move(_awaiter.wait_thread_)),
-        worker_(std::move(_awaiter.worker_)) {
+        channel_(std::move(_awaiter.channel_)) {
   }
 
   ~TaskAwaiter() {
@@ -411,20 +394,20 @@ class TaskAwaiter<Task<void>> {
   void await_suspend(std::experimental::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
-      worker_->get_io_service().post([_coro]() mutable {
+      channel_->push([_coro]() mutable {
         _coro.resume();
       });
     });
   }
 
-  void setIOService(boost::asio::io_service &_service) {
-    worker_ = std::make_unique<boost::asio::io_service::work>(_service);
+  void setContextChannel(std::shared_ptr<IContext::IChannel> _contextChannel) {
+    channel_ = _contextChannel;
   }
 
  private:
   Task<void> && awaitable_;
   std::thread wait_thread_;
-  std::unique_ptr<boost::asio::io_service::work> worker_;
+  std::shared_ptr<IContext::IChannel> channel_;
 };
 
 }

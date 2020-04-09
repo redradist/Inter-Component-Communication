@@ -18,20 +18,16 @@ TaskScheduler::TaskScheduler()
   : icc::Component(nullptr) {
 }
 
-TaskScheduler::TaskScheduler(boost::asio::io_service *_eventLoop)
-  : icc::Component(_eventLoop) {
-}
-
-TaskScheduler::TaskScheduler(std::shared_ptr<boost::asio::io_service> _eventLoop)
-  : icc::Component(_eventLoop) {
+TaskScheduler::TaskScheduler(std::shared_ptr<IContext::IChannel> _contextChannel)
+  : icc::Component(_contextChannel) {
 }
 
 TaskScheduler::~TaskScheduler() {
 }
 
 TaskScheduler &
-TaskScheduler::getDefaultTaskSheduler(boost::asio::io_service *_eventLoop) {
-  static TaskScheduler sheduler(_eventLoop);
+TaskScheduler::getDefaultTaskSheduler(std::shared_ptr<IContext::IChannel> _contextChannel) {
+  static TaskScheduler sheduler(_contextChannel);
   return sheduler;
 }
 

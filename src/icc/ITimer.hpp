@@ -30,7 +30,6 @@ class ITimer {
    * @param _duration Timeout duration in boost::posix_time::time_duration
    */
   virtual void setInterval(const std::chrono::nanoseconds _duration) = 0;
-
   /**
    * Method is used to start async waiting timer
    */
