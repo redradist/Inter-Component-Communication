@@ -46,8 +46,6 @@ class IContext {
 
   virtual ~IContext() = 0;
   virtual std::unique_ptr<IChannel> createChannel() = 0;
-  virtual std::thread::id getThreadId() const = 0;
-  virtual bool isRun() const = 0;
 };
 
 inline
@@ -62,6 +60,8 @@ class ContextBase : public IContext {
  public:
   virtual void run(ExecPolicy _policy = ExecPolicy::Forever) = 0;
   virtual void stop() = 0;
+  virtual std::thread::id getThreadId() const = 0;
+  virtual bool isRun() const = 0;
 };
 
 class ContextBuilder {
@@ -98,7 +98,6 @@ class Context<ThreadSafeQueueAction> final
     : public ContextBase
     , public std::enable_shared_from_this<Context<ThreadSafeQueueAction>> {
  public:
-  friend class Channel;
   class Channel : public IContext::IChannel {
    public:
     explicit Channel(std::shared_ptr<Context> context)

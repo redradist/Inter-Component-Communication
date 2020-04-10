@@ -1,6 +1,6 @@
 project(icc_tests)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror=return-type -Werror=return-stack-address")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror=return-type -Werror=return-local-addr")
 
 ################################
 # GTest

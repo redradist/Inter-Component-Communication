@@ -4,6 +4,7 @@
 // Created by redra on 21.07.17.
 //
 
+#include <boost/asio/io_service.hpp>
 #include <iostream>
 #include <icc/Component.hpp>
 #include <icc/Event.hpp>
@@ -16,33 +17,38 @@
 namespace icc {
 
 template <>
-class EventLoop<boost::asio::io_service>
-    : public std::enable_shared_from_this<EventLoop<boost::asio::io_service>>
-    , public IEventLoop {
+class Context<boost::asio::io_service>
+    : public std::enable_shared_from_this<Context<boost::asio::io_service>>
+    , public ContextBase {
  public:
-  class Channel : public IEventLoop::IChannel {
+  class Channel : public IContext::IChannel {
    public:
-    Channel(std::shared_ptr<EventLoop> eventLoop)
-        : event_loop_{std::move(eventLoop)} {
+    explicit Channel(std::shared_ptr<Context> context)
+        : context_{std::move(context)} {
     }
 
     void push(Action _action) override {
-      if (event_loop_) {
-        event_loop_->push(std::move(_action));
+      if (context_) {
+        context_->push(std::move(_action));
       }
     }
 
     void invoke(Action _action) override {
-      if (event_loop_) {
-        event_loop_->invoke(std::move(_action));
+      if (context_) {
+        context_->invoke(std::move(_action));
       }
     }
 
+    [[nodiscard]]
+    IContext & getContext() const override {
+      return *context_;
+    }
+
    private:
-    std::shared_ptr<EventLoop> event_loop_;
+    std::shared_ptr<Context> context_;
   };
 
-  EventLoop(boost::asio::io_service *_service)
+  Context(boost::asio::io_service *_service)
     : execute_{true}
     , service_(std::shared_ptr<boost::asio::io_service>(_service,
       [=](boost::asio::io_service *) {
@@ -51,7 +57,7 @@ class EventLoop<boost::asio::io_service>
     , worker_(new boost::asio::io_service::work(*service_)) {
   }
 
-  EventLoop(std::shared_ptr<boost::asio::io_service> _service)
+  Context(std::shared_ptr<boost::asio::io_service> _service)
     : execute_{true}
     , service_(std::move(_service))
     , worker_(new boost::asio::io_service::work(*service_)) {
@@ -69,7 +75,7 @@ class EventLoop<boost::asio::io_service>
     }
   }
 
-  void run() override {
+  void run(ExecPolicy _policy = ExecPolicy::Forever) override {
     bool stopState = false;
     if (execute_.compare_exchange_strong(stopState, true)) {
       queue_thread_id_.store(std::this_thread::get_id());
@@ -84,8 +90,8 @@ class EventLoop<boost::asio::io_service>
     }
   }
 
-  std::shared_ptr<IChannel> createChannel() override {
-    return std::make_shared<Channel>(shared_from_this());
+  std::unique_ptr<IChannel> createChannel() override {
+    return std::unique_ptr<Channel>(new Channel{shared_from_this()});
   }
 
   std::thread::id getThreadId() const override {

@@ -48,9 +48,9 @@ class Component {
    * @param _service Service for creating event loop that will be used
    */
   template <typename TService,
-            typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
+            typename = std::enable_if<!std::is_base_of<Component, TService>::value>,
+            typename = std::enable_if<!std::is_base_of<IContext, TService>::value>,
+            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>>
   explicit Component(TService *_service)
     : channel_(ContextBuilder::createContext(_service)->createChannel()) {
   }
@@ -61,13 +61,13 @@ class Component {
    * @param _eventLoop Service for creating event loop that will be used
    */
   template <typename TService,
-            typename = std::enable_if<!std::is_base_of<Component, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
-            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
+            typename = std::enable_if<!std::is_base_of<Component, TService>::value>,
+            typename = std::enable_if<!std::is_base_of<IContext, TService>::value>,
+            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>>
   explicit Component(std::shared_ptr<TService> _service)
     : channel_(ContextBuilder::createContext(_service)->createChannel()) {
     static_assert(!std::is_base_of<Component, TService>::value,
-                  "_listener is not derived from IComponent");
+                  "_listener is not derived from Component");
   }
 
   /**
