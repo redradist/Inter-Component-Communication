@@ -25,7 +25,7 @@ class MyComponent : public icc::Component {
 int main() {
   MyComponent comp;
   icc::threadpool::Task<int>([=] () -> int {
-    std::cout << "icc::pools::Task<int>" << std::endl;
+    std::cout << "icc::threadpool::Task<int>" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(3));
     return 1;
   }).then([=] (int result1) {
@@ -33,14 +33,14 @@ int main() {
   }).callback(&MyComponent::newFunction, &comp)
   .start();
   icc::threadpool::Task<int>([=] () -> int {
-    std::cout << "icc::pools::Task<int>" << std::endl;
+    std::cout << "icc::threadpool::Task<int>" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(2));
     return 2;
   }).then([=] (int result2) {
     std::cout << "then([=] (int result = " << result2 << "))" << std::endl;
   }).start();
   icc::threadpool::Task<int>([=] () -> int {
-    std::cout << "icc::pools::Task<int>" << std::endl;
+    std::cout << "icc::threadpool::Task<int>" << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(3));
     return 5;
   }).then([=] (int result) {
