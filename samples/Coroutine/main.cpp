@@ -66,12 +66,12 @@ int main() {
     promise2.set_value(43);
   });
 
-  auto context = std::make_shared<icc::Context<icc::ThreadSafeQueueAction>>();
+  auto context = std::make_shared<icc::ThreadSafeQueueContext>();
   {
-    auto sheduler = std::make_shared<icc::coroutine::TaskScheduler>(context->createChannel());
-    sheduler->startCoroutine(create_task0());
-    sheduler->startCoroutine(create_task1());
-    sheduler->startCoroutine(create_task2());
+    auto scheduler = std::make_shared<icc::coroutine::TaskScheduler>(context->createChannel());
+    scheduler->startCoroutine(create_task0());
+    scheduler->startCoroutine(create_task1());
+    scheduler->startCoroutine(create_task2());
   }
 
   context->run(icc::ExecPolicy::UntilWorkers);

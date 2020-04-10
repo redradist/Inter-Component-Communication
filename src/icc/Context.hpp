@@ -167,8 +167,8 @@ class Context<ThreadSafeQueueAction> final
   }
 
   void stop() override {
-    auto this_thread = std::this_thread::get_id();
-    if (queue_thread_id_.compare_exchange_strong(this_thread, std::thread::id())) {
+    auto thisThread = std::this_thread::get_id();
+    if (queue_thread_id_.compare_exchange_strong(thisThread, std::thread::id())) {
       bool executeState = true;
       if (run_.compare_exchange_strong(executeState, false)) {
         queue_->interrupt();
@@ -213,6 +213,8 @@ class Context<ThreadSafeQueueAction> final
   std::atomic<std::thread::id> queue_thread_id_;
   std::unique_ptr<ThreadSafeQueueAction> queue_{new ThreadSafeQueueAction()};
 };
+
+using ThreadSafeQueueContext = Context<ThreadSafeQueueAction>;
 
 }
 
