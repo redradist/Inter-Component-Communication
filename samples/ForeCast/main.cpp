@@ -107,7 +107,7 @@ class WeatherObserver
 };
 
 int main() {
-  auto defaultContext = icc::IContext::createContext<icc::ThreadSafeQueueAction>();
+  auto defaultContext = icc::ContextBuilder::createContext<icc::ThreadSafeQueueAction>();
   std::shared_ptr<WeatherObserver> observer = std::make_shared<WeatherObserver>(defaultContext);
   std::shared_ptr<WeatherStation> station = std::make_shared<WeatherStation>(defaultContext);
   // Start event loop

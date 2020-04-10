@@ -48,9 +48,9 @@ class Component {
    * @param _service Service for creating event loop that will be used
    */
   template <typename TService,
-            typename = std::enable_if<!std::is_base_of<Component, TService>::value>,
-            typename = std::enable_if<!std::is_base_of<IContext, TService>::value>,
-            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>>
+            typename = typename std::enable_if<!std::is_base_of<Component, TService>::value>::type,
+            typename = typename std::enable_if<!std::is_base_of<IContext, TService>::value>::type,
+            typename = typename std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>::type>
   explicit Component(TService *_service)
     : channel_(ContextBuilder::createContext(_service)->createChannel()) {
   }
@@ -61,9 +61,9 @@ class Component {
    * @param _eventLoop Service for creating event loop that will be used
    */
   template <typename TService,
-            typename = std::enable_if<!std::is_base_of<Component, TService>::value>,
-            typename = std::enable_if<!std::is_base_of<IContext, TService>::value>,
-            typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>>
+            typename = typename std::enable_if<!std::is_base_of<Component, TService>::value>::type,
+            typename = typename std::enable_if<!std::is_base_of<IContext, TService>::value>::type,
+            typename = typename std::enable_if<!std::is_base_of<IContext::IChannel, TService>::value>::type>
   explicit Component(std::shared_ptr<TService> _service)
     : channel_(ContextBuilder::createContext(_service)->createChannel()) {
     static_assert(!std::is_base_of<Component, TService>::value,
@@ -122,14 +122,14 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (parent_) {
+    if (!parent_) {
       context_->run();
     }
   }
 
   virtual void stop() {
     channel_.reset();
-    if (parent_) {
+    if (!parent_) {
       context_->stop();
     }
   }
