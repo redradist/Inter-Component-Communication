@@ -30,7 +30,7 @@ class Timer;
 class ServerSocket;
 class Socket;
 
-class EventLoop : public IContext {
+class EventLoop : public ContextBase {
  public:
   static EventLoop & getDefaultInstance();
   static std::shared_ptr<EventLoop> createEventLoop();

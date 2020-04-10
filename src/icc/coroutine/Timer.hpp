@@ -377,6 +377,7 @@ class TaskAwaiter<boost::posix_time::nanoseconds>
 };
 
 #endif
+
 #endif
 
 template <class _Rep, class _Period>

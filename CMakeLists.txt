@@ -1,6 +1,4 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-project(ICC)
-
 #NOTE(redra): This commented lines only for testing purposes
 #set(CMAKE_C_COMPILER "clang")
 #set(CMAKE_CXX_COMPILER "clang++")
@@ -9,8 +7,13 @@ project(ICC)
 #set(CMAKE_CXX_COMPILER "g++-4.8")
 #set(CMAKE_C_COMPILER "gcc-4.9")
 #set(CMAKE_CXX_COMPILER "g++-4.9")
+project(ICC)
 
-set(CMAKE_CXX_STANDARD 20)
+message(STATUS "CMAKE_CXX_STANDARD is ${CMAKE_CXX_STANDARD}")
+set(ICC_SUPPORTED_CXX_STANDARDS "11;14;17;20")
+if (NOT CMAKE_CXX_STANDARD IN_LIST ICC_SUPPORTED_CXX_STANDARDS)
+    message(FATAL_ERROR "ICC library does not support ${CMAKE_CXX_STANDARD}")
+endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")

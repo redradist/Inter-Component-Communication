@@ -16,7 +16,7 @@ namespace icc {
 
 namespace os {
 
-class EventLoop::EventLoopImpl : public IContext {
+class EventLoop::EventLoopImpl : public ContextBase {
  public:
   EventLoopImpl() = default;
   EventLoopImpl(std::nullptr_t);

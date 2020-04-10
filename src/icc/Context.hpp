@@ -35,30 +35,6 @@ enum class ExecPolicy {
 
 class IContext {
  public:
-  template <typename TService>
-  static std::shared_ptr<IContext>
-  createContext() {
-    return std::make_shared<Context<TService>>();
-  }
-
-  template <typename TService>
-  static std::shared_ptr<IContext>
-  createContext(TService *_service) {
-    return std::make_shared<Context<TService>>(_service);
-  }
-
-  template <typename TService>
-  static std::shared_ptr<IContext>
-  createContext(std::shared_ptr<TService> _service) {
-    return std::make_shared<Context<TService>>(_service);
-  }
-
-  template <typename TService>
-  static std::shared_ptr<IContext>
-  createContext(std::unique_ptr<TService> _service) {
-    return std::make_shared<Context<TService>>(_service);
-  }
-
   class IChannel {
    public:
     virtual ~IChannel() = 0;
@@ -69,8 +45,6 @@ class IContext {
   };
 
   virtual ~IContext() = 0;
-  virtual void run(ExecPolicy _policy = ExecPolicy::Forever) = 0;
-  virtual void stop() = 0;
   virtual std::unique_ptr<IChannel> createChannel() = 0;
   virtual std::thread::id getThreadId() const = 0;
   virtual bool isRun() const = 0;
@@ -84,22 +58,55 @@ inline
 IContext::IChannel::~IChannel() {
 }
 
+class ContextBase : public IContext {
+ public:
+  virtual void run(ExecPolicy _policy = ExecPolicy::Forever) = 0;
+  virtual void stop() = 0;
+};
+
+class ContextBuilder {
+ public:
+  template <typename TService, typename ... TArgs>
+  static std::shared_ptr<ContextBase>
+  createContext(TArgs && ... _args) {
+    return std::make_shared<Context<TService>>(std::forward<TArgs>(_args)...);
+  }
+
+  template <typename TService, typename ... TArgs>
+  static std::shared_ptr<ContextBase>
+  createContext(TService *_service, TArgs && ... _args) {
+    return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
+  }
+
+  template <typename TService, typename ... TArgs>
+  static std::shared_ptr<ContextBase>
+  createContext(std::shared_ptr<TService> _service, TArgs && ... _args) {
+    return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
+  }
+
+  template <typename TService, typename ... TArgs>
+  static std::shared_ptr<ContextBase>
+  createContext(std::unique_ptr<TService> _service, TArgs && ... _args) {
+    return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
+  }
+};
+
 using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
 
 template <>
 class Context<ThreadSafeQueueAction> final
-    : public std::enable_shared_from_this<Context<ThreadSafeQueueAction>>
-    , public IContext {
+    : public ContextBase
+    , public std::enable_shared_from_this<Context<ThreadSafeQueueAction>> {
  public:
   friend class Channel;
   class Channel : public IContext::IChannel {
    public:
-    Channel(std::shared_ptr<Context> context)
+    explicit Channel(std::shared_ptr<Context> context)
       : context_{std::move(context)} {
       context_->num_of_channels_.fetch_add(1, std::memory_order_acq_rel);
     }
 
-    ~Channel() {
+    ~Channel() override {
       const uint32_t kPrevNumWorkers = context_->num_of_channels_.fetch_sub(1, std::memory_order_acq_rel);
       if (1 == kPrevNumWorkers) {
         context_->queue_->interrupt();
@@ -141,22 +148,31 @@ class Context<ThreadSafeQueueAction> final
   }
 
   void run(ExecPolicy _policy = ExecPolicy::Forever) override {
-    switch (_policy) {
-      case ExecPolicy::Forever: {
-        runForever();
+    std::thread::id defaultThreadId;
+    if (queue_thread_id_.compare_exchange_strong(defaultThreadId, std::this_thread::get_id())) {
+      bool stopState = false;
+      if (run_.compare_exchange_strong(stopState, true)) {
+        switch (_policy) {
+          case ExecPolicy::Forever: {
+            runForever();
+          }
+            break;
+          case ExecPolicy::UntilWorkers: {
+            runUntilWorkers();
+          }
+            break;
+        }
       }
-        break;
-      case ExecPolicy::UntilWorkers: {
-        runUntilWorkers();
-      }
-        break;
     }
   }
 
   void stop() override {
-    bool executeState = true;
-    if (run_.compare_exchange_strong(executeState, false)) {
-      queue_->interrupt();
+    auto this_thread = std::this_thread::get_id();
+    if (queue_thread_id_.compare_exchange_strong(this_thread, std::thread::id())) {
+      bool executeState = true;
+      if (run_.compare_exchange_strong(executeState, false)) {
+        queue_->interrupt();
+      }
     }
   }
 
@@ -174,28 +190,22 @@ class Context<ThreadSafeQueueAction> final
 
  private:
   void runForever() {
-    bool stopState = false;
-    if (run_.compare_exchange_strong(stopState, true)) {
-      do {
-        Action action = queue_->waitPop();
-        if (action) {
-          action();
-        }
-      } while (run_.load(std::memory_order_acquire));
-    }
+    do {
+      Action action = queue_->waitPop();
+      if (action) {
+        action();
+      }
+    } while (run_.load(std::memory_order_acquire));
   }
 
   void runUntilWorkers() {
-    bool stopState = false;
-    if (run_.compare_exchange_strong(stopState, true)) {
-      do {
-        Action action = queue_->waitPop();
-        if (!queue_->isInterrupt() && action) {
-          action();
-        }
-      } while (run_.load(std::memory_order_acquire) &&
-               num_of_channels_.load(std::memory_order_acquire) > 0);
-    }
+    do {
+      Action action = queue_->waitPop();
+      if (!queue_->isInterrupt() && action) {
+        action();
+      }
+    } while (run_.load(std::memory_order_acquire) &&
+             num_of_channels_.load(std::memory_order_acquire) > 0);
   }
 
   std::atomic_bool run_{false};

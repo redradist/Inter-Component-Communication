@@ -29,7 +29,8 @@ class Component {
    * Only with this constructor object will be owner of service_.
    */
   Component()
-    : channel_(IContext::createContext<ThreadSafeQueueAction>()->createChannel()) {
+    : context_(ContextBuilder::createContext<ThreadSafeQueueAction>())
+    , channel_(context_->createChannel()) {
   }
 
  public:
@@ -51,7 +52,7 @@ class Component {
             typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
   explicit Component(TService *_service)
-    : channel_(IContext::createContext(_service)->createChannel()) {
+    : channel_(ContextBuilder::createContext(_service)->createChannel()) {
   }
 
   /**
@@ -64,7 +65,7 @@ class Component {
             typename = std::enable_if<!std::is_base_of<IContext, TService>::type>,
             typename = std::enable_if<!std::is_base_of<IContext::IChannel, TService>::type>>
   explicit Component(std::shared_ptr<TService> _service)
-    : channel_(IContext::createContext(_service)->createChannel()) {
+    : channel_(ContextBuilder::createContext(_service)->createChannel()) {
     static_assert(!std::is_base_of<Component, TService>::value,
                   "_listener is not derived from IComponent");
   }
@@ -121,16 +122,16 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (nullptr == parent_) {
-      channel_->getContext().run();
+    if (parent_) {
+      context_->run();
     }
   }
 
   virtual void stop() {
-    if (nullptr == parent_) {
-      channel_->getContext().stop();
-    }
     channel_.reset();
+    if (parent_) {
+      context_->stop();
+    }
   }
 
   /**
@@ -183,7 +184,8 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
-  virtual IContext & getContext() const {
+  [[nodiscard]]
+  IContext & getContext() const {
     return channel_->getContext();
   }
 
@@ -217,10 +219,9 @@ class Component {
     }
   }
 
- protected:
-  std::unique_ptr<IContext::IChannel> channel_;
-
  private:
+  std::shared_ptr<ContextBase> context_;
+  std::unique_ptr<IContext::IChannel> channel_;
   Component *parent_ = nullptr;
   std::vector<Component *> children_;
 };
