@@ -15,7 +15,7 @@
 #include <CommonAPI/CommonAPI.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
 #include <icc/Component.hpp>
-#include <icc/commonapi/exceptions/CommonAPIClientError.hpp>
+#include <icc/interprocess/commonapi/exceptions/CommonAPIClientError.hpp>
 #include <icc/logger/DummyLogger.hpp>
 
 namespace icc {

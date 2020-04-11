@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(COMMONAPI_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi-generator/commonapi-generator-linux-x86_64)
 set(COMMONAPI_DBUS_GENERATOR $ENV{HOME}/Projects/Automotive/cgen/commonapi_dbus_generator/commonapi-dbus-generator-linux-x86_64)
 
-include(../../src/icc/commonapi/cmake-config/wrapper_generator.cmake)
+include(../../src/icc/interprocess/commonapi/cmake-config/wrapper_generator.cmake)
 include_directories(../../src)
 
 include_directories(${CMAKE_BINARY_DIR})

@@ -12,8 +12,8 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT GENERATOR_
         get_filename_component(FIDL_NAME_WITH_EXTENTION ${FIDL} NAME)
         string(REPLACE ".fidl" "" FIDL_NAME ${FIDL_NAME_WITH_EXTENTION})
         message(STATUS "FIDL_NAME is ${FIDL_NAME}")
-        message(STATUS "ICC_SOURCE_DIR is ${ICC_SOURCE_DIR}/src/icc/commonapi/scripts/interface_hierarchical_path.py")
-        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/icc/commonapi/scripts/interface_hierarchical_path.py
+        message(STATUS "ICC_SOURCE_DIR is ${ICC_SOURCE_DIR}/src/icc/interprocess/commonapi/scripts/interface_hierarchical_path.py")
+        execute_process(COMMAND python3 ${ICC_SOURCE_DIR}/src/icc/interprocess/commonapi/scripts/interface_hierarchical_path.py
                                         ${FIDL}
                         OUTPUT_VARIABLE HIERARCHIC_PATHS)
         string(REGEX MATCHALL "([^;]*);"
@@ -50,7 +50,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT GENERATOR_
                     COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                     ${FIDL}
                     ${GENERATOR_PATH}
-                    --capi_service ${ICC_SOURCE_DIR}/src/icc/commonapi/templates/CommonAPIService.hpp.jinja2
+                    --capi_service ${ICC_SOURCE_DIR}/src/icc/interprocess/commonapi/templates/CommonAPIService.hpp.jinja2
                 )
             else(${SERVICE_OR_CLIENT} STREQUAL "Service")
                 set(COMMONAPI_WRAPPER_GENERATED_FILES
@@ -62,7 +62,7 @@ function(add_wrapper_dependencies TARGET FIDL_FILES SERVICE_OR_CLIENT GENERATOR_
                         COMMAND python3 ${ICC_SOURCE_DIR}/libs/commonapi_tools/wrapper_generator.py
                         ${FIDL}
                         ${GENERATOR_PATH}
-                        --capi_client ${ICC_SOURCE_DIR}/src/icc/commonapi/templates/CommonAPIClient.hpp.jinja2
+                        --capi_client ${ICC_SOURCE_DIR}/src/icc/interprocess/commonapi/templates/CommonAPIClient.hpp.jinja2
                 )
             endif ()
         endforeach()
