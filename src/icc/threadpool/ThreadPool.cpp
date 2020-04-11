@@ -53,6 +53,13 @@ void ThreadPool::push(std::function<void(void)> _task) {
   task_queue_.push(std::move(_task));
 }
 
+bool ThreadPool::hasThread(std::thread::id _threadId) const {
+  return std::any_of(thread_pool_.begin(), thread_pool_.end(),
+  [&](const std::thread & _thread) {
+    return _thread.get_id() == _threadId;
+  });
+}
+
 }
 
 }

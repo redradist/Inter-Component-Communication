@@ -52,7 +52,7 @@ class Context<boost::asio::io_service>
     : execute_{true}
     , service_(std::shared_ptr<boost::asio::io_service>(_service,
       [=](boost::asio::io_service *) {
-        // NOTE(redra): Nothing need to do. Owner of this pointer is not we
+        // NOTE(redra): Nothing need to do. Owner of this pointer is not us
       }))
     , worker_(new boost::asio::io_service::work(*service_)) {
   }

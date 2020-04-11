@@ -47,6 +47,8 @@ class ThreadPool
    */
   void push(std::function<void(void)> _task);
 
+  bool hasThread(std::thread::id _threadId) const;
+
  protected:
   ThreadPool(const unsigned int _numThreads);
 

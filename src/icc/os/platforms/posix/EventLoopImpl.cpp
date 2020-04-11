@@ -196,7 +196,7 @@ bool EventLoop::EventLoopImpl::isRun() const {
 }
 
 void EventLoop::EventLoopImpl::run(ExecPolicy _policy) {
-  event_loop_handle_.fd_ = eventfd(0, O_NONBLOCK);
+  event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
   if (event_loop_handle_.fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
     throw "Error !!";

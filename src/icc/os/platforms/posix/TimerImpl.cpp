@@ -123,7 +123,7 @@ void Timer::TimerImpl::removeListener(ITimerListener * _listener) {
 
 void Timer::TimerImpl::onTimerExpired(const Handle & _) {
   uint64_t numberExpired;
-  read(timer_handle_.fd_, &numberExpired, sizeof(numberExpired));
+  ::read(timer_handle_.fd_, &numberExpired, sizeof(numberExpired));
   if (execute_.load(std::memory_order_acquire)) {
     if (counter_.load() == Infinite) {
       itimerspec ival;
