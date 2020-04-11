@@ -3,7 +3,7 @@ project(PosixServerSocket)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(../../../.. ${CMAKE_BINARY_DIR}/bin)
+add_subdirectory(../../.. ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(PosixServerSocket main.cpp)
 target_link_libraries(PosixServerSocket ICC)

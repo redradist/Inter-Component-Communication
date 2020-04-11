@@ -4,21 +4,10 @@
 
 #include <iostream>
 #include <utility>
-#include <errno.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/epoll.h>
-#include <sys/timerfd.h>
-#include <vector>
-#include <functional>
 
 #include <icc/os/EventLoop.hpp>
 #include <icc/os/timer/Timer.hpp>
 
-#include "Common.hpp"
 #include "TimerImpl.hpp"
 
 namespace icc {

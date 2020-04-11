@@ -50,7 +50,7 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
 }
 
 std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
-  const int kTimerFd = timerfd_create(CLOCK_MONOTONIC, 0);
+  const int kTimerFd = ::timerfd_create(CLOCK_MONOTONIC, 0);
   auto timer = new Timer::TimerImpl(Handle{kTimerFd});
   function_wrapper<void(const Handle&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
   registerObjectEvents(Handle{kTimerFd}, EventType::READ, callback);
