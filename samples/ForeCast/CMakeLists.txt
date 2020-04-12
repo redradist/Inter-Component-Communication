@@ -3,28 +3,16 @@ project(Forecast)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(${CMAKE_BINARY_DIR})
-include_directories($ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/include/CommonAPI/DBus)
-include_directories(/usr/local/lib/boost/include)
-include_directories(/usr/local/include/CommonAPI-3.1)
-include_directories(/usr/local/lib/dbus-1.0/include)
-include_directories(/usr/include/dbus-1.0)
-include_directories(${CMAKE_SOURCE_DIR}/cmake-build-debug/src-gen)
-include_directories(
-        $ENV{HOME}/Projects/Automotive/capicxx-core-runtime/include
-        $ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/include
-        $ENV{HOME}/Projects/Automotive/dbus-1.11.12
-        /usr/lib/x86_64-linux-gnu/dbus-1.0/include/
-)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREAD ON)
+find_package(Boost 1.65.0 REQUIRED system)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+endif(Boost_FOUND)
 
-link_directories(/usr/local/lib/boost/lib)
-link_directories(/usr/local/lib)
-
-set(SOURCE_FILES    main.cpp)
+set(SOURCE_FILES main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
 add_executable(Forecast ${SOURCE_FILES})
 add_dependencies(Forecast ICC)
-target_link_libraries(Forecast
-        pthread
-        ICC
-        )
+target_link_libraries(Forecast pthread ICC ${Boost_SYSTEM_LIBRARY})

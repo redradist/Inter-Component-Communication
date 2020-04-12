@@ -8,7 +8,7 @@
 #include <CommonAPI/DBus/CommonAPIDBus.hpp>
 #include <CommonAPI/CommonAPI.hpp>
 #include <v1/commonapi/HelloWorldProxy.hpp>
-#include <icc/commonapi/CommonAPIClient.hpp>
+#include <icc/interprocess/commonapi/CommonAPIClient.hpp>
 #include <HelloWorldClient.hpp>
 #include <HelloWorld2Client.hpp>
 

@@ -38,8 +38,14 @@ link_directories(
         $ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/build
         $ENV{HOME}/Projects/Automotive/dbus-1.11.12/build/dbus/.libs
 )
-link_directories(/usr/local/lib/boost/lib)
-link_directories(/usr/local/lib)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREAD ON)
+find_package(Boost 1.65.0 REQUIRED system)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+endif(Boost_FOUND)
 
 file(GLOB FIDL_FILES ./interfaces/HelloWorld.fidl)
 
@@ -65,7 +71,7 @@ set(SOURCE_FILES main.cpp HelloWorldProxyClient.cpp HelloWorldProxyClient.hpp)
 #        COMMAND ${COMMONAPI_DBUS_GENERATOR} --dest ${GENERATOR_PATH} ${FIDL_FILES}
 #)
 add_custom_target(
-        afdsaasdadsdas_commonapi_gen
+        commonapi_gen
         DEPENDS ${GENERATED_FILES}
         COMMAND echo "Generation of CommonAPI wrappers is finished")
 
@@ -74,6 +80,6 @@ add_executable(
         CommonAPI_Client
         ${SOURCE_FILES}
         ${GENERATED_FILES})
-add_dependencies(CommonAPI_Client ICC afdsaasdadsdas_commonapi_gen)
-add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client TRUE ${CMAKE_BINARY_DIR})
-target_link_libraries(CommonAPI_Client CommonAPI CommonAPI-DBus dbus-1 boost_system)
+add_dependencies(CommonAPI_Client ICC commonapi_gen)
+add_wrapper_dependencies(CommonAPI_Client "${FIDL_FILES}" Client ${CMAKE_BINARY_DIR})
+target_link_libraries(CommonAPI_Client CommonAPI CommonAPI-DBus dbus-1 ${Boost_SYSTEM_LIBRARY})

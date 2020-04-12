@@ -1,8 +1,8 @@
 import argparse
 import os
 import sys
-sys.path.append(str(os.path.dirname(os.path.abspath(__file__)))+'/../../../../libs')
-sys.path.append(str(os.path.dirname(os.path.abspath(__file__)))+'/../../../../libs/commonapi_tools')
+sys.path.append(str(os.path.dirname(os.path.abspath(__file__)))+'/../../../../../libs')
+sys.path.append(str(os.path.dirname(os.path.abspath(__file__)))+'/../../../../../libs/commonapi_tools')
 
 from commonapi_tools.fidl_parser import parse_interfaces
 

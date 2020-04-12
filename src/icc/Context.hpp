@@ -214,6 +214,7 @@ class Context<ThreadSafeQueueAction> final
 };
 
 using ThreadSafeQueueContext = Context<ThreadSafeQueueAction>;
+using DefaultContext = ThreadSafeQueueContext;
 
 }
 

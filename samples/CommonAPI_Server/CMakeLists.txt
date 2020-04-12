@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.7)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_COMPILER "/usr/bin/clang-9" )
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-9")
+set(CMAKE_C_COMPILER "/usr/bin/clang-10" )
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-10")
 add_definitions(-D__STRICT_ANSI__)
 
 project(CommonAPI_Server)
@@ -35,8 +35,14 @@ link_directories(
         $ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/build
         $ENV{HOME}/Projects/Automotive/dbus-1.11.12/build/dbus/.libs
 )
-link_directories(/usr/local/boost_1_69_0/lib)
-link_directories(/usr/local/lib)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREAD ON)
+find_package(Boost 1.65.0 REQUIRED system)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+endif(Boost_FOUND)
 
 file(GLOB FIDL_FILES ./interfaces/*.fidl)
 set(GEN_DIR "${CMAKE_BINARY_DIR}")
@@ -56,4 +62,4 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${GENERATED_FILES})
 add_dependencies(${PROJECT_NAME} ICC)
 add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Service ${CMAKE_BINARY_DIR})
 add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Client ${CMAKE_BINARY_DIR})
-target_link_libraries(${PROJECT_NAME} ICC CommonAPI CommonAPI-DBus dbus-1 boost_system)
+target_link_libraries(${PROJECT_NAME} ICC CommonAPI CommonAPI-DBus dbus-1 ${Boost_SYSTEM_LIBRARY})
