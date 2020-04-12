@@ -122,14 +122,14 @@ class Component {
    * Used to start event loop
    */
   virtual void exec() {
-    if (!parent_) {
+    if (context_) {
       context_->run();
     }
   }
 
   virtual void stop() {
     channel_.reset();
-    if (!parent_) {
+    if (context_) {
       context_->stop();
     }
   }
