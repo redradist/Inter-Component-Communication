@@ -12,6 +12,13 @@ add_subdirectory(<path_to_library>)
 For introduction to ICC library see:
 [Tutorial](docs/Tutorial.md)
 
+## Known issues
+1. Some compilers that supports C++17 at the same time does not support Feature Macros __cpp_lib_optional
+If you want to use automatic conversion from icc::_private::containers::Optional<T> to C++17 std::optional<T> you
+should set this macros by hand like this:
+
+    add_definitions(-D__cpp_lib_optional=201606) 
+
 ## Contributing
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`

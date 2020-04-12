@@ -13,14 +13,18 @@
 #include <type_traits>
 #include <boost/optional.hpp>
 #include <CommonAPI/CommonAPI.hpp>
-#include <icc/_private/helpers/memory_helpers.hpp>
 #include <icc/Component.hpp>
 #include <icc/interprocess/commonapi/exceptions/CommonAPIClientError.hpp>
 #include <icc/logger/DummyLogger.hpp>
+#include <icc/_private/helpers/memory_helpers.hpp>
+#include <icc/_private/containers/Optional.hpp>
 
 namespace icc {
 
 namespace commonapi {
+
+template <typename T>
+using Optional = icc::_private::containers::Optional<T>;
 
 template< template< typename ... _AttributeExtensions > class Proxy,
           typename Logger = icc::logger::DummyLogger >
@@ -115,7 +119,7 @@ class CommonAPIClient
         Logger::warning("Service Status is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on Service Status ...");
-        Proxy<>::getProxyStatusEvent().unsubscribe(on_service_status_.get());
+        Proxy<>::getProxyStatusEvent().unsubscribe(on_service_status_.value());
         on_service_status_.reset();
       }
     });
@@ -182,7 +186,7 @@ class CommonAPIClient
   /************************************************************
    * Below variables for storing subscriptions on broadcasts
    ***********************************************************/
-  boost::optional<CommonAPI::Event<>::Subscription> on_service_status_;
+  Optional<CommonAPI::Event<>::Subscription> on_service_status_;
 };
 
 }

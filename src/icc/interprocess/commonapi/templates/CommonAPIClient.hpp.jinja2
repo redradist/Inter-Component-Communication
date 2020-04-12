@@ -23,9 +23,9 @@
 #include <map>
 #include <memory>
 #include <functional>
-#include <boost/optional.hpp>
 #include <icc/Component.hpp>
 #include <icc/coroutine/TaskScheduler.hpp>
+#include <icc/_private/containers/Optional.hpp>
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
 {%- if type_collections is not none %}
 {%- for type_collection in type_collections %}
@@ -47,6 +47,9 @@ using v{{client_version}}::{{package_ns}}::{{client_name}}ProxyDefault;
 using v{{type_collection.major}}::{{type_collection.type}};
 {%- endfor %}
 {%- endif %}
+
+template <typename T>
+using Optional = icc::_private::containers::Optional<T>;
 
 template< typename Logger = icc::logger::DummyLogger >
 class {{class_name}}
@@ -259,7 +262,7 @@ class {{class_name}}
    * Below variables for storing subscriptions on broadcasts
    ***********************************************************/
   {%- for broadcast in broadcasts %}
-  boost::optional<CommonAPI::Event<>::Subscription> on_{{broadcast.lower()}}_update_;
+  Optional<CommonAPI::Event<>::Subscription> on_{{broadcast.lower()}}_update_;
   {%- endfor %}
   {%- endif %}
   {% if attributes is not none and attributes|length > 0 %}
@@ -267,7 +270,7 @@ class {{class_name}}
    * Below variables for storing subscriptions on attributes
    ***********************************************************/
   {%- for attribute in attributes %}
-  boost::optional<CommonAPI::Event<>::Subscription> on_{{attribute.lower()}}_changed_;
+  Optional<CommonAPI::Event<>::Subscription> on_{{attribute.lower()}}_changed_;
   {%- endfor %}
   {%- endif %}
 };
@@ -430,7 +433,7 @@ void {{class_name}}< Logger >::notifyOn{{broadcast}}Update(const bool isNotify) 
         Logger::warning("{{broadcast}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{broadcast}} ...");
-        this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_.get());
+        this->get{{broadcast}}{{ 'Selective' if broadcast.is_selective else '' }}Event().unsubscribe(on_{{broadcast.lower()}}_update_.value());
         on_{{broadcast.lower()}}_update_.reset();
       }
     }
@@ -473,7 +476,7 @@ void {{class_name}}< Logger >::notifyOn{{attribute}}Changed(const bool isNotify)
         Logger::warning("{{attribute}} is not subscribed !!");
       } else {
         Logger::debug("Unsubscribing on {{attribute}} ...");
-        this->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_.get());
+        this->get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_.value());
         on_{{attribute.lower()}}_changed_.reset();
       }
     }
