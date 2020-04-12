@@ -38,8 +38,7 @@ namespace os {
 
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
   : EventLoopImpl() {
-  event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this,
-                                   ExecPolicy::Forever);
+  event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
 }
 
 EventLoop::EventLoopImpl::~EventLoopImpl() {
@@ -183,25 +182,16 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   return socketPtr;
 }
 
-std::unique_ptr<IContext::IChannel> EventLoop::EventLoopImpl::createChannel() {
-  return nullptr;
-}
-
-std::thread::id EventLoop::EventLoopImpl::getThreadId() const {
-  return event_loop_thread_id_.load(std::memory_order_acquire);
-}
-
 bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-void EventLoop::EventLoopImpl::run(ExecPolicy _policy) {
+void EventLoop::EventLoopImpl::run() {
   event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
   if (event_loop_handle_.fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
     throw "Error !!";
   }
-  event_loop_thread_id_.store(std::this_thread::get_id(), std::memory_order_release);
   execute_.store(true, std::memory_order_release);
   {
     std::lock_guard<std::mutex> lock(internal_mtx_);

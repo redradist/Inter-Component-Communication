@@ -16,16 +16,14 @@ namespace icc {
 
 namespace os {
 
-class EventLoop::EventLoopImpl : public ContextBase {
+class EventLoop::EventLoopImpl : public IEventLoop {
  public:
   EventLoopImpl() = default;
   EventLoopImpl(std::nullptr_t);
   ~EventLoopImpl();
 
-  void run(ExecPolicy _policy) override;
+  void run() override;
   void stop() override;
-  std::unique_ptr<IChannel> createChannel() override;
-  std::thread::id getThreadId() const override;
   bool isRun() const override;
 
   std::shared_ptr<Timer::TimerImpl> createTimerImpl();
@@ -60,7 +58,6 @@ class EventLoop::EventLoopImpl : public ContextBase {
 
   std::atomic_bool execute_{true};
   std::thread event_loop_thread_;
-  std::atomic<std::thread::id> event_loop_thread_id_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};
   std::vector<InternalEvent> add_read_listeners_;

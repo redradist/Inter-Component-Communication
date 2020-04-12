@@ -16,6 +16,8 @@
 #include <icc/Context.hpp>
 #include <icc/_private/helpers/function_wrapper.hpp>
 
+#include "IEventLoop.hpp"
+
 namespace icc {
 
 namespace os {
@@ -30,16 +32,14 @@ class Timer;
 class ServerSocket;
 class Socket;
 
-class EventLoop : public ContextBase {
+class EventLoop : public IEventLoop {
  public:
   static EventLoop & getDefaultInstance();
   static std::shared_ptr<EventLoop> createEventLoop();
   ~EventLoop();
 
-  void run(ExecPolicy _policy) override;
+  void run() override;
   void stop() override;
-  std::unique_ptr<IChannel> createChannel() override;
-  std::thread::id getThreadId() const override;
   bool isRun() const override;
 
   std::shared_ptr<Timer> createTimer();
