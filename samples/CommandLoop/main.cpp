@@ -19,7 +19,7 @@ namespace icc {
 template <>
 class Context<boost::asio::io_service>
     : public std::enable_shared_from_this<Context<boost::asio::io_service>>
-    , public ContextBase {
+    , public IContext {
  public:
   class Channel : public IContext::IChannel {
    public:
@@ -49,8 +49,7 @@ class Context<boost::asio::io_service>
   };
 
   Context(boost::asio::io_service *_service)
-    : execute_{true}
-    , service_(std::shared_ptr<boost::asio::io_service>(_service,
+    : service_(std::shared_ptr<boost::asio::io_service>(_service,
       [=](boost::asio::io_service *) {
         // NOTE(redra): Nothing need to do. Owner of this pointer is not us
       }))
@@ -58,35 +57,19 @@ class Context<boost::asio::io_service>
   }
 
   Context(std::shared_ptr<boost::asio::io_service> _service)
-    : execute_{true}
-    , service_(std::move(_service))
+    : service_(std::move(_service))
     , worker_(new boost::asio::io_service::work(*service_)) {
   }
 
   void push(Action _action) {
-    if (execute_.load()) {
+    if (service_) {
       service_->post(std::move(_action));
     }
   }
 
   void invoke(Action _action) {
-    if (execute_.load()) {
+    if (service_) {
       service_->dispatch(_action);
-    }
-  }
-
-  void run(ExecPolicy _policy = ExecPolicy::Forever) override {
-    bool stopState = false;
-    if (execute_.compare_exchange_strong(stopState, true)) {
-      queue_thread_id_.store(std::this_thread::get_id());
-      service_->run();
-    }
-  }
-
-  void stop() override {
-    bool executeState = true;
-    if (execute_.compare_exchange_strong(executeState, false)) {
-      worker_.reset(nullptr);
     }
   }
 
@@ -94,17 +77,7 @@ class Context<boost::asio::io_service>
     return std::unique_ptr<Channel>(new Channel{shared_from_this()});
   }
 
-  std::thread::id getThreadId() const override {
-    return queue_thread_id_.load(std::memory_order_acquire);
-  }
-
-  bool isRun() const override {
-    return execute_.load(std::memory_order_acquire);
-  }
-
  private:
-  std::atomic_bool execute_{false};
-  std::atomic<std::thread::id> queue_thread_id_;
   std::shared_ptr<boost::asio::io_service> service_;
   std::unique_ptr<boost::asio::io_service::work> worker_;
 };

@@ -67,26 +67,34 @@ class ContextBase : public IContext {
 class ContextBuilder {
  public:
   template <typename TService, typename ... TArgs>
-  static std::shared_ptr<ContextBase>
+  static std::shared_ptr<Context<TService>>
   createContext(TArgs && ... _args) {
+    static_assert(std::is_base_of<IContext, Context<TService>>::value,
+                  "Context<TService> should be at least IContext based !!");
     return std::make_shared<Context<TService>>(std::forward<TArgs>(_args)...);
   }
 
   template <typename TService, typename ... TArgs>
-  static std::shared_ptr<ContextBase>
+  static std::shared_ptr<Context<TService>>
   createContext(TService *_service, TArgs && ... _args) {
+    static_assert(std::is_base_of<IContext, Context<TService>>::value,
+                  "Context<TService> should be at least IContext based !!");
     return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
   }
 
   template <typename TService, typename ... TArgs>
-  static std::shared_ptr<ContextBase>
+  static std::shared_ptr<Context<TService>>
   createContext(std::shared_ptr<TService> _service, TArgs && ... _args) {
+    static_assert(std::is_base_of<IContext, Context<TService>>::value,
+                  "Context<TService> should be at least IContext based !!");
     return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
   }
 
   template <typename TService, typename ... TArgs>
-  static std::shared_ptr<ContextBase>
+  static std::shared_ptr<Context<TService>>
   createContext(std::unique_ptr<TService> _service, TArgs && ... _args) {
+    static_assert(std::is_base_of<IContext, Context<TService>>::value,
+                  "Context<TService> should be at least IContext based !!");
     return std::make_shared<Context<TService>>(_service, std::forward<TArgs>(_args)...);
   }
 };
