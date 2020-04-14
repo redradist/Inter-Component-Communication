@@ -56,6 +56,7 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   return std::shared_ptr<Timer::TimerImpl>(timer,
   [this, callback](Timer::TimerImpl* timer) {
     unregisterObjectEvents(timer->timer_handle_, EventType::READ, callback);
+    ::close(timer->timer_handle_.fd_);
   });
 }
 
@@ -67,7 +68,7 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
   unsigned long mode = blocking ? 0 : 1;
   return (ioctlsocket(fd, FIONBIO, &mode) == 0) ? true : false;
 #else
-  int flags = fcntl(_fd, F_GETFL, 0);
+  int flags = ::fcntl(_fd, F_GETFL, 0);
   if (flags == -1) return false;
   flags = _isBlocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
   return fcntl(_fd, F_SETFL, flags) == 0;
@@ -85,9 +86,10 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
   registerObjectEvents(Handle{kServerSocketFd}, EventType::READ, readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-                                                       [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-                                                         unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
-                                                       });
+  [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+    ::close(serverSocket->socket_handle_.fd_);
+  });
 
   sockaddr_in addr;
   addr.sin_family = AF_INET;
@@ -116,9 +118,10 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
   registerObjectEvents(Handle{_socketHandle}, EventType::READ, readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-                                                                   [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-                                                                     unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
-                                                                   });
+  [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+    ::close(serverSocket->socket_handle_.fd_);
+  });
 
   if (setSocketBlockingMode(_socketHandle.fd_, false)) {
     socketPtr->setBlockingMode(false);
@@ -142,6 +145,7 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
     unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
     unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+    ::close(socket->socket_handle_.fd_);
   });
 
   sockaddr_in addr;
@@ -171,10 +175,11 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
   registerObjectEvents(_socketHandle, EventType::WRITE, writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
-                                                       [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-                                                         unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-                                                         unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
-                                                       });
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+    ::close(socket->socket_handle_.fd_);
+  });
 
   if (setSocketBlockingMode(_socketHandle.fd_, false)) {
     socketPtr->setBlockingMode(false);
