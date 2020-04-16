@@ -9,8 +9,9 @@
 
 #include "Common.hpp"
 #include "TimerImpl.hpp"
-#include "SocketImpl.hpp"
-#include "ServerSocketImpl.hpp"
+//TODO(redradist): Uncomment when possible
+//#include "SocketImpl.hpp"
+//#include "ServerSocketImpl.hpp"
 
 namespace icc {
 
@@ -43,7 +44,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   struct InternalEvent;
   struct HandleListeners;
 
-  bool setSocketBlockingMode(int _fd, bool _isBlocking);
+  bool setSocketBlockingMode(SOCKET _fd, bool _isBlocking);
   void addFdTo(std::lock_guard<std::mutex>& lock,
                std::vector<HandleListeners>& listeners,
                const std::vector<InternalEvent>& addListeners);

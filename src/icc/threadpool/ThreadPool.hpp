@@ -26,7 +26,7 @@ template <typename T>
 class Task;
 
 class ThreadPool
-    : private icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
+    : public icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
  public:
   ~ThreadPool();
 
@@ -50,7 +50,7 @@ class ThreadPool
   bool hasThread(std::thread::id _threadId) const;
 
  protected:
-  ThreadPool(const unsigned int _numThreads);
+  ThreadPool(unsigned int _numThreads);
 
   std::vector<std::thread> thread_pool_;
   std::atomic_bool execute_{true};
