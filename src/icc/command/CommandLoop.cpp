@@ -7,6 +7,7 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
+#include <iterator>
 #include <icc/command/exceptions/CommandNotFound.hpp>
 #include "CommandLoop.hpp"
 

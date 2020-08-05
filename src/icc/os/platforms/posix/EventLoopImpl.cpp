@@ -29,6 +29,7 @@ extern "C" {
 #include <memory>
 #include <arpa/inet.h>
 
+#include <icc/_private/helpers/exceptions.h>
 #include "EventLoopImpl.hpp"
 #include "TimerImpl.hpp"
 
@@ -195,7 +196,7 @@ void EventLoop::EventLoopImpl::run() {
   event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
   if (event_loop_handle_.fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
-    throw "Error !!";
+    THROW_OR_RETURN_RESULT("Error !!", 0);
   }
   execute_.store(true, std::memory_order_release);
   {
@@ -221,7 +222,7 @@ void EventLoop::EventLoopImpl::run() {
 
     ::select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
     if (!execute_.load(std::memory_order_acquire)) {
-      eventfd_write(event_loop_handle_.fd_, 0);
+      ::eventfd_write(event_loop_handle_.fd_, 0);
       break;
     }
 

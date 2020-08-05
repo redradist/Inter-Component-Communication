@@ -6,6 +6,13 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
+extern "C" {
+
+#include <winsock2.h>
+#include <windows.h>
+
+}
+
 #include <cstdlib>
 #include <cerrno>
 
@@ -20,7 +27,7 @@ namespace icc {
 namespace os {
 
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
-  : EventLoopImpl() {
+    : EventLoopImpl() {
   event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
 }
 
@@ -35,13 +42,13 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   //TODO(redradist): Timer should be created (kTimerFd)
   const int kTimerFd = 0;
   auto timer = new Timer::TimerImpl(Handle{kTimerFd});
-  function_wrapper<void(const Handle&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
+  function_wrapper<void(const Handle &)> callback(&Timer::TimerImpl::onTimerExpired, timer);
   registerObjectEvents(Handle{kTimerFd}, EventType::kRead, callback);
   return std::shared_ptr<Timer::TimerImpl>(timer,
-  [this, callback](Timer::TimerImpl* timer) {
-    unregisterObjectEvents(timer->timer_handle_, EventType::kRead, callback);
-    //TODO(redradist): Timer should be closed
-  });
+                                           [this, callback](Timer::TimerImpl *timer) {
+                                             unregisterObjectEvents(timer->timer_handle_, EventType::kRead, callback);
+                                             //TODO(redradist): Timer should be closed
+                                           });
 }
 
 bool
@@ -49,7 +56,7 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
   if (_fd < 0) return false;
 
   unsigned long mode = _isBlocking ? 0 : 1;
-  return (ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
+  return (::ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
 }
 
 //std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
@@ -168,45 +175,84 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
+void WorkingThread(HANDLE iocp) {
+  while (true) {
+//    if (!GetQueuedCompletionStatus(iocp, &bytes, &key, &overlapped,INFINITE)) {
+//      break;
+//    }
+//    if(!bytes) {
+//      switch(key->OpType) {
+//      }
+//    }
+  }
+}
+
 void EventLoop::EventLoopImpl::run() {
-//  event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
+//  event_loop_handle_.handle_ = ::_open(".", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
 //  if (event_loop_handle_.fd_ == -1) {
 //    std::cerr << strerror(errno) << "\n";
-//    throw "Error !!";
+//    THROW_OR_EXIT("Error !!";
 //  }
-//  execute_.store(true, std::memory_order_release);
-//  {
-//    std::lock_guard<std::mutex> lock(internal_mtx_);
-//    addFdTo(lock, read_listeners_, add_read_listeners_);
-//    addFdTo(lock, write_listeners_, add_write_listeners_);
-//    addFdTo(lock, error_listeners_, add_error_listeners_);
-//    removeFdFrom(lock, read_listeners_, remove_read_listeners_);
-//    removeFdFrom(lock, write_listeners_, remove_write_listeners_);
-//    removeFdFrom(lock, error_listeners_, remove_error_listeners_);
-//  }
-//  while (execute_.load(std::memory_order_acquire)) {
-//    fd_set readFds;
-//    fd_set writeFds;
-//    fd_set errorFds;
-//
-//    int maxFd = 0;
+  // Step 1:
+  HANDLE ioCompletionPort = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr,0,0);
+
+  // Step 2:
+  // Determine how many processors are on the system
+  SYSTEM_INFO systemInfo;
+  ::GetSystemInfo(&systemInfo);
+  for (int i = 0; i < systemInfo.dwNumberOfProcessors; i++) {
+    HANDLE threadHandle;
+    // Create a server worker thread, and pass the
+    // completion port to the thread. NOTE: the
+    // ServerWorkerThread procedure is not defined in this listing.
+//    threadHandle = ::CreateThread(nullptr, 0, WorkingThread, ioCompletionPort, 0, nullptr);
+    // Close the thread handle
+    ::CloseHandle(threadHandle);
+  }
+
+
+// Step 3:
+
+// Create worker threads based on the number of
+
+// processors available on the system. For this
+
+// simple case, we create one worker thread for each processor.
+
+
+  execute_.store(true, std::memory_order_release);
+  {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
+    addFdTo(lock, read_listeners_, add_read_listeners_);
+    addFdTo(lock, write_listeners_, add_write_listeners_);
+    addFdTo(lock, error_listeners_, add_error_listeners_);
+    removeFdFrom(lock, read_listeners_, remove_read_listeners_);
+    removeFdFrom(lock, write_listeners_, remove_write_listeners_);
+    removeFdFrom(lock, error_listeners_, remove_error_listeners_);
+  }
+  while (execute_.load(std::memory_order_acquire)) {
+    fd_set readFds;
+    fd_set writeFds;
+    fd_set errorFds;
+
+    int maxFd = 0;
 //    maxFd = std::max(maxFd, event_loop_handle_.fd_);
 //    FD_SET(event_loop_handle_.fd_, &readFds);
-//    initFds(read_listeners_, readFds, maxFd);
-//    initFds(write_listeners_, writeFds, maxFd);
-//    initFds(error_listeners_, errorFds, maxFd);
-//
-//    ::select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
+    initFds(read_listeners_, readFds, maxFd);
+    initFds(write_listeners_, writeFds, maxFd);
+    initFds(error_listeners_, errorFds, maxFd);
+
+    ::select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
 //    if (!execute_.load(std::memory_order_acquire)) {
 //      eventfd_write(event_loop_handle_.fd_, 0);
 //      break;
 //    }
-//
-//    handleLoopEvents(readFds);
-//    handleHandlesEvents(read_listeners_, readFds);
-//    handleHandlesEvents(write_listeners_, writeFds);
-//    handleHandlesEvents(error_listeners_, errorFds);
-//  }
+
+    handleLoopEvents(readFds);
+    handleHandlesEvents(read_listeners_, readFds);
+    handleHandlesEvents(write_listeners_, writeFds);
+    handleHandlesEvents(error_listeners_, errorFds);
+  }
 }
 
 void EventLoop::EventLoopImpl::stop() {
@@ -217,9 +263,9 @@ void EventLoop::EventLoopImpl::stop() {
 }
 
 void EventLoop::EventLoopImpl::registerObjectEvents(
-    const Handle & osObject,
-    const EventType & eventType,
-    function_wrapper<void(const Handle&)> callback) {
+    const Handle &osObject,
+    const EventType &eventType,
+    function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case EventType::kRead: {
@@ -240,9 +286,9 @@ void EventLoop::EventLoopImpl::registerObjectEvents(
 }
 
 void EventLoop::EventLoopImpl::unregisterObjectEvents(
-    const Handle & osObject,
-    const EventType & eventType,
-    function_wrapper<void(const Handle&)> callback) {
+    const Handle &osObject,
+    const EventType &eventType,
+    function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
   switch (eventType) {
     case EventType::kRead: {
@@ -263,8 +309,8 @@ void EventLoop::EventLoopImpl::unregisterObjectEvents(
 }
 
 void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
-                        std::vector<HandleListeners> &listeners,
-                        const std::vector<InternalEvent> &addListeners) {
+                                       std::vector<HandleListeners> &listeners,
+                                       const std::vector<InternalEvent> &addListeners) {
   if (!addListeners.empty()) {
     for (auto &fdInfo : addListeners) {
       auto foundFd = findOSObjectIn(fdInfo.object_, listeners);
@@ -280,8 +326,8 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
 }
 
 void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
-                             std::vector<HandleListeners> &listeners,
-                             const std::vector<InternalEvent> &removeListeners) {
+                                            std::vector<HandleListeners> &listeners,
+                                            const std::vector<InternalEvent> &removeListeners) {
   if (!removeListeners.empty()) {
     for (auto &fdInfo : removeListeners) {
       auto foundFd = findOSObjectIn(fdInfo.object_, listeners);
@@ -308,20 +354,20 @@ void EventLoop::EventLoopImpl::initFds(std::vector<HandleListeners> &fds,
 }
 
 void EventLoop::EventLoopImpl::handleLoopEvents(fd_set fdSet) {
-//  if (FD_ISSET(event_loop_handle_.fd_, &fdSet)) {
-//    std::lock_guard<std::mutex> lock(internal_mtx_);
+  if (FD_ISSET(event_loop_handle_.handle_, &fdSet)) {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
 //    eventfd_t updatedEvent;
 //    eventfd_read(event_loop_handle_.fd_, &updatedEvent);
 //    if (updatedEvent > 0) {
-//      addFdTo(lock, read_listeners_, add_read_listeners_);
-//      addFdTo(lock, write_listeners_, add_write_listeners_);
-//      addFdTo(lock, error_listeners_, add_error_listeners_);
-//      removeFdFrom(lock, read_listeners_, remove_read_listeners_);
-//      removeFdFrom(lock, write_listeners_, remove_write_listeners_);
-//      removeFdFrom(lock, error_listeners_, remove_error_listeners_);
+      addFdTo(lock, read_listeners_, add_read_listeners_);
+      addFdTo(lock, write_listeners_, add_write_listeners_);
+      addFdTo(lock, error_listeners_, add_error_listeners_);
+      removeFdFrom(lock, read_listeners_, remove_read_listeners_);
+      removeFdFrom(lock, write_listeners_, remove_write_listeners_);
+      removeFdFrom(lock, error_listeners_, remove_error_listeners_);
 //      eventfd_write(event_loop_handle_.handle_, 0);
 //    }
-//  }
+  }
 }
 
 void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet) {

@@ -33,24 +33,24 @@ class EventLoop::EventLoopImpl : public IEventLoop {
 //  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const std::string& _address, uint16_t _port);
 //  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
-  void registerObjectEvents(const Handle & osObject,
-                            const EventType & eventType,
-                            function_wrapper<void(const Handle&)> callback);
-  void unregisterObjectEvents(const Handle & osObject,
-                              const EventType & eventType,
-                              function_wrapper<void(const Handle&)> callback);
+  void registerObjectEvents(const Handle &osObject,
+                            const EventType &eventType,
+                            function_wrapper<void(const Handle &)> callback);
+  void unregisterObjectEvents(const Handle &osObject,
+                              const EventType &eventType,
+                              function_wrapper<void(const Handle &)> callback);
 
  private:
   struct InternalEvent;
   struct HandleListeners;
 
   bool setSocketBlockingMode(SOCKET _fd, bool _isBlocking);
-  void addFdTo(std::lock_guard<std::mutex>& lock,
-               std::vector<HandleListeners>& listeners,
-               const std::vector<InternalEvent>& addListeners);
-  void removeFdFrom(std::lock_guard<std::mutex>& lock,
-                    std::vector<HandleListeners>& listeners,
-                    const std::vector<InternalEvent>& removeListeners);
+  void addFdTo(std::lock_guard<std::mutex> &lock,
+               std::vector<HandleListeners> &listeners,
+               const std::vector<InternalEvent> &addListeners);
+  void removeFdFrom(std::lock_guard<std::mutex> &lock,
+                    std::vector<HandleListeners> &listeners,
+                    const std::vector<InternalEvent> &removeListeners);
   void initFds(std::vector<HandleListeners> &fds, fd_set &fdSet, int &maxFd) const;
   void handleLoopEvents(fd_set fdSet);
   void handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet);
