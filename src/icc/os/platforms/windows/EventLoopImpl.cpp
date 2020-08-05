@@ -26,6 +26,24 @@ namespace icc {
 
 namespace os {
 
+#define PORT 5150
+#define DATA_BUFSIZE 8192
+
+// Typedef definition
+typedef struct {
+  OVERLAPPED overlapped;
+  WSABUF dataBuf;
+  CHAR buffer[DATA_BUFSIZE];
+  DWORD bytesSEND;
+  DWORD bytesRECV;
+} PER_IO_OPERATION_DATA, * LPPER_IO_OPERATION_DATA;
+
+typedef struct _PER_HANDLE_DATA {
+  SOCKET            socket;
+  SOCKADDR_STORAGE  clientAddr;
+  // Other information useful to be associated with the handle
+} PER_HANDLE_DATA, * LPPER_HANDLE_DATA;
+
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
   event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
@@ -175,15 +193,86 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-void WorkingThread(HANDLE iocp) {
-  while (true) {
-//    if (!GetQueuedCompletionStatus(iocp, &bytes, &key, &overlapped,INFINITE)) {
-//      break;
-//    }
-//    if(!bytes) {
-//      switch(key->OpType) {
-//      }
-//    }
+DWORD WINAPI serverWorkerThread(LPVOID CompletionPortID) {
+  HANDLE completionPort = static_cast<HANDLE>(CompletionPortID);
+  DWORD bytesTransferred;
+  LPPER_HANDLE_DATA perHandleData;
+  LPPER_IO_OPERATION_DATA perIoData;
+  DWORD sendBytes, recvBytes;
+  DWORD flags;
+
+  while(true) {
+    if (GetQueuedCompletionStatus(completionPort,
+                                  &bytesTransferred,
+                                  (LPDWORD)&perHandleData,
+                                  (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
+      printf("GetQueuedCompletionStatus() failed with error %d\n", GetLastError());
+      return 0;
+    } else {
+      printf("GetQueuedCompletionStatus() is OK!\n");
+    }
+
+    // First check to see if an error has occurred on the socket and if so
+    // then close the socket and cleanup the SOCKET_INFORMATION structure
+    // associated with the socket
+    if (bytesTransferred == 0) {
+      printf("Closing socket %d\n", perHandleData->socket);
+      if (closesocket(perHandleData->socket) == SOCKET_ERROR) {
+        printf("closesocket() failed with error %d\n", WSAGetLastError());
+        return 0;
+      } else {
+        printf("closesocket() is fine!\n");
+      }
+
+      GlobalFree(perHandleData);
+      GlobalFree(perIoData);
+      continue;
+    }
+
+    // Check to see if the BytesRECV field equals zero. If this is so, then
+    // this means a WSARecv call just completed so update the BytesRECV field
+    // with the BytesTransferred value from the completed WSARecv() call
+    if (perIoData->bytesRECV == 0) {
+      perIoData->bytesRECV = bytesTransferred;
+      perIoData->bytesSEND = 0;
+    } else {
+      perIoData->bytesSEND += bytesTransferred;
+    }
+
+    if (perIoData->bytesRECV > perIoData->bytesSEND) {
+      // Post another WSASend() request.
+      // Since WSASend() is not guaranteed to send all of the bytes requested,
+      // continue posting WSASend() calls until all received bytes are sent.
+      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
+      perIoData->dataBuf.buf = perIoData->buffer + perIoData->bytesSEND;
+      perIoData->dataBuf.len = perIoData->bytesRECV - perIoData->bytesSEND;
+      if (WSASend(perHandleData->socket, &(perIoData->dataBuf), 1, &sendBytes, 0,
+                  &(perIoData->overlapped), NULL) == SOCKET_ERROR) {
+        if (WSAGetLastError() != ERROR_IO_PENDING) {
+          printf("WSASend() failed with error %d\n", WSAGetLastError());
+          return 0;
+        }
+      } else {
+        printf("WSASend() is OK!\n");
+      }
+    } else {
+      perIoData->bytesRECV = 0;
+      // Now that there are no more bytes to send post another WSARecv() request
+      flags = 0;
+      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
+      perIoData->dataBuf.len = DATA_BUFSIZE;
+      perIoData->dataBuf.buf = perIoData->buffer;
+
+      if (WSARecv(perHandleData->socket, &(perIoData->dataBuf), 1, &recvBytes, &flags,
+                  &(perIoData->overlapped), NULL) == SOCKET_ERROR) {
+        if (WSAGetLastError() != ERROR_IO_PENDING) {
+          printf("WSARecv() failed with error %d\n", WSAGetLastError());
+          return 0;
+        }
+      } else {
+        printf("WSARecv() is OK!\n");
+      }
+    }
   }
 }
 
@@ -205,20 +294,16 @@ void EventLoop::EventLoopImpl::run() {
     // Create a server worker thread, and pass the
     // completion port to the thread. NOTE: the
     // ServerWorkerThread procedure is not defined in this listing.
-//    threadHandle = ::CreateThread(nullptr, 0, WorkingThread, ioCompletionPort, 0, nullptr);
+    threadHandle = ::CreateThread(nullptr, 0, serverWorkerThread, ioCompletionPort, 0, nullptr);
     // Close the thread handle
     ::CloseHandle(threadHandle);
   }
 
 
 // Step 3:
-
 // Create worker threads based on the number of
-
 // processors available on the system. For this
-
 // simple case, we create one worker thread for each processor.
-
 
   execute_.store(true, std::memory_order_release);
   {
