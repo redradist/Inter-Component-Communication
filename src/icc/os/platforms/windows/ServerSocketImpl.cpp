@@ -31,21 +31,21 @@ ServerSocket::ServerSocketImpl::acceptAsync() {
 }
 
 void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
-//  std::lock_guard<std::mutex> lock{mtx_};
-//  while (!accept_queue_.empty() && !is_blocking_) {
-//    const int kSock = ::accept(socket_handle_.handle_, nullptr, nullptr);
-//    if (kSock < 0) {
-//      perror("accept");
-//      break;
-//    }
-//    auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{kSock});
-//    if (clientSocket) {
-//      client_sockets_.push_back(clientSocket);
-//      auto & acceptReq = accept_queue_.front();
-//      acceptReq.set_value(clientSocket);
-//      accept_queue_.pop_front();
-//    }
-//  }
+  std::lock_guard<std::mutex> lock{mtx_};
+  while (!accept_queue_.empty() && !is_blocking_) {
+    const int kSock = ::accept(reinterpret_cast<SOCKET>(socket_handle_.handle_), nullptr, nullptr);
+    if (kSock < 0) {
+      perror("accept");
+      break;
+    }
+    auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{reinterpret_cast<HANDLE>(kSock)});
+    if (clientSocket) {
+      client_sockets_.push_back(clientSocket);
+      auto & acceptReq = accept_queue_.front();
+      acceptReq.set_value(clientSocket);
+      accept_queue_.pop_front();
+    }
+  }
 }
 
 }

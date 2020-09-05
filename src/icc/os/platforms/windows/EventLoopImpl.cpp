@@ -90,27 +90,24 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   }
   return socketPtr;
 }
-//
-//std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
-//  if(_socketHandle.fd_ < 0) {
-//    perror("socket");
-//    return nullptr;
-//  }
-//
-//  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{_socketHandle});
-//  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
-//  registerObjectEvents(Handle{_socketHandle}, EventType::READ, readCallback);
-//  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-//  [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-//    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
-//    ::close(serverSocket->socket_handle_.fd_);
-//  });
-//
-//  if (setSocketBlockingMode(_socketHandle.fd_, false)) {
-//    socketPtr->setBlockingMode(false);
-//  }
-//  return socketPtr;
-//}
+
+std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
+  if(_socketHandle.handle_ < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(_socketHandle);
+  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
+  [this, _socketHandle](ServerSocket::ServerSocketImpl* serverSocket) {
+    ::closesocket(reinterpret_cast<SOCKET>(_socketHandle.handle_));
+  });
+
+  if (setSocketBlockingMode(reinterpret_cast<SOCKET>(_socketHandle.handle_), false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
 //
 //std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
 //  const int kSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
