@@ -5,7 +5,12 @@
 #ifndef ICC_COMMON_HPP
 #define ICC_COMMON_HPP
 
+extern "C" {
+
+#include <winsock2.h>
 #include <windows.h>
+
+}
 
 namespace icc {
 namespace os {
@@ -21,6 +26,24 @@ enum class EventType {
   kWrite,
   kError,
 };
+
+#define PORT 5150
+#define DATA_BUFF_SIZE 8192
+
+// Typedef definition
+typedef struct {
+  OVERLAPPED overlapped;
+  WSABUF dataBuf;
+  CHAR buffer[DATA_BUFF_SIZE];
+  DWORD bytesSend;
+  DWORD bytesRecv;
+} IOOperationData, * LpperIOOperationData;
+
+typedef struct {
+  SOCKET            socket;
+  SOCKADDR_STORAGE  clientAddr;
+  // Other information useful to be associated with the handle
+} HandleData, * LpperHandleData;
 
 }
 }

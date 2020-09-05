@@ -20,29 +20,13 @@ extern "C" {
 #include <algorithm>
 #include <memory>
 
+#include "Common.hpp"
+#include "ServerSocketImpl.hpp"
 #include "EventLoopImpl.hpp"
 
 namespace icc {
 
 namespace os {
-
-#define PORT 5150
-#define DATA_BUFSIZE 8192
-
-// Typedef definition
-typedef struct {
-  OVERLAPPED overlapped;
-  WSABUF dataBuf;
-  CHAR buffer[DATA_BUFSIZE];
-  DWORD bytesSEND;
-  DWORD bytesRECV;
-} PER_IO_OPERATION_DATA, * LPPER_IO_OPERATION_DATA;
-
-typedef struct _PER_HANDLE_DATA {
-  SOCKET            socket;
-  SOCKADDR_STORAGE  clientAddr;
-  // Other information useful to be associated with the handle
-} PER_HANDLE_DATA, * LPPER_HANDLE_DATA;
 
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
@@ -77,38 +61,35 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
   return (::ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
 }
 
-//std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
-//  const int kServerSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
-//  if(kServerSocketFd < 0) {
-//    perror("socket");
-//    return nullptr;
-//  }
-//
-//  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{kServerSocketFd});
-//  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
-//  registerObjectEvents(Handle{kServerSocketFd}, EventType::READ, readCallback);
-//  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-//  [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-//    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
-//    ::close(serverSocket->socket_handle_.fd_);
-//  });
-//
-//  sockaddr_in addr;
-//  addr.sin_family = AF_INET;
-//  addr.sin_port = htons(_port);
-//  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
-//  if(::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-//    perror("bind");
-//    return nullptr;
-//  }
-//
-//  ::listen(kServerSocketFd, _numQueue);
-//
-//  if (setSocketBlockingMode(kServerSocketFd, false)) {
-//    socketPtr->setBlockingMode(false);
-//  }
-//  return socketPtr;
-//}
+std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
+  const SOCKET kServerSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
+  if(kServerSocketFd < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{reinterpret_cast<HANDLE>(kServerSocketFd)});
+  auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
+  [this, kServerSocketFd](ServerSocket::ServerSocketImpl* serverSocket) {
+    ::closesocket(kServerSocketFd);
+  });
+
+  sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_port = htons(_port);
+  if(::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    perror("bind");
+    return nullptr;
+  }
+
+  ::listen(kServerSocketFd, _numQueue);
+
+  if (setSocketBlockingMode(kServerSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
 //
 //std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
 //  if(_socketHandle.fd_ < 0) {
@@ -193,19 +174,19 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-DWORD WINAPI serverWorkerThread(LPVOID CompletionPortID) {
+DWORD WINAPI workerThread(LPVOID CompletionPortID) {
   HANDLE completionPort = static_cast<HANDLE>(CompletionPortID);
   DWORD bytesTransferred;
-  LPPER_HANDLE_DATA perHandleData;
-  LPPER_IO_OPERATION_DATA perIoData;
+  LpperHandleData perHandleData;
+  LpperIOOperationData perIoData;
   DWORD sendBytes, recvBytes;
   DWORD flags;
 
   while(true) {
-    if (GetQueuedCompletionStatus(completionPort,
-                                  &bytesTransferred,
-                                  (LPDWORD)&perHandleData,
-                                  (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
+    if (::GetQueuedCompletionStatus(completionPort,
+                                    &bytesTransferred,
+                                    (LPDWORD)&perHandleData,
+                                    (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
       printf("GetQueuedCompletionStatus() failed with error %d\n", GetLastError());
       return 0;
     } else {
@@ -224,31 +205,31 @@ DWORD WINAPI serverWorkerThread(LPVOID CompletionPortID) {
         printf("closesocket() is fine!\n");
       }
 
-      GlobalFree(perHandleData);
-      GlobalFree(perIoData);
+      ::GlobalFree(perHandleData);
+      ::GlobalFree(perIoData);
       continue;
     }
 
     // Check to see if the BytesRECV field equals zero. If this is so, then
     // this means a WSARecv call just completed so update the BytesRECV field
     // with the BytesTransferred value from the completed WSARecv() call
-    if (perIoData->bytesRECV == 0) {
-      perIoData->bytesRECV = bytesTransferred;
-      perIoData->bytesSEND = 0;
+    if (perIoData->bytesRecv == 0) {
+      perIoData->bytesRecv = bytesTransferred;
+      perIoData->bytesSend = 0;
     } else {
-      perIoData->bytesSEND += bytesTransferred;
+      perIoData->bytesSend += bytesTransferred;
     }
 
-    if (perIoData->bytesRECV > perIoData->bytesSEND) {
+    if (perIoData->bytesRecv > perIoData->bytesSend) {
       // Post another WSASend() request.
       // Since WSASend() is not guaranteed to send all of the bytes requested,
       // continue posting WSASend() calls until all received bytes are sent.
       ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
-      perIoData->dataBuf.buf = perIoData->buffer + perIoData->bytesSEND;
-      perIoData->dataBuf.len = perIoData->bytesRECV - perIoData->bytesSEND;
-      if (WSASend(perHandleData->socket, &(perIoData->dataBuf), 1, &sendBytes, 0,
-                  &(perIoData->overlapped), NULL) == SOCKET_ERROR) {
-        if (WSAGetLastError() != ERROR_IO_PENDING) {
+      perIoData->dataBuf.buf = perIoData->buffer + perIoData->bytesSend;
+      perIoData->dataBuf.len = perIoData->bytesRecv - perIoData->bytesSend;
+      if (::WSASend(perHandleData->socket, &(perIoData->dataBuf), 1, &sendBytes, 0,
+                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
+        if (::WSAGetLastError() != ERROR_IO_PENDING) {
           printf("WSASend() failed with error %d\n", WSAGetLastError());
           return 0;
         }
@@ -256,16 +237,16 @@ DWORD WINAPI serverWorkerThread(LPVOID CompletionPortID) {
         printf("WSASend() is OK!\n");
       }
     } else {
-      perIoData->bytesRECV = 0;
+      perIoData->bytesRecv = 0;
       // Now that there are no more bytes to send post another WSARecv() request
       flags = 0;
       ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
-      perIoData->dataBuf.len = DATA_BUFSIZE;
+      perIoData->dataBuf.len = DATA_BUFF_SIZE;
       perIoData->dataBuf.buf = perIoData->buffer;
 
-      if (WSARecv(perHandleData->socket, &(perIoData->dataBuf), 1, &recvBytes, &flags,
-                  &(perIoData->overlapped), NULL) == SOCKET_ERROR) {
-        if (WSAGetLastError() != ERROR_IO_PENDING) {
+      if (::WSARecv(perHandleData->socket, &(perIoData->dataBuf), 1, &recvBytes, &flags,
+                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
+        if (::WSAGetLastError() != ERROR_IO_PENDING) {
           printf("WSARecv() failed with error %d\n", WSAGetLastError());
           return 0;
         }
@@ -294,11 +275,10 @@ void EventLoop::EventLoopImpl::run() {
     // Create a server worker thread, and pass the
     // completion port to the thread. NOTE: the
     // ServerWorkerThread procedure is not defined in this listing.
-    threadHandle = ::CreateThread(nullptr, 0, serverWorkerThread, ioCompletionPort, 0, nullptr);
+    threadHandle = ::CreateThread(nullptr, 0, workerThread, ioCompletionPort, 0, nullptr);
     // Close the thread handle
     ::CloseHandle(threadHandle);
   }
-
 
 // Step 3:
 // Create worker threads based on the number of
