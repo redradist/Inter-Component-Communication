@@ -20,8 +20,22 @@ namespace icc {
 
 namespace helpers {
 
+template <typename T>
+class enable_self_shared_from_this
+    : public std::enable_shared_from_this<T> {
+ public:
+  enable_self_shared_from_this() {
+    self_ = std::shared_ptr<T>(reinterpret_cast<T*>(this), [](T*){});
+  }
+
+  virtual ~enable_self_shared_from_this() {}
+
+ private:
+  std::shared_ptr<T> self_;
+};
+
 class virtual_enable_shared_from_this_base
-    : public std::enable_shared_from_this<virtual_enable_shared_from_this_base> {
+    : public enable_self_shared_from_this<virtual_enable_shared_from_this_base> {
  public:
   virtual ~virtual_enable_shared_from_this_base() {}
 };
