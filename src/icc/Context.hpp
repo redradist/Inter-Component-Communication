@@ -216,7 +216,7 @@ class Context<ThreadSafeQueueAction> final
   }
 
   std::atomic_bool run_{false};
-  std::atomic_uint32_t num_of_channels_{0};
+  std::atomic_uint num_of_channels_{0};
   std::atomic<std::thread::id> queue_thread_id_;
   std::unique_ptr<ThreadSafeQueueAction> queue_{new ThreadSafeQueueAction()};
 };

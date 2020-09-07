@@ -22,7 +22,15 @@ endif()
 set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE ICC_SOURCE_FILES src/*.c src/*.cpp)
-add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
+message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
+if (UNIX)
+    list(FILTER ICC_SOURCE_FILES EXCLUDE REGEX "src/icc/os/platforms/windows/.*")
+elseif(WIN32)
+    list(FILTER ICC_SOURCE_FILES EXCLUDE REGEX "src/icc/os/platforms/posix/.*")
+endif ()
+message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
+
+add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES} src/icc/os/platforms/windows/Common.hpp)
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
