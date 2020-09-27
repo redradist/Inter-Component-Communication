@@ -34,6 +34,10 @@ add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES} src/icc/os/platforms/windows/Com
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
-target_link_libraries(${PROJECT_NAME} pthread)
+if (UNIX)
+    target_link_libraries(${PROJECT_NAME} pthread)
+elseif(WIN32)
+    target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
+endif ()
 
 add_subdirectory(test)

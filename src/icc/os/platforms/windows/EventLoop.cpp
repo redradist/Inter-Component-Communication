@@ -80,14 +80,14 @@ std::shared_ptr<ServerSocket> EventLoop::createServerSocket(const Handle & _serv
 //  }
 //  return std::shared_ptr<Socket>(new Socket(socketImpl));
 //}
-//
-//std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
+
+std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
 //  auto socketImpl = impl_ptr_->createSocketImpl(_socketHandle);
 //  if (!socketImpl) {
 //    return nullptr;
 //  }
-//  return std::shared_ptr<Socket>(new Socket(socketImpl));
-//}
+  return nullptr;
+}
 
 void EventLoop::registerObjectEvents(const Handle & osObject,
                                      const EventType & eventType,

@@ -10,8 +10,9 @@ namespace icc {
 
 namespace os {
 
-ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle)
-    : socket_handle_{socketHandle} {
+ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle, const Handle & ioCompletionPort)
+    : socket_handle_{socketHandle}
+    , io_completion_port_{ioCompletionPort} {
 }
 
 std::shared_ptr<Socket>
