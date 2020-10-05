@@ -18,11 +18,11 @@ namespace os {
 struct Handle {
   HANDLE handle_;
 
-  bool operator==(const Handle & other) {
+  bool operator==(const Handle & other) const {
     return handle_ == other.handle_;
   }
 
-  bool operator!=(const Handle & other) {
+  bool operator!=(const Handle & other) const {
     return !operator==(other);
   }
 };

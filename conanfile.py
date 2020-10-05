@@ -16,6 +16,9 @@ class HelloConan(ConanFile):
     default_options = {"shared": False}
     generators = "cmake"
 
+    def configure(self):
+        del self.settings.compiler.libcxx
+
     def source(self):
         self.run("git clone https://github.com/redradist/Inter-Component-Communication.git")
 
