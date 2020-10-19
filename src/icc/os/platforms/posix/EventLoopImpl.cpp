@@ -29,7 +29,6 @@ extern "C" {
 #include <memory>
 #include <arpa/inet.h>
 
-#include <icc/_private/helpers/exceptions.h>
 #include "EventLoopImpl.hpp"
 #include "TimerImpl.hpp"
 
@@ -76,7 +75,8 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(int _fd, bool _isBlocking) {
 #endif
 }
 
-std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
+std::shared_ptr<ServerSocket::ServerSocketImpl>
+EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
   const int kServerSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
   if(kServerSocketFd < 0) {
     perror("socket");
@@ -109,7 +109,8 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   return socketPtr;
 }
 
-std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
+std::shared_ptr<ServerSocket::ServerSocketImpl>
+EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
   if(_socketHandle.fd_ < 0) {
     perror("socket");
     return nullptr;
@@ -196,7 +197,7 @@ void EventLoop::EventLoopImpl::run() {
   event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
   if (event_loop_handle_.fd_ == -1) {
     std::cerr << strerror(errno) << "\n";
-    THROW_OR_RETURN_RESULT("Error !!", 0);
+    throw "Error to open ::eventfd(0, O_NONBLOCK) !!";
   }
   execute_.store(true, std::memory_order_release);
   {

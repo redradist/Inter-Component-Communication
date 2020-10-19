@@ -27,10 +27,10 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   bool isRun() const override;
 
   std::shared_ptr<Timer::TimerImpl> createTimerImpl();
-//  std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue);
-//  std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(const Handle & _socketHandle);
-//  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const std::string& _address, uint16_t _port);
-//  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
+  std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue);
+  std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(const Handle & _socketHandle);
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const std::string& _address, uint16_t _port);
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle & osObject,
                             const EventType & eventType,

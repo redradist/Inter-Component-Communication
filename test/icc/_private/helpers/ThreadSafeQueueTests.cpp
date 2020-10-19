@@ -78,7 +78,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThread_OneWriteThread)
     writeThreads[i].join();
   }
 
-  printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+  printf("Time taken: %.2fs\n", static_cast<double>((clock() - tStart)/CLOCKS_PER_SEC));
 
   std::cout << "Write data = " << write_count.load() << std::endl;
   std::cout << "Read data = " << read_count.load() << std::endl;
@@ -112,7 +112,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_OneReadThread_TenWriteThread)
     writeThreads[i].join();
   }
 
-  printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+  printf("Time taken: %.2fs\n", static_cast<double>((clock() - tStart)/CLOCKS_PER_SEC));
 
   std::cout << "Write data = " << write_count.load() << std::endl;
   std::cout << "Read data = " << read_count.load() << std::endl;
@@ -146,7 +146,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_FiveReadThread_TenWriteThread)
     writeThreads[i].join();
   }
 
-  printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+  printf("Time taken: %.2fs\n", static_cast<double>((clock() - tStart)/CLOCKS_PER_SEC));
 
   std::cout << "Write data = " << write_count.load() << std::endl;
   std::cout << "Read data = " << read_count.load() << std::endl;
@@ -180,7 +180,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThread_FiveWriteThread)
     writeThreads[i].join();
   }
 
-  printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+  printf("Time taken: %.2fs\n", static_cast<double>((clock() - tStart)/CLOCKS_PER_SEC));
 
   std::cout << "Write data = " << write_count.load() << std::endl;
   std::cout << "Read data = " << read_count.load() << std::endl;
