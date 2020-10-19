@@ -10,6 +10,14 @@ namespace os {
 
 struct Handle {
   int fd_;
+
+  bool operator==(const Handle & other) const {
+    return fd_ == other.fd_;
+  }
+
+  bool operator!=(const Handle & other) const {
+    return !operator==(other);
+  }
 };
 
 constexpr Handle kInvalidHandle{-1};

@@ -16,7 +16,15 @@ namespace icc {
 namespace os {
 
 struct Handle {
-    HANDLE handle_;
+  HANDLE handle_;
+
+  bool operator==(const Handle & other) const {
+    return handle_ == other.handle_;
+  }
+
+  bool operator!=(const Handle & other) const {
+    return !operator==(other);
+  }
 };
 
 constexpr Handle kInvalidHandle{nullptr};

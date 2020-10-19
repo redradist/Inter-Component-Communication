@@ -35,7 +35,7 @@ class enable_self_shared_from_this
 };
 
 class virtual_enable_shared_from_this_base
-    : public enable_self_shared_from_this<virtual_enable_shared_from_this_base> {
+ : public std::enable_shared_from_this<virtual_enable_shared_from_this_base> {
  public:
   virtual ~virtual_enable_shared_from_this_base() {}
 };

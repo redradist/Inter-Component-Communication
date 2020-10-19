@@ -30,6 +30,8 @@ namespace os {
 
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
+  // Step 1:
+  io_completion_port_ = Handle{::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr,0,0)};
   event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
 }
 
@@ -68,7 +70,7 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
     return nullptr;
   }
 
-  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{reinterpret_cast<HANDLE>(kServerSocketFd)});
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{reinterpret_cast<HANDLE>(kServerSocketFd)}, io_completion_port_);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
   [this, kServerSocketFd](ServerSocket::ServerSocketImpl* serverSocket) {
     ::closesocket(kServerSocketFd);
@@ -97,7 +99,7 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
     return nullptr;
   }
 
-  auto socketRawPtr = new ServerSocket::ServerSocketImpl(_socketHandle);
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(_socketHandle, io_completion_port_);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
   [this, _socketHandle](ServerSocket::ServerSocketImpl* serverSocket) {
     ::closesocket(reinterpret_cast<SOCKET>(_socketHandle.handle_));
@@ -171,16 +173,16 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-DWORD WINAPI workerThread(LPVOID CompletionPortID) {
-  HANDLE completionPort = static_cast<HANDLE>(CompletionPortID);
+DWORD WINAPI socketsWorkerThread(LPVOID completionPortID) {
+  auto* params = static_cast<SocketsWorkerThreadParams*>(completionPortID);
   DWORD bytesTransferred;
   LpperHandleData perHandleData;
   LpperIOOperationData perIoData;
   DWORD sendBytes, recvBytes;
   DWORD flags;
 
-  while(true) {
-    if (::GetQueuedCompletionStatus(completionPort,
+  while(params->execute_.load(std::memory_order_acquire)) {
+    if (::GetQueuedCompletionStatus(params->io_completion_port_.handle_,
                                     &bytesTransferred,
                                     (LPDWORD)&perHandleData,
                                     (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
@@ -195,7 +197,7 @@ DWORD WINAPI workerThread(LPVOID CompletionPortID) {
     // associated with the socket
     if (bytesTransferred == 0) {
       printf("Closing socket %d\n", perHandleData->socket);
-      if (closesocket(perHandleData->socket) == SOCKET_ERROR) {
+      if (::closesocket(perHandleData->socket) == SOCKET_ERROR) {
         printf("closesocket() failed with error %d\n", WSAGetLastError());
         return 0;
       } else {
@@ -255,13 +257,7 @@ DWORD WINAPI workerThread(LPVOID CompletionPortID) {
 }
 
 void EventLoop::EventLoopImpl::run() {
-//  event_loop_handle_.handle_ = ::_open(".", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
-//  if (event_loop_handle_.fd_ == -1) {
-//    std::cerr << strerror(errno) << "\n";
-//    THROW_OR_EXIT("Error !!";
-//  }
-  // Step 1:
-  HANDLE ioCompletionPort = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr,0,0);
+  execute_.store(true, std::memory_order_release);
 
   // Step 2:
   // Determine how many processors are on the system
@@ -272,56 +268,27 @@ void EventLoop::EventLoopImpl::run() {
     // Create a server worker thread, and pass the
     // completion port to the thread. NOTE: the
     // ServerWorkerThread procedure is not defined in this listing.
-    threadHandle = ::CreateThread(nullptr, 0, workerThread, ioCompletionPort, 0, nullptr);
+    sockets_worker_thread_params_ = std::unique_ptr<SocketsWorkerThreadParams>(new SocketsWorkerThreadParams{
+        io_completion_port_,
+        execute_
+    });
+    threadHandle = ::CreateThread(nullptr, 0, &socketsWorkerThread, sockets_worker_thread_params_.get(), 0, nullptr);
     // Close the thread handle
     ::CloseHandle(threadHandle);
   }
 
-// Step 3:
-// Create worker threads based on the number of
-// processors available on the system. For this
-// simple case, we create one worker thread for each processor.
-
-  execute_.store(true, std::memory_order_release);
-  {
-    std::lock_guard<std::mutex> lock(internal_mtx_);
-    addFdTo(lock, read_listeners_, add_read_listeners_);
-    addFdTo(lock, write_listeners_, add_write_listeners_);
-    addFdTo(lock, error_listeners_, add_error_listeners_);
-    removeFdFrom(lock, read_listeners_, remove_read_listeners_);
-    removeFdFrom(lock, write_listeners_, remove_write_listeners_);
-    removeFdFrom(lock, error_listeners_, remove_error_listeners_);
-  }
+  // Step 3:
+  // Create worker threads based on the number of
+  // processors available on the system. For this
+  // simple case, we create one worker thread for each processor.
   while (execute_.load(std::memory_order_acquire)) {
-    fd_set readFds;
-    fd_set writeFds;
-    fd_set errorFds;
-
-    int maxFd = 0;
-//    maxFd = std::max(maxFd, event_loop_handle_.fd_);
-//    FD_SET(event_loop_handle_.fd_, &readFds);
-    initFds(read_listeners_, readFds, maxFd);
-    initFds(write_listeners_, writeFds, maxFd);
-    initFds(error_listeners_, errorFds, maxFd);
-
-    ::select(maxFd + 1, &readFds, &writeFds, &errorFds, nullptr);
-//    if (!execute_.load(std::memory_order_acquire)) {
-//      eventfd_write(event_loop_handle_.fd_, 0);
-//      break;
-//    }
-
-    handleLoopEvents(readFds);
-    handleHandlesEvents(read_listeners_, readFds);
-    handleHandlesEvents(write_listeners_, writeFds);
-    handleHandlesEvents(error_listeners_, errorFds);
   }
 }
 
 void EventLoop::EventLoopImpl::stop() {
-//  if (event_loop_handle_.fd_ != -1) {
-//    execute_.store(false, std::memory_order_release);
-//    eventfd_write(event_loop_handle_.fd_, 1);
-//  }
+  if (event_loop_handle_ != kInvalidHandle) {
+    execute_.store(false, std::memory_order_release);
+  }
 }
 
 void EventLoop::EventLoopImpl::registerObjectEvents(

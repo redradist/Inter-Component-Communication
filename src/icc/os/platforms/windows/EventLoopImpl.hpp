@@ -17,6 +17,11 @@ namespace icc {
 
 namespace os {
 
+struct SocketsWorkerThreadParams {
+  Handle io_completion_port_;
+  std::atomic_bool & execute_;
+};
+
 class EventLoop::EventLoopImpl : public IEventLoop {
  public:
   EventLoopImpl() = default;
@@ -57,8 +62,10 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   static std::vector<HandleListeners>::iterator
   findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
 
+  Handle io_completion_port_;
   std::atomic_bool execute_{true};
   std::thread event_loop_thread_;
+  std::unique_ptr<SocketsWorkerThreadParams> sockets_worker_thread_params_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};
   std::vector<InternalEvent> add_read_listeners_;
