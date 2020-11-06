@@ -30,7 +30,7 @@ elseif(WIN32)
 endif ()
 message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
 
-add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES} src/icc/os/platforms/windows/Common.hpp)
+add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)

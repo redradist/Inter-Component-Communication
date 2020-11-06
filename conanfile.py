@@ -20,18 +20,6 @@ class IccConan(ConanFile):
         self.run("git clone https://github.com/redradist/Inter-Component-Communication.git .")
         self.run("git submodule update --init --recursive")
 
-    def package_info(self):
-        self.cpp_info.name = "icc"
-        self.cpp_info.includedirs = ['src']  # Ordered list of include paths
-        self.cpp_info.libdirs = ['lib']  # Directories where libraries can be found
-        self.cpp_info.bindirs = ['bin']  # Directories where executables and shared libs can be found
-
-    def package(self):
-        self.cpp_info.name = "icc"
-        self.cpp_info.includedirs = ['src']  # Ordered list of include paths
-        self.cpp_info.libdirs = ['lib']  # Directories where libraries can be found
-        self.cpp_info.bindirs = ['bin']  # Directories where executables and shared libs can be found
-
     def build(self):
         cmake = CMake(self)
         cmake.configure()
@@ -39,13 +27,17 @@ class IccConan(ConanFile):
         cmake.test()
 
     def package(self):
-        self.copy("*.h", dst="include", src="icc")
-        self.copy("*.hpp", dst="include", src="icc")
-        self.copy("*icc.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
+        self.copy("*.h", src="src", dst="include")
+        self.copy("*.hpp", src="src", dst="include")
+        self.copy("*ICC.lib", dst="lib", keep_path=False)
+        self.copy("*ICC.dll", dst="bin", keep_path=False)
+        self.copy("*ICC.so", dst="lib", keep_path=False)
+        self.copy("*ICC.dylib", dst="lib", keep_path=False)
+        self.copy("*ICC.a", dst="lib", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = ["icc"]
+        self.cpp_info.name = "icc"
+        self.cpp_info.libs = ["ICC"]
+        self.cpp_info.includedirs = ['include']
+        self.cpp_info.libdirs = ['lib']
+        self.cpp_info.bindirs = ['bin']
