@@ -3,7 +3,7 @@ from conans import ConanFile, CMake, tools
 
 class IccConan(ConanFile):
     name = "icc"
-    version = "1.0"
+    version = "1.0.0"
     license = "MIT"
     author = "Denis Kotov, redradist@gmail.com"
     url = "https://github.com/redradist/Inter-Component-Communication.git"

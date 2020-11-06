@@ -1,5 +1,5 @@
 [requires]
-icc/1.0@redradist/stable
+icc/1.0.0@redradist/stable
 
 [generators]
 cmake
