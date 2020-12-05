@@ -19,7 +19,7 @@ namespace os {
 class EventLoop::EventLoopImpl : public IEventLoop {
  public:
   EventLoopImpl() = default;
-  EventLoopImpl(std::nullptr_t);
+  explicit EventLoopImpl(std::nullptr_t);
   ~EventLoopImpl();
 
   void run() override;

@@ -9,9 +9,8 @@
 
 #include "Common.hpp"
 #include "TimerImpl.hpp"
-//TODO(redradist): Uncomment when possible
-//#include "SocketImpl.hpp"
-//#include "ServerSocketImpl.hpp"
+#include "SocketImpl.hpp"
+#include "ServerSocketImpl.hpp"
 
 namespace icc {
 
@@ -25,7 +24,7 @@ struct SocketsWorkerThreadParams {
 class EventLoop::EventLoopImpl : public IEventLoop {
  public:
   EventLoopImpl() = default;
-  EventLoopImpl(std::nullptr_t);
+  explicit EventLoopImpl(std::nullptr_t);
   ~EventLoopImpl();
 
   void run() override;
@@ -36,7 +35,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue);
   std::shared_ptr<ServerSocket::ServerSocketImpl> createServerSocketImpl(const Handle & _socketHandle);
   std::shared_ptr<Socket::SocketImpl> createSocketImpl(const std::string& _address, uint16_t _port);
-//  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
+  std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle &osObject,
                             const EventType &eventType,

@@ -82,11 +82,11 @@ std::shared_ptr<Socket> EventLoop::createSocket(const std::string& _address, con
 }
 
 std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
-//  auto socketImpl = impl_ptr_->createSocketImpl(_socketHandle);
-//  if (!socketImpl) {
-//    return nullptr;
-//  }
-  return nullptr;
+  auto socketImpl = impl_ptr_->createSocketImpl(_socketHandle);
+  if (!socketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<Socket>(new Socket(socketImpl));
 }
 
 void EventLoop::registerObjectEvents(const Handle & osObject,

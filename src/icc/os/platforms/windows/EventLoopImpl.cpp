@@ -21,8 +21,6 @@ extern "C" {
 #include <memory>
 
 #include "Common.hpp"
-#include "ServerSocketImpl.hpp"
-#include "SocketImpl.hpp"
 #include "EventLoopImpl.hpp"
 
 namespace icc {
@@ -145,30 +143,30 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   }
   return socketPtr;
 }
-//
-//std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
-//  if(_socketHandle.fd_ < 0) {
-//    perror("socket");
-//    return nullptr;
-//  }
-//
-//  auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
-//  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
-//  registerObjectEvents(_socketHandle, EventType::READ, readCallback);
-//  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
-//  registerObjectEvents(_socketHandle, EventType::WRITE, writeCallback);
-//  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
-//  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-//    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-//    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+
+std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
+  if(_socketHandle.handle_ < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
+  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(_socketHandle, EventType::kRead, readCallback);
+  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
+  registerObjectEvents(_socketHandle, EventType::kWrite, writeCallback);
+  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, EventType::kRead, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, EventType::kWrite, writeCallback);
 //    ::close(socket->socket_handle_.fd_);
-//  });
-//
-//  if (setSocketBlockingMode(_socketHandle.fd_, false)) {
-//    socketPtr->setBlockingMode(false);
-//  }
-//  return socketPtr;
-//}
+  });
+
+  if (setSocketBlockingMode(reinterpret_cast<SOCKET>(_socketHandle.handle_), false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
 
 bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
