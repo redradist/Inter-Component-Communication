@@ -22,6 +22,7 @@ extern "C" {
 
 #include "Common.hpp"
 #include "ServerSocketImpl.hpp"
+#include "SocketImpl.hpp"
 #include "EventLoopImpl.hpp"
 
 namespace icc {
@@ -63,7 +64,8 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
   return (::ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
 }
 
-std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
+std::shared_ptr<ServerSocket::ServerSocketImpl>
+EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
   const SOCKET kServerSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
   if(kServerSocketFd < 0) {
     perror("socket");
@@ -76,7 +78,7 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
     ::closesocket(kServerSocketFd);
   });
 
-  sockaddr_in addr;
+  sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(_port);
@@ -93,7 +95,8 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   return socketPtr;
 }
 
-std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
+std::shared_ptr<ServerSocket::ServerSocketImpl>
+EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
   if(_socketHandle.handle_ < 0) {
     perror("socket");
     return nullptr;
@@ -110,40 +113,38 @@ std::shared_ptr<ServerSocket::ServerSocketImpl> EventLoop::EventLoopImpl::create
   }
   return socketPtr;
 }
-//
-//std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
-//  const int kSocketFd = ::socket(AF_INET, SOCK_STREAM, 0);
-//  if(kSocketFd < 0) {
-//    perror("socket");
-//    return nullptr;
-//  }
-//
-//  auto socketRawPtr = new Socket::SocketImpl(Handle{kSocketFd});
-//  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
-//  registerObjectEvents(Handle{kSocketFd}, EventType::READ, readCallback);
-//  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
-//  registerObjectEvents(Handle{kSocketFd}, EventType::WRITE, writeCallback);
-//  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
-//  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-//    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-//    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+
+std::shared_ptr<Socket::SocketImpl>
+EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
+  const SOCKET kSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
+  if(kSocketFd < 0) {
+    perror("socket");
+    return nullptr;
+  }
+
+  auto socketRawPtr = new Socket::SocketImpl(Handle{reinterpret_cast<HANDLE>(kSocketFd)});
+  function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
+  function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
+  auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, EventType::kRead, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, EventType::kWrite, writeCallback);
 //    ::close(socket->socket_handle_.fd_);
-//  });
-//
-//  sockaddr_in addr;
-//  addr.sin_family = AF_INET;
-//  addr.sin_port = htons(_port);
-//  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
-//  if(::connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-//    perror("connect");
-//    return nullptr;
-//  }
-//
-//  if (setSocketBlockingMode(kSocketFd, false)) {
-//    socketPtr->setBlockingMode(false);
-//  }
-//  return socketPtr;
-//}
+  });
+
+  sockaddr_in addr{};
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(_port);
+  if(::connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    perror("connect");
+    return nullptr;
+  }
+
+  if (setSocketBlockingMode(kSocketFd, false)) {
+    socketPtr->setBlockingMode(false);
+  }
+  return socketPtr;
+}
 //
 //std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
 //  if(_socketHandle.fd_ < 0) {
@@ -184,7 +185,7 @@ DWORD WINAPI socketsWorkerThread(LPVOID completionPortID) {
   while(params->execute_.load(std::memory_order_acquire)) {
     if (::GetQueuedCompletionStatus(params->io_completion_port_.handle_,
                                     &bytesTransferred,
-                                    (LPDWORD)&perHandleData,
+                                    (PULONG_PTR)&perHandleData,
                                     (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
       printf("GetQueuedCompletionStatus() failed with error %d\n", GetLastError());
       return 0;
@@ -196,7 +197,7 @@ DWORD WINAPI socketsWorkerThread(LPVOID completionPortID) {
     // then close the socket and cleanup the SOCKET_INFORMATION structure
     // associated with the socket
     if (bytesTransferred == 0) {
-      printf("Closing socket %d\n", perHandleData->socket);
+      printf("Closing socket %lld\n", perHandleData->socket);
       if (::closesocket(perHandleData->socket) == SOCKET_ERROR) {
         printf("closesocket() failed with error %d\n", WSAGetLastError());
         return 0;

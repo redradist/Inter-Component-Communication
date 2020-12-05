@@ -73,13 +73,13 @@ std::shared_ptr<ServerSocket> EventLoop::createServerSocket(const Handle & _serv
   return std::shared_ptr<ServerSocket>(new ServerSocket(serverSocketImpl));
 }
 
-//std::shared_ptr<Socket> EventLoop::createSocket(const std::string& _address, const uint16_t _port) {
-//  auto socketImpl = impl_ptr_->createSocketImpl(_address, _port);
-//  if (!socketImpl) {
-//    return nullptr;
-//  }
-//  return std::shared_ptr<Socket>(new Socket(socketImpl));
-//}
+std::shared_ptr<Socket> EventLoop::createSocket(const std::string& _address, const uint16_t _port) {
+  auto socketImpl = impl_ptr_->createSocketImpl(_address, _port);
+  if (!socketImpl) {
+    return nullptr;
+  }
+  return std::shared_ptr<Socket>(new Socket(socketImpl));
+}
 
 std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
 //  auto socketImpl = impl_ptr_->createSocketImpl(_socketHandle);
