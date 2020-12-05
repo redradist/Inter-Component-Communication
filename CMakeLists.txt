@@ -12,7 +12,7 @@ if (NOT CMAKE_CXX_STANDARD IN_LIST ICC_SUPPORTED_CXX_STANDARDS)
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=old-style-cast")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-stack-address")
     else()
@@ -30,7 +30,7 @@ elseif(WIN32)
 endif ()
 message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
 
-add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES} src/icc/os/platforms/windows/Common.hpp)
+add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
