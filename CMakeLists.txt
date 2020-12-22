@@ -40,4 +40,4 @@ elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
 endif ()
 
-add_subdirectory(test)
+#add_subdirectory(test)

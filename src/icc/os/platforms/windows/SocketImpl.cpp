@@ -56,6 +56,15 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
   std::lock_guard<std::mutex> lock{read_mtx_};
   while (!read_requests_queue_.empty()) {
     auto & promiseChunk = read_requests_queue_.front();
+
+//    if (WSARecv(Accept, &(PerIoData->DataBuf), 1, &RecvBytes, &Flags, &(PerIoData->Overlapped), NULL) == SOCKET_ERROR)
+//    {
+//      if (WSAGetLastError() != ERROR_IO_PENDING)
+//      {
+//        printf("WSARecv() failed with error %d\n", WSAGetLastError());
+//      }
+//    }
+
     bool isRecvError = false;
     do {
       const int kRecvLen = ::recv(reinterpret_cast<SOCKET>(socket_handle_.handle_),

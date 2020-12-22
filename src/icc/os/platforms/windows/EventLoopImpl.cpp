@@ -27,9 +27,21 @@ namespace icc {
 
 namespace os {
 
+typedef struct _PER_HANDLE_DATA
+{
+  SOCKET        Socket;
+  SOCKADDR_STORAGE  ClientAddr;
+  // Other information useful to be associated with the handle
+} PER_HANDLE_DATA, * LPPER_HANDLE_DATA;
+
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
   // Step 1:
+  int iResult = ::WSAStartup(MAKEWORD(2, 2), &wsa_data_);
+  if (iResult != NO_ERROR) {
+    wprintf(L"Error at WSAStartup()\n");
+    throw std::runtime_error("WSAStartup is failed");
+  }
   io_completion_port_ = Handle{::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr,0,0)};
   event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
 }
@@ -56,7 +68,9 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
 
 bool
 EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
-  if (_fd < 0) return false;
+  if (_fd < 0) {
+    return false;
+  }
 
   unsigned long mode = _isBlocking ? 0 : 1;
   return (::ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
@@ -80,8 +94,9 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(_port);
-  if(::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-    perror("bind");
+  if(SOCKET_ERROR == ::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))) {
+    auto err = WSAGetLastError();
+    wprintf(L"bind failed with error %u\n", err);
     return nullptr;
   }
 
@@ -145,10 +160,26 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
 }
 
 std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
+  PER_HANDLE_DATA *PerHandleData = nullptr;
+  SOCKADDR_IN saRemote;
+  SOCKET Accept;
+  int RemoteLen;
+
   if(_socketHandle.handle_ < 0) {
     perror("socket");
     return nullptr;
   }
+
+  // Step 6:
+  // Create per-handle data information structure to associate with the socket
+  RemoteLen = sizeof(saRemote);
+  PerHandleData = (LPPER_HANDLE_DATA)GlobalAlloc(GPTR, sizeof(PER_HANDLE_DATA));
+  printf("Socket number %d connected\n", Accept);
+  PerHandleData->Socket = Accept;
+  ::memcpy(&PerHandleData->ClientAddr, &saRemote, RemoteLen);
+  // Step 7:
+  // Associate the accepted socket with the completion port
+  ::CreateIoCompletionPort((HANDLE) Accept, io_completion_port_.handle_, (DWORD) PerHandleData, 0);
 
   auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
@@ -172,8 +203,8 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-DWORD WINAPI socketsWorkerThread(LPVOID completionPortID) {
-  auto* params = static_cast<SocketsWorkerThreadParams*>(completionPortID);
+DWORD WINAPI socketsWorkerThread(LPVOID completionPortId) {
+  auto* params = static_cast<SocketsWorkerThreadParams*>(completionPortId);
   DWORD bytesTransferred;
   LpperHandleData perHandleData;
   LpperIOOperationData perIoData;
@@ -262,18 +293,17 @@ void EventLoop::EventLoopImpl::run() {
   // Determine how many processors are on the system
   SYSTEM_INFO systemInfo;
   ::GetSystemInfo(&systemInfo);
+  sockets_worker_thread_params_ = std::unique_ptr<SocketsWorkerThreadParams>(new SocketsWorkerThreadParams{
+      io_completion_port_,
+      execute_
+  });
   for (int i = 0; i < systemInfo.dwNumberOfProcessors; i++) {
-    HANDLE threadHandle;
     // Create a server worker thread, and pass the
     // completion port to the thread. NOTE: the
     // ServerWorkerThread procedure is not defined in this listing.
-    sockets_worker_thread_params_ = std::unique_ptr<SocketsWorkerThreadParams>(new SocketsWorkerThreadParams{
-        io_completion_port_,
-        execute_
-    });
-    threadHandle = ::CreateThread(nullptr, 0, &socketsWorkerThread, sockets_worker_thread_params_.get(), 0, nullptr);
-    // Close the thread handle
-    ::CloseHandle(threadHandle);
+    sockets_worker_threads_.push_back(
+        ::CreateThread(nullptr, 0, &socketsWorkerThread, sockets_worker_thread_params_.get(), 0, nullptr)
+    );
   }
 
   // Step 3:

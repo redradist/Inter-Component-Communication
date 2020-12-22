@@ -63,6 +63,8 @@ class EventLoop::EventLoopImpl : public IEventLoop {
 
   Handle io_completion_port_;
   std::atomic_bool execute_{true};
+  WSADATA wsa_data_;
+  std::vector<HANDLE> sockets_worker_threads_;
   std::thread event_loop_thread_;
   std::unique_ptr<SocketsWorkerThreadParams> sockets_worker_thread_params_;
   std::mutex internal_mtx_;

@@ -31,15 +31,17 @@ class ServerSocket::ServerSocketImpl {
   friend class EventLoop;
 
   explicit ServerSocketImpl(const Handle & socketHandle, const Handle & ioCompletionPort);
-  void onSocketDataAvailable(const Handle &_);
+  void waitAcceptAsync();
   void setBlockingMode(bool isBlocking);
 
+  std::thread thr_;
   Handle socket_handle_{kInvalidHandle};
   Handle io_completion_port_{kInvalidHandle};
   bool is_blocking_ = false;
   std::vector<std::shared_ptr<Socket>> client_sockets_;
   std::deque<std::promise<std::shared_ptr<Socket>>> accept_queue_;
   std::atomic_bool is_new_client_available_event_{false};
+  std::condition_variable var_;
 
   std::mutex mtx_;
 };
