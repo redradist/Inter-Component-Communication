@@ -38,10 +38,10 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle &osObject,
-                            const EventType &eventType,
+                            const long event,
                             function_wrapper<void(const Handle &)> callback);
   void unregisterObjectEvents(const Handle &osObject,
-                              const EventType &eventType,
+                              const long event,
                               function_wrapper<void(const Handle &)> callback);
 
  private:
@@ -55,9 +55,11 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   void removeFdFrom(std::lock_guard<std::mutex> &lock,
                     std::vector<HandleListeners> &listeners,
                     const std::vector<InternalEvent> &removeListeners);
-  void initFds(std::vector<HandleListeners> &fds, fd_set &fdSet, int &maxFd) const;
-  void handleLoopEvents(fd_set fdSet);
-  void handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet);
+  void initFds(std::vector<HandleListeners> &fds,
+               WSAEVENT *eventArray,
+               size_t numEvents) const;
+  void handleLoopEvents(WSAEVENT eventObj);
+  void handleHandlesEvents(std::vector<HandleListeners> &fds, WSAEVENT event);
   static std::vector<HandleListeners>::iterator
   findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
 
@@ -69,36 +71,39 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::unique_ptr<SocketsWorkerThreadParams> sockets_worker_thread_params_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};
-  std::vector<InternalEvent> add_read_listeners_;
-  std::vector<InternalEvent> remove_read_listeners_;
-  std::vector<InternalEvent> add_write_listeners_;
-  std::vector<InternalEvent> remove_write_listeners_;
-  std::vector<InternalEvent> add_error_listeners_;
-  std::vector<InternalEvent> remove_error_listeners_;
-  std::vector<HandleListeners> read_listeners_;
-  std::vector<HandleListeners> write_listeners_;
-  std::vector<HandleListeners> error_listeners_;
+  std::vector<InternalEvent> add_event_listeners_;
+  std::vector<InternalEvent> remove_event_listeners_;
+  std::vector<HandleListeners> event_listeners_;
 };
 
 struct EventLoop::EventLoopImpl::InternalEvent {
   Handle object_;
+  long event_;
   function_wrapper<void(const Handle &)> callback_;
 
-  InternalEvent(const Handle fd, function_wrapper<void(const Handle &)> callback)
-      : object_{fd}, callback_{std::move(callback)} {
+  InternalEvent(const Handle fd, const long event, function_wrapper<void(const Handle &)> callback)
+      : object_{fd}
+      , event_{}
+      , callback_{std::move(callback)} {
   }
 };
 
 struct EventLoop::EventLoopImpl::HandleListeners {
-  HandleListeners(const Handle fd)
-      : handle_{fd} {
+  HandleListeners(const Handle fd, const WSAEVENT event)
+      : handle_{fd}
+      , event_{event} {
   }
 
-  HandleListeners(const Handle fd, std::vector<function_wrapper<void(const Handle &)>> callbacks)
-      : handle_{fd}, callbacks_{std::move(callbacks)} {
+  HandleListeners(const Handle fd,
+                  const WSAEVENT event,
+                  std::vector<function_wrapper<void(const Handle &)>> callbacks)
+      : handle_{fd}
+      , event_{event}
+      , callbacks_{std::move(callbacks)} {
   }
 
   Handle handle_;
+  WSAEVENT event_;
   std::vector<function_wrapper<void(const Handle &)>> callbacks_;
 };
 

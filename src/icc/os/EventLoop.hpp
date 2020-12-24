@@ -15,6 +15,7 @@
 #include <thread>
 #include <icc/Context.hpp>
 #include <icc/_private/helpers/function_wrapper.hpp>
+#include <WinSock2.h>
 
 #include "IEventLoop.hpp"
 
@@ -49,10 +50,10 @@ class EventLoop : public IEventLoop {
   std::shared_ptr<Socket> createSocket(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle & osObject,
-                            const EventType & eventType,
+                            const long event,
                             function_wrapper<void(const Handle&)> callback);
   void unregisterObjectEvents(const Handle & osObject,
-                              const EventType & eventType,
+                              const long event,
                               function_wrapper<void(const Handle&)> callback);
 
  private:

@@ -90,13 +90,13 @@ std::shared_ptr<Socket> EventLoop::createSocket(const Handle & _socketHandle) {
 }
 
 void EventLoop::registerObjectEvents(const Handle & osObject,
-                                     const EventType & eventType,
+                                     const long event,
                                      function_wrapper<void(const Handle&)> callback) {
-  impl_ptr_->registerObjectEvents(osObject, eventType, std::move(callback));
+  impl_ptr_->registerObjectEvents(osObject, event, std::move(callback));
 }
 
 void EventLoop::unregisterObjectEvents(const Handle & osObject,
-                                       const EventType & eventType,
+                                       const long eventType,
                                        function_wrapper<void(const Handle&)> callback) {
   impl_ptr_->unregisterObjectEvents(osObject, eventType, std::move(callback));
 }

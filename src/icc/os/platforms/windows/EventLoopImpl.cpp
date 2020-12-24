@@ -55,15 +55,16 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
 
 std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   //TODO(redradist): Timer should be created (kTimerFd)
-  const int kTimerFd = 0;
-  auto timer = new Timer::TimerImpl(Handle{kTimerFd});
-  function_wrapper<void(const Handle &)> callback(&Timer::TimerImpl::onTimerExpired, timer);
-  registerObjectEvents(Handle{kTimerFd}, EventType::kRead, callback);
-  return std::shared_ptr<Timer::TimerImpl>(timer,
-                                           [this, callback](Timer::TimerImpl *timer) {
-                                             unregisterObjectEvents(timer->timer_handle_, EventType::kRead, callback);
-                                             //TODO(redradist): Timer should be closed
-                                           });
+//  const int kTimerFd = 0;
+//  auto timer = new Timer::TimerImpl(Handle{kTimerFd});
+//  function_wrapper<void(const Handle &)> callback(&Timer::TimerImpl::onTimerExpired, timer);
+//  registerObjectEvents(Handle{kTimerFd}, EventType::kRead, callback);
+//  return std::shared_ptr<Timer::TimerImpl>(timer,
+//                                           [this, callback](Timer::TimerImpl *timer) {
+//                                             unregisterObjectEvents(timer->timer_handle_, EventType::kRead, callback);
+//                                             //TODO(redradist): Timer should be closed
+//                                           });
+  return nullptr;
 }
 
 bool
@@ -73,7 +74,7 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
   }
 
   unsigned long mode = _isBlocking ? 0 : 1;
-  return (::ioctlsocket(_fd, FIONBIO, &mode) == 0) ? true : false;
+  return (::ioctlsocket(_fd, FIONBIO, &mode) == 0);
 }
 
 std::shared_ptr<ServerSocket::ServerSocketImpl>
@@ -140,9 +141,9 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, EventType::kRead, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, EventType::kWrite, writeCallback);
-//    ::close(socket->socket_handle_.fd_);
+    unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
+    ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
   });
 
   sockaddr_in addr{};
@@ -183,14 +184,14 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
 
   auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
-  registerObjectEvents(_socketHandle, EventType::kRead, readCallback);
+  registerObjectEvents(_socketHandle, FD_READ, readCallback);
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
-  registerObjectEvents(_socketHandle, EventType::kWrite, writeCallback);
+  registerObjectEvents(_socketHandle, FD_WRITE, writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, EventType::kRead, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, EventType::kWrite, writeCallback);
-//    ::close(socket->socket_handle_.fd_);
+    unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
+    ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
   });
 
   if (setSocketBlockingMode(reinterpret_cast<SOCKET>(_socketHandle.handle_), false)) {
@@ -203,114 +204,32 @@ bool EventLoop::EventLoopImpl::isRun() const {
   return execute_.load(std::memory_order_acquire);
 }
 
-DWORD WINAPI socketsWorkerThread(LPVOID completionPortId) {
-  auto* params = static_cast<SocketsWorkerThreadParams*>(completionPortId);
-  DWORD bytesTransferred;
-  LpperHandleData perHandleData;
-  LpperIOOperationData perIoData;
-  DWORD sendBytes, recvBytes;
-  DWORD flags;
-
-  while(params->execute_.load(std::memory_order_acquire)) {
-    if (::GetQueuedCompletionStatus(params->io_completion_port_.handle_,
-                                    &bytesTransferred,
-                                    (PULONG_PTR)&perHandleData,
-                                    (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
-      printf("GetQueuedCompletionStatus() failed with error %d\n", GetLastError());
-      return 0;
-    } else {
-      printf("GetQueuedCompletionStatus() is OK!\n");
-    }
-
-    // First check to see if an error has occurred on the socket and if so
-    // then close the socket and cleanup the SOCKET_INFORMATION structure
-    // associated with the socket
-    if (bytesTransferred == 0) {
-      printf("Closing socket %lld\n", perHandleData->socket);
-      if (::closesocket(perHandleData->socket) == SOCKET_ERROR) {
-        printf("closesocket() failed with error %d\n", WSAGetLastError());
-        return 0;
-      } else {
-        printf("closesocket() is fine!\n");
-      }
-
-      ::GlobalFree(perHandleData);
-      ::GlobalFree(perIoData);
-      continue;
-    }
-
-    // Check to see if the BytesRECV field equals zero. If this is so, then
-    // this means a WSARecv call just completed so update the BytesRECV field
-    // with the BytesTransferred value from the completed WSARecv() call
-    if (perIoData->bytesRecv == 0) {
-      perIoData->bytesRecv = bytesTransferred;
-      perIoData->bytesSend = 0;
-    } else {
-      perIoData->bytesSend += bytesTransferred;
-    }
-
-    if (perIoData->bytesRecv > perIoData->bytesSend) {
-      // Post another WSASend() request.
-      // Since WSASend() is not guaranteed to send all of the bytes requested,
-      // continue posting WSASend() calls until all received bytes are sent.
-      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
-      perIoData->dataBuf.buf = perIoData->buffer + perIoData->bytesSend;
-      perIoData->dataBuf.len = perIoData->bytesRecv - perIoData->bytesSend;
-      if (::WSASend(perHandleData->socket, &(perIoData->dataBuf), 1, &sendBytes, 0,
-                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
-        if (::WSAGetLastError() != ERROR_IO_PENDING) {
-          printf("WSASend() failed with error %d\n", WSAGetLastError());
-          return 0;
-        }
-      } else {
-        printf("WSASend() is OK!\n");
-      }
-    } else {
-      perIoData->bytesRecv = 0;
-      // Now that there are no more bytes to send post another WSARecv() request
-      flags = 0;
-      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
-      perIoData->dataBuf.len = DATA_BUFF_SIZE;
-      perIoData->dataBuf.buf = perIoData->buffer;
-
-      if (::WSARecv(perHandleData->socket, &(perIoData->dataBuf), 1, &recvBytes, &flags,
-                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
-        if (::WSAGetLastError() != ERROR_IO_PENDING) {
-          printf("WSARecv() failed with error %d\n", WSAGetLastError());
-          return 0;
-        }
-      } else {
-        printf("WSARecv() is OK!\n");
-      }
-    }
-  }
-}
-
 void EventLoop::EventLoopImpl::run() {
-  execute_.store(true, std::memory_order_release);
-
-  // Step 2:
-  // Determine how many processors are on the system
-  SYSTEM_INFO systemInfo;
-  ::GetSystemInfo(&systemInfo);
-  sockets_worker_thread_params_ = std::unique_ptr<SocketsWorkerThreadParams>(new SocketsWorkerThreadParams{
-      io_completion_port_,
-      execute_
-  });
-  for (int i = 0; i < systemInfo.dwNumberOfProcessors; i++) {
-    // Create a server worker thread, and pass the
-    // completion port to the thread. NOTE: the
-    // ServerWorkerThread procedure is not defined in this listing.
-    sockets_worker_threads_.push_back(
-        ::CreateThread(nullptr, 0, &socketsWorkerThread, sockets_worker_thread_params_.get(), 0, nullptr)
-    );
+  event_loop_handle_.handle_ = CreateEvent(
+      nullptr,                        // default security attributes
+      TRUE,                           // manual-reset event
+      FALSE,                          // initial state is nonsignaled
+      TEXT("AddRemoveEvent")    // object name
+  );
+  if (event_loop_handle_.handle_ == INVALID_HANDLE_VALUE) {
+    std::cerr << strerror(errno) << "\n";
+    throw "Error to create CreateEvent(...) !!";
   }
-
-  // Step 3:
-  // Create worker threads based on the number of
-  // processors available on the system. For this
-  // simple case, we create one worker thread for each processor.
+  execute_.store(true, std::memory_order_release);
+  WSAEVENT eventArray[WSA_MAXIMUM_WAIT_EVENTS];
+  eventArray[0] = event_loop_handle_.handle_;
   while (execute_.load(std::memory_order_acquire)) {
+    initFds(event_listeners_, &eventArray[1], WSA_MAXIMUM_WAIT_EVENTS-1);
+
+    DWORD event;
+    if ((event = ::WSAWaitForMultipleEvents(event_listeners_.size(), eventArray, FALSE, WSA_INFINITE, FALSE)) == WSA_WAIT_FAILED) {
+      printf("WSAWaitForMultipleEvents() failed with error %d\n", WSAGetLastError());
+    } else {
+      printf("WSAWaitForMultipleEvents() is pretty damn OK!\n");
+    }
+
+    handleLoopEvents(eventArray[event - WSA_WAIT_EVENT_0]);
+    handleHandlesEvents(event_listeners_, eventArray[event - WSA_WAIT_EVENT_0]);
   }
 }
 
@@ -322,48 +241,24 @@ void EventLoop::EventLoopImpl::stop() {
 
 void EventLoop::EventLoopImpl::registerObjectEvents(
     const Handle &osObject,
-    const EventType &eventType,
+    const long event,
     function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  switch (eventType) {
-    case EventType::kRead: {
-      add_read_listeners_.emplace_back(osObject, callback);
-      break;
-    }
-    case EventType::kWrite: {
-      add_write_listeners_.emplace_back(osObject, callback);
-      break;
-    }
-    case EventType::kError: {
-      add_error_listeners_.emplace_back(osObject, callback);
-      break;
-    }
+  if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
+    add_event_listeners_.emplace_back(osObject, event, callback);
+    ::SetEvent(event_loop_handle_.handle_);
   }
-//  eventfd_t updated = 1;
-//  eventfd_write(event_loop_handle_.fd_, updated);
 }
 
 void EventLoop::EventLoopImpl::unregisterObjectEvents(
     const Handle &osObject,
-    const EventType &eventType,
+    const long event,
     function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  switch (eventType) {
-    case EventType::kRead: {
-      remove_read_listeners_.emplace_back(osObject, callback);
-      break;
-    }
-    case EventType::kWrite: {
-      remove_write_listeners_.emplace_back(osObject, callback);
-      break;
-    }
-    case EventType::kError: {
-      remove_error_listeners_.emplace_back(osObject, callback);
-      break;
-    }
+  if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
+    remove_event_listeners_.emplace_back(osObject, event, callback);
+    ::SetEvent(event_loop_handle_.handle_);
   }
-//  eventfd_t updated = 1;
-//  eventfd_write(event_loop_handle_.fd_, updated);
 }
 
 void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
@@ -377,7 +272,18 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
         auto erased = std::unique(foundFd->callbacks_.begin(), foundFd->callbacks_.end());
         foundFd->callbacks_.erase(erased, foundFd->callbacks_.end());
       } else {
-        listeners.emplace_back(fdInfo.object_, std::vector<function_wrapper<void(const Handle &)>>{fdInfo.callback_});
+        WSAEVENT eventObject = ::WSACreateEvent();
+        if (eventObject == WSA_INVALID_EVENT) {
+          printf("WSACreateEvent() failed with error %d\n", WSAGetLastError());
+          return;
+        }
+        if (::WSAEventSelect(reinterpret_cast<SOCKET>(fdInfo.object_.handle_), eventObject, fdInfo.event_) == SOCKET_ERROR){
+          printf("WSAEventSelect() failed with error %d\n", WSAGetLastError());
+          return;
+        } else {
+          printf("WSAEventSelect() is pretty fine!\n");
+        }
+        listeners.emplace_back(fdInfo.object_, eventObject, std::vector<function_wrapper<void(const Handle &)>>{fdInfo.callback_});
       }
     }
   }
@@ -401,36 +307,29 @@ void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
 }
 
 void EventLoop::EventLoopImpl::initFds(std::vector<HandleListeners> &fds,
-                                       fd_set &fdSet,
-                                       int &maxFd) const {
-//  for (const auto &fdInfo : fds) {
-//    FD_SET(fdInfo.handle_.fd_, &fdSet);
-//    if (fdInfo.handle_.fd_ > maxFd) {
-//      maxFd = fdInfo.handle_.fd_;
-//    }
-//  }
-}
-
-void EventLoop::EventLoopImpl::handleLoopEvents(fd_set fdSet) {
-  if (FD_ISSET(event_loop_handle_.handle_, &fdSet)) {
-    std::lock_guard<std::mutex> lock(internal_mtx_);
-//    eventfd_t updatedEvent;
-//    eventfd_read(event_loop_handle_.fd_, &updatedEvent);
-//    if (updatedEvent > 0) {
-      addFdTo(lock, read_listeners_, add_read_listeners_);
-      addFdTo(lock, write_listeners_, add_write_listeners_);
-      addFdTo(lock, error_listeners_, add_error_listeners_);
-      removeFdFrom(lock, read_listeners_, remove_read_listeners_);
-      removeFdFrom(lock, write_listeners_, remove_write_listeners_);
-      removeFdFrom(lock, error_listeners_, remove_error_listeners_);
-//      eventfd_write(event_loop_handle_.handle_, 0);
-//    }
+                                       WSAEVENT *eventArray,
+                                       size_t numEvents) const {
+  unsigned i = 0;
+  for (const auto &fdInfo : fds) {
+    if (i >= numEvents) {
+      break;
+    }
+    eventArray[i++] = fdInfo.event_;
   }
 }
 
-void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> &fds, fd_set &fdSet) {
+void EventLoop::EventLoopImpl::handleLoopEvents(const WSAEVENT eventObj) {
+  if (event_loop_handle_.handle_ == eventObj) {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
+    ::ResetEvent(event_loop_handle_.handle_);
+    addFdTo(lock, event_listeners_, add_event_listeners_);
+    removeFdFrom(lock, event_listeners_, remove_event_listeners_);
+  }
+}
+
+void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> &fds, WSAEVENT event) {
   for (const auto &fdInfo : fds) {
-    if (FD_ISSET(fdInfo.handle_.handle_, &fdSet)) {
+    if (event == fdInfo.event_) {
       for (const auto &callback : fdInfo.callbacks_) {
         callback(fdInfo.handle_);
       }
@@ -446,6 +345,90 @@ EventLoop::EventLoopImpl::findOSObjectIn(const Handle &osObject, std::vector<Han
                               });
   return foundFd;
 }
+
+// TODO(redradist): Use this as example for CompletionPort
+//DWORD WINAPI socketsWorkerThread(LPVOID completionPortId) {
+//  auto* params = static_cast<SocketsWorkerThreadParams*>(completionPortId);
+//  DWORD bytesTransferred;
+//  LpperHandleData perHandleData;
+//  LpperIOOperationData perIoData;
+//  DWORD sendBytes, recvBytes;
+//  DWORD flags;
+//
+//  while(params->execute_.load(std::memory_order_acquire)) {
+//    if (::GetQueuedCompletionStatus(params->io_completion_port_.handle_,
+//                                    &bytesTransferred,
+//                                    (PULONG_PTR)&perHandleData,
+//                                    (LPOVERLAPPED *) &perIoData, INFINITE) == 0) {
+//      printf("GetQueuedCompletionStatus() failed with error %d\n", GetLastError());
+//      return 0;
+//    } else {
+//      printf("GetQueuedCompletionStatus() is OK!\n");
+//    }
+//
+//    // First check to see if an error has occurred on the socket and if so
+//    // then close the socket and cleanup the SOCKET_INFORMATION structure
+//    // associated with the socket
+//    if (bytesTransferred == 0) {
+//      printf("Closing socket %lld\n", perHandleData->socket);
+//      if (::closesocket(perHandleData->socket) == SOCKET_ERROR) {
+//        printf("closesocket() failed with error %d\n", WSAGetLastError());
+//        return 0;
+//      } else {
+//        printf("closesocket() is fine!\n");
+//      }
+//
+//      ::GlobalFree(perHandleData);
+//      ::GlobalFree(perIoData);
+//      continue;
+//    }
+//
+//    // Check to see if the BytesRECV field equals zero. If this is so, then
+//    // this means a WSARecv call just completed so update the BytesRECV field
+//    // with the BytesTransferred value from the completed WSARecv() call
+//    if (perIoData->bytesRecv == 0) {
+//      perIoData->bytesRecv = bytesTransferred;
+//      perIoData->bytesSend = 0;
+//    } else {
+//      perIoData->bytesSend += bytesTransferred;
+//    }
+//
+//    if (perIoData->bytesRecv > perIoData->bytesSend) {
+//      // Post another WSASend() request.
+//      // Since WSASend() is not guaranteed to send all of the bytes requested,
+//      // continue posting WSASend() calls until all received bytes are sent.
+//      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
+//      perIoData->dataBuf.buf = perIoData->buffer + perIoData->bytesSend;
+//      perIoData->dataBuf.len = perIoData->bytesRecv - perIoData->bytesSend;
+//      if (::WSASend(perHandleData->socket, &(perIoData->dataBuf), 1, &sendBytes, 0,
+//                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
+//        if (::WSAGetLastError() != ERROR_IO_PENDING) {
+//          printf("WSASend() failed with error %d\n", WSAGetLastError());
+//          return 0;
+//        }
+//      } else {
+//        printf("WSASend() is OK!\n");
+//      }
+//    } else {
+//      perIoData->bytesRecv = 0;
+//      // Now that there are no more bytes to send post another WSARecv() request
+//      flags = 0;
+//      ZeroMemory(&(perIoData->overlapped), sizeof(OVERLAPPED));
+//      perIoData->dataBuf.len = DATA_BUFF_SIZE;
+//      perIoData->dataBuf.buf = perIoData->buffer;
+//
+//      if (::WSARecv(perHandleData->socket, &(perIoData->dataBuf), 1, &recvBytes, &flags,
+//                    &(perIoData->overlapped), nullptr) == SOCKET_ERROR) {
+//        if (::WSAGetLastError() != ERROR_IO_PENDING) {
+//          printf("WSARecv() failed with error %d\n", WSAGetLastError());
+//          return 0;
+//        }
+//      } else {
+//        printf("WSARecv() is OK!\n");
+//      }
+//    }
+//  }
+//}
 
 }
 
