@@ -83,7 +83,7 @@ struct EventLoop::EventLoopImpl::InternalEvent {
 
   InternalEvent(const Handle fd, const long event, function_wrapper<void(const Handle &)> callback)
       : object_{fd}
-      , event_{}
+      , event_{event}
       , callback_{std::move(callback)} {
   }
 };

@@ -10,6 +10,7 @@ extern "C" {
 
 #include <winsock2.h>
 #include <windows.h>
+#include <ws2tcpip.h>
 
 }
 
@@ -80,14 +81,18 @@ EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
 std::shared_ptr<ServerSocket::ServerSocketImpl>
 EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
   const SOCKET kServerSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
-  if(kServerSocketFd < 0) {
+  if(kServerSocketFd == INVALID_SOCKET) {
     perror("socket");
     return nullptr;
   }
 
-  auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{reinterpret_cast<HANDLE>(kServerSocketFd)}, io_completion_port_);
+  auto socketHandle = Handle{reinterpret_cast<HANDLE>(kServerSocketFd)};
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(socketHandle);
+  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(socketHandle, FD_ACCEPT | FD_CLOSE, readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-  [this, kServerSocketFd](ServerSocket::ServerSocketImpl* serverSocket) {
+  [this, kServerSocketFd, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+    unregisterObjectEvents(serverSocket->socket_handle_, FD_ACCEPT | FD_CLOSE, readCallback);
     ::closesocket(kServerSocketFd);
   });
 
@@ -95,8 +100,9 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(_port);
+  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
   if(SOCKET_ERROR == ::bind(kServerSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))) {
-    auto err = WSAGetLastError();
+    auto err = ::WSAGetLastError();
     wprintf(L"bind failed with error %u\n", err);
     return nullptr;
   }
@@ -116,9 +122,12 @@ EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
     return nullptr;
   }
 
-  auto socketRawPtr = new ServerSocket::ServerSocketImpl(_socketHandle, io_completion_port_);
+  auto socketRawPtr = new ServerSocket::ServerSocketImpl(_socketHandle);
+  function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(_socketHandle, FD_ACCEPT | FD_CLOSE, readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
-  [this, _socketHandle](ServerSocket::ServerSocketImpl* serverSocket) {
+  [this, _socketHandle, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
+    unregisterObjectEvents(serverSocket->socket_handle_, FD_ACCEPT | FD_CLOSE, readCallback);
     ::closesocket(reinterpret_cast<SOCKET>(_socketHandle.handle_));
   });
 
@@ -136,9 +145,12 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
     return nullptr;
   }
 
-  auto socketRawPtr = new Socket::SocketImpl(Handle{reinterpret_cast<HANDLE>(kSocketFd)});
+  auto socketHandle = Handle{reinterpret_cast<HANDLE>(kSocketFd)};
+  auto socketRawPtr = new Socket::SocketImpl(socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
+  registerObjectEvents(socketHandle, FD_READ, readCallback);
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
+  registerObjectEvents(socketHandle, FD_WRITE, readCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
     unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
@@ -149,6 +161,7 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(_port);
+  ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
   if(::connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
     perror("connect");
     return nullptr;
@@ -161,26 +174,10 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
 }
 
 std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
-  PER_HANDLE_DATA *PerHandleData = nullptr;
-  SOCKADDR_IN saRemote;
-  SOCKET Accept;
-  int RemoteLen;
-
-  if(_socketHandle.handle_ < 0) {
+  if(_socketHandle.handle_ == INVALID_HANDLE_VALUE) {
     perror("socket");
     return nullptr;
   }
-
-  // Step 6:
-  // Create per-handle data information structure to associate with the socket
-  RemoteLen = sizeof(saRemote);
-  PerHandleData = (LPPER_HANDLE_DATA)GlobalAlloc(GPTR, sizeof(PER_HANDLE_DATA));
-  printf("Socket number %d connected\n", Accept);
-  PerHandleData->Socket = Accept;
-  ::memcpy(&PerHandleData->ClientAddr, &saRemote, RemoteLen);
-  // Step 7:
-  // Associate the accepted socket with the completion port
-  ::CreateIoCompletionPort((HANDLE) Accept, io_completion_port_.handle_, (DWORD) PerHandleData, 0);
 
   auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
@@ -188,11 +185,11 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
   registerObjectEvents(_socketHandle, FD_WRITE, writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
-  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
-    ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
-  });
+                                                       [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+                                                         unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
+                                                         unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
+                                                         ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
+                                                       });
 
   if (setSocketBlockingMode(reinterpret_cast<SOCKET>(_socketHandle.handle_), false)) {
     socketPtr->setBlockingMode(false);
@@ -222,8 +219,9 @@ void EventLoop::EventLoopImpl::run() {
     initFds(event_listeners_, &eventArray[1], WSA_MAXIMUM_WAIT_EVENTS-1);
 
     DWORD event;
-    if ((event = ::WSAWaitForMultipleEvents(event_listeners_.size(), eventArray, FALSE, WSA_INFINITE, FALSE)) == WSA_WAIT_FAILED) {
+    if ((event = ::WSAWaitForMultipleEvents(event_listeners_.size() + 1, eventArray, FALSE, WSA_INFINITE, FALSE)) == WSA_WAIT_FAILED) {
       printf("WSAWaitForMultipleEvents() failed with error %d\n", WSAGetLastError());
+      continue;
     } else {
       printf("WSAWaitForMultipleEvents() is pretty damn OK!\n");
     }
@@ -324,6 +322,8 @@ void EventLoop::EventLoopImpl::handleLoopEvents(const WSAEVENT eventObj) {
     ::ResetEvent(event_loop_handle_.handle_);
     addFdTo(lock, event_listeners_, add_event_listeners_);
     removeFdFrom(lock, event_listeners_, remove_event_listeners_);
+    add_event_listeners_.clear();
+    remove_event_listeners_.clear();
   }
 }
 
@@ -331,6 +331,16 @@ void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> 
   for (const auto &fdInfo : fds) {
     if (event == fdInfo.event_) {
       for (const auto &callback : fdInfo.callbacks_) {
+        WSANETWORKEVENTS NetworkEvents;
+        if (::WSAEnumNetworkEvents(reinterpret_cast<SOCKET>(fdInfo.handle_.handle_),
+                                   fdInfo.event_, &NetworkEvents) == SOCKET_ERROR)
+        {
+          printf("WSAEnumNetworkEvents() failed with error %d\n", WSAGetLastError());
+          return;
+        }
+        else
+          printf("WSAEnumNetworkEvents() should be fine!\n");
+
         callback(fdInfo.handle_);
       }
     }

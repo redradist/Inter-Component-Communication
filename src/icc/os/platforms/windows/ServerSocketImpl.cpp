@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <icc/os/EventLoop.hpp>
+#include <iostream>
 #include "ServerSocketImpl.hpp"
 
 namespace icc {
@@ -17,16 +18,8 @@ typedef struct _PER_HANDLE_DATA
   // Other information useful to be associated with the handle
 } PER_HANDLE_DATA, * LPPER_HANDLE_DATA;
 
-ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle, const Handle & ioCompletionPort)
-    : socket_handle_{socketHandle}
-    , io_completion_port_{ioCompletionPort} {
-  thr_ = std::thread([=] {
-    std::unique_lock<std::mutex> lock{mtx_};
-    var_.wait(lock, [=] {
-      return !accept_queue_.empty();
-    });
-    waitAcceptAsync();
-  });
+ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle)
+    : socket_handle_{socketHandle} {
 }
 
 std::shared_ptr<Socket>
@@ -41,19 +34,21 @@ ServerSocket::ServerSocketImpl::acceptAsync() {
 
   std::lock_guard<std::mutex> lock{mtx_};
   accept_queue_.emplace_back(std::move(promiseResult));
-  var_.notify_one();
+//  var_.notify_one();
 
   return futureResult;
 }
 
-void ServerSocket::ServerSocketImpl::waitAcceptAsync() {
+void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
+  std::lock_guard<std::mutex> lock{mtx_};
+  std::cout << "::accept" << std::endl;
   while (!accept_queue_.empty() && !is_blocking_) {
     SOCKADDR_IN saRemote;
     SOCKET Accept;
     int RemoteLen;
 
     RemoteLen = sizeof(saRemote);
-    Accept = ::WSAAccept(reinterpret_cast<SOCKET>(socket_handle_.handle_), nullptr, nullptr, nullptr, 0);
+    Accept = ::accept(reinterpret_cast<SOCKET>(socket_handle_.handle_), nullptr, nullptr);
 
     auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{reinterpret_cast<HANDLE>(Accept)});
     if (clientSocket) {

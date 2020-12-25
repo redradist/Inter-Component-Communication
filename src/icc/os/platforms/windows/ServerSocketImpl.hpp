@@ -30,13 +30,12 @@ class ServerSocket::ServerSocketImpl {
  private:
   friend class EventLoop;
 
-  explicit ServerSocketImpl(const Handle & socketHandle, const Handle & ioCompletionPort);
-  void waitAcceptAsync();
+  explicit ServerSocketImpl(const Handle & socketHandle);
+  void onSocketDataAvailable(const Handle &_);
   void setBlockingMode(bool isBlocking);
 
   std::thread thr_;
   Handle socket_handle_{kInvalidHandle};
-  Handle io_completion_port_{kInvalidHandle};
   bool is_blocking_ = false;
   std::vector<std::shared_ptr<Socket>> client_sockets_;
   std::deque<std::promise<std::shared_ptr<Socket>>> accept_queue_;

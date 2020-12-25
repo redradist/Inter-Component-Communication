@@ -3,6 +3,7 @@
 //
 
 #include <system_error>
+#include <iostream>
 #include "SocketImpl.hpp"
 
 namespace icc {
@@ -52,36 +53,32 @@ Socket::SocketImpl::receiveAsync() {
 void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
   static ChunkData chunk;
 
+  std::cout << "::recv" << std::endl;
   data_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{read_mtx_};
   while (!read_requests_queue_.empty()) {
     auto & promiseChunk = read_requests_queue_.front();
-
-//    if (WSARecv(Accept, &(PerIoData->DataBuf), 1, &RecvBytes, &Flags, &(PerIoData->Overlapped), NULL) == SOCKET_ERROR)
-//    {
-//      if (WSAGetLastError() != ERROR_IO_PENDING)
-//      {
-//        printf("WSARecv() failed with error %d\n", WSAGetLastError());
-//      }
-//    }
-
-    bool isRecvError = false;
+    int recvError = NO_ERROR;
     do {
-      const int kRecvLen = ::recv(reinterpret_cast<SOCKET>(socket_handle_.handle_),
-                                  reinterpret_cast<char *>(receive_buffer_ptr_.get()),
-                                  RECEIVE_BUFFER_SIZE,
-                                  0);
-      if (kRecvLen > 0) {
-        chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get()+kRecvLen);
-      } else if (0 == kRecvLen || errno == EWOULDBLOCK || errno == EAGAIN) {
+      DWORD recvLen;
+      DWORD flags = 0;
+      WSABUF wsaBuffer;
+      wsaBuffer.buf = reinterpret_cast<char *>(receive_buffer_ptr_.get());
+      wsaBuffer.len = RECEIVE_BUFFER_SIZE;
+      int wsaRecvError = ::WSARecv(reinterpret_cast<SOCKET>(socket_handle_.handle_),
+                &wsaBuffer, 1, &recvLen, &flags, NULL, NULL);
+      int lastRecvError = WSAGetLastError();
+      if (wsaRecvError != SOCKET_ERROR && recvLen > 0) {
+        chunk.insert(chunk.end(), receive_buffer_ptr_.get(), receive_buffer_ptr_.get() + recvLen);
+      } else if (0 == recvLen || lastRecvError == WSAEWOULDBLOCK || lastRecvError == WSATRY_AGAIN) {
         data_available_event_.store(false, std::memory_order_release);
         break;
       } else {
-        isRecvError = true;
+        recvError = wsaRecvError;
         break;
       }
     } while (!is_blocking_);
-    if (isRecvError) {
+    if (recvError != NO_ERROR) {
       promiseChunk.set_exception(
           std::make_exception_ptr(
               std::system_error(errno, std::system_category(), "Socket send error")
@@ -104,6 +101,7 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
 void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
   static size_t currentSentChunkDataSize = 0;
 
+  std::cout << "::send" << std::endl;
   buffer_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{write_mtx_};
   while (!send_chunks_queue_.empty()) {
