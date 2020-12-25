@@ -213,6 +213,12 @@ void EventLoop::EventLoopImpl::run() {
     throw "Error to create CreateEvent(...) !!";
   }
   execute_.store(true, std::memory_order_release);
+  {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
+    addFdTo(lock, event_listeners_, add_event_listeners_);
+    removeFdFrom(lock, event_listeners_, remove_event_listeners_);
+  }
+
   WSAEVENT eventArray[WSA_MAXIMUM_WAIT_EVENTS];
   eventArray[0] = event_loop_handle_.handle_;
   while (execute_.load(std::memory_order_acquire)) {
@@ -222,8 +228,6 @@ void EventLoop::EventLoopImpl::run() {
     if ((event = ::WSAWaitForMultipleEvents(event_listeners_.size() + 1, eventArray, FALSE, WSA_INFINITE, FALSE)) == WSA_WAIT_FAILED) {
       printf("WSAWaitForMultipleEvents() failed with error %d\n", WSAGetLastError());
       continue;
-    } else {
-      printf("WSAWaitForMultipleEvents() is pretty damn OK!\n");
     }
 
     handleLoopEvents(eventArray[event - WSA_WAIT_EVENT_0]);
@@ -234,6 +238,7 @@ void EventLoop::EventLoopImpl::run() {
 void EventLoop::EventLoopImpl::stop() {
   if (event_loop_handle_ != kInvalidHandle) {
     execute_.store(false, std::memory_order_release);
+    ::SetEvent(event_loop_handle_.handle_);
   }
 }
 
@@ -331,15 +336,13 @@ void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> 
   for (const auto &fdInfo : fds) {
     if (event == fdInfo.event_) {
       for (const auto &callback : fdInfo.callbacks_) {
-        WSANETWORKEVENTS NetworkEvents;
-        if (::WSAEnumNetworkEvents(reinterpret_cast<SOCKET>(fdInfo.handle_.handle_),
-                                   fdInfo.event_, &NetworkEvents) == SOCKET_ERROR)
+        WSANETWORKEVENTS networkEvents;
+        if (SOCKET_ERROR == ::WSAEnumNetworkEvents(reinterpret_cast<SOCKET>(fdInfo.handle_.handle_),
+                                                   fdInfo.event_, &networkEvents))
         {
           printf("WSAEnumNetworkEvents() failed with error %d\n", WSAGetLastError());
           return;
         }
-        else
-          printf("WSAEnumNetworkEvents() should be fine!\n");
 
         callback(fdInfo.handle_);
       }
