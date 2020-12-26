@@ -23,17 +23,21 @@ set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE ICC_SOURCE_FILES src/*.c src/*.cpp)
 message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
+set(ICC_OS_HEADERS "")
 if (UNIX)
     list(FILTER ICC_SOURCE_FILES EXCLUDE REGEX "src/icc/os/platforms/windows/.*")
+    set(ICC_OS_HEADERS "${ICC_INCLUDE_DIR}/icc/os/platforms/posix")
 elseif(WIN32)
     list(FILTER ICC_SOURCE_FILES EXCLUDE REGEX "src/icc/os/platforms/posix/.*")
+    set(ICC_OS_HEADERS "${ICC_INCLUDE_DIR}/icc/os/platforms/windows")
 endif ()
 message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
 
 add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
-                           PRIVATE ${ICC_INCLUDE_DIR}/icc/_private)
+                           PRIVATE ${ICC_INCLUDE_DIR}/icc/_private
+                                   ${ICC_OS_HEADERS})
 if (UNIX)
     target_link_libraries(${PROJECT_NAME} pthread)
 elseif(WIN32)
