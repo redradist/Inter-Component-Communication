@@ -29,6 +29,7 @@ extern "C" {
 #include <memory>
 #include <arpa/inet.h>
 
+#include <icc/os/exceptions/OSError.hpp>
 #include "EventLoopImpl.hpp"
 #include "TimerImpl.hpp"
 
@@ -196,8 +197,8 @@ bool EventLoop::EventLoopImpl::isRun() const {
 void EventLoop::EventLoopImpl::run() {
   event_loop_handle_.fd_ = ::eventfd(0, O_NONBLOCK);
   if (event_loop_handle_.fd_ == -1) {
-    std::cerr << strerror(errno) << "\n";
-    throw "Error to open ::eventfd(0, O_NONBLOCK) !!";
+    printf("Error to open ::eventfd(0, O_NONBLOCK): %s\n", ::strerror(errno));
+    throw OSError("Error to open ::eventfd(0, O_NONBLOCK) !!");
   }
   execute_.store(true, std::memory_order_release);
   {

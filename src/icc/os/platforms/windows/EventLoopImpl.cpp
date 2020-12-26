@@ -21,6 +21,7 @@ extern "C" {
 #include <algorithm>
 #include <memory>
 
+#include <icc/os/exceptions/OSError.hpp>
 #include "Common.hpp"
 #include "EventLoopImpl.hpp"
 
@@ -37,11 +38,10 @@ typedef struct _PER_HANDLE_DATA
 
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
-  // Step 1:
   int result = ::WSAStartup(MAKEWORD(2, 2), &wsa_data_);
   if (NO_ERROR != result) {
-    wprintf(L"Error at WSAStartup()\n");
-    throw std::runtime_error("WSAStartup is failed");
+    printf("Error at WSAStartup()\n");
+    throw OSError("WSAStartup is failed !!");
   }
   io_completion_port_ = Handle{::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr,0,0)};
   event_loop_thread_ = std::thread(&EventLoop::EventLoopImpl::run, this);
@@ -216,8 +216,8 @@ void EventLoop::EventLoopImpl::run() {
       TEXT("AddRemoveEvent")    // object name
   );
   if (INVALID_HANDLE_VALUE == event_loop_handle_.handle_) {
-    std::cerr << strerror(errno) << "\n";
-    throw "Error to create CreateEvent(...) !!";
+    printf("CreateEvent() failed with error %d\n", WSAGetLastError());
+    throw OSError("Error to create CreateEvent(...) !!");
   }
   execute_.store(true, std::memory_order_release);
   {
