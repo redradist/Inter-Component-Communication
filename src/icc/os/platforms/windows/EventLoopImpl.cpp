@@ -237,7 +237,6 @@ void EventLoop::EventLoopImpl::run() {
       continue;
     }
 
-    handleLoopEvents();
     handleHandlesEvents(event_listeners_, eventArray[event - WSA_WAIT_EVENT_0]);
     handleLoopEvents();
   }
@@ -332,9 +331,9 @@ void EventLoop::EventLoopImpl::initFds(std::vector<HandleListeners> &fds,
 }
 
 void EventLoop::EventLoopImpl::handleLoopEvents() {
-  std::lock_guard<std::mutex> lock(internal_mtx_);
   if (event_loop_.load(std::memory_order_acquire))
   {
+    std::lock_guard<std::mutex> lock(internal_mtx_);
     event_loop_.store(false, std::memory_order_release);
     ::ResetEvent(event_loop_handle_.handle_);
     addFdTo(lock, event_listeners_, add_event_listeners_);
