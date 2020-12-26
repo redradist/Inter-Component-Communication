@@ -55,16 +55,17 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
 }
 
 std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
-  //TODO(redradist): Timer should be created (kTimerFd)
-//  const int kTimerFd = 0;
-//  auto timer = new Timer::TimerImpl(Handle{kTimerFd});
-//  function_wrapper<void(const Handle &)> callback(&Timer::TimerImpl::onTimerExpired, timer);
-//  registerObjectEvents(Handle{kTimerFd}, EventType::kRead, callback);
-//  return std::shared_ptr<Timer::TimerImpl>(timer,
-//                                           [this, callback](Timer::TimerImpl *timer) {
-//                                             unregisterObjectEvents(timer->timer_handle_, EventType::kRead, callback);
-//                                             //TODO(redradist): Timer should be closed
-//                                           });
+  HANDLE kTimerQueue = ::CreateTimerQueue();
+  if (nullptr == kTimerQueue) {
+    printf("CreateTimerQueue failed (%d)\n", GetLastError());
+    return nullptr;
+  }
+
+  auto timer = new Timer::TimerImpl(Handle{kTimerQueue});
+  return std::shared_ptr<Timer::TimerImpl>(timer,
+  [this, kTimerQueue](Timer::TimerImpl *timer) {
+    ::DeleteTimerQueue(kTimerQueue);
+  });
   return nullptr;
 }
 
@@ -225,7 +226,6 @@ void EventLoop::EventLoopImpl::run() {
   while (execute_.load(std::memory_order_acquire)) {
     initFds(event_listeners_, &eventArray[1], WSA_MAXIMUM_WAIT_EVENTS-1);
 
-//    std::cout << "WSAWaitForMultipleEvents" << std::endl;
     const DWORD event = ::WSAWaitForMultipleEvents(event_listeners_.size() + 1, eventArray, FALSE, WSA_INFINITE, FALSE);
     if (WSA_WAIT_FAILED == event) {
       printf("WSAWaitForMultipleEvents() failed with error %d\n", WSAGetLastError());
@@ -304,7 +304,6 @@ void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
     for (auto &fdInfo : removeListeners) {
       auto foundFd = findOSObjectIn(fdInfo.object_, listeners);
       if (foundFd != listeners.end()) {
-//        std::cout << "removeFdFrom" << std::endl;
         auto itemToRemove = std::remove(foundFd->callbacks_.begin(), foundFd->callbacks_.end(), fdInfo.callback_);
         foundFd->callbacks_.erase(itemToRemove);
         if (foundFd->callbacks_.empty()) {

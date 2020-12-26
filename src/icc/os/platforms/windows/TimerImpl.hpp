@@ -78,12 +78,15 @@ class Timer::TimerImpl {
   friend class EventLoop;
 
   explicit TimerImpl(const Handle & timerObject);
-  void onTimerExpired(const Handle & osObject);
+  void onTimerExpired();
+  static void CALLBACK timerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired);
 
   std::mutex mutex_;
   Handle timer_handle_{kInvalidHandle};
+  Handle timer_queue_handle_{kInvalidHandle};
   std::atomic_bool execute_{false};
   std::atomic_int32_t counter_{OneTime};
+  std::atomic_int32_t current_counter_{0};
   std::vector<ITimerListener*> listeners_ptr_;
   std::vector<std::weak_ptr<ITimerListener>> listeners_;
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();

@@ -14,8 +14,10 @@ namespace icc {
 
 namespace os {
 
+static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired);
+
 Timer::TimerImpl::TimerImpl(const Handle & timerObject)
-  : timer_handle_{timerObject} {
+  : timer_queue_handle_{timerObject} {
 }
 
 /**
@@ -50,8 +52,13 @@ void Timer::TimerImpl::setInterval(const std::chrono::nanoseconds _duration) {
 bool Timer::TimerImpl::start() {
   bool timerDisabled = false;
   if (execute_.compare_exchange_strong(timerDisabled, true)) {
-    //TODO(redradist): Should be added implementation
-    return true;
+    // Set a timer to call the timer routine in 10 seconds.
+    auto dueTime = duration_.count() / 1000000LL;
+    auto period = counter_.load(std::memory_order_acquire) > 0 ? dueTime : 0;
+    return ::CreateTimerQueueTimer(
+        &timer_handle_.handle_, timer_queue_handle_.handle_,
+        reinterpret_cast<WAITORTIMERCALLBACK>(timerRoutine),
+        this, dueTime, period, 0);
   }
   return false;
 }
@@ -59,8 +66,11 @@ bool Timer::TimerImpl::start() {
 bool Timer::TimerImpl::stop() {
   bool timerEnabled = true;
   if (execute_.compare_exchange_strong(timerEnabled, false)) {
-    //TODO(redradist): Should be added implementation
-    return true;
+    return ::DeleteTimerQueueTimer(
+        timer_queue_handle_.handle_,
+        timer_handle_.handle_,
+        nullptr
+    );
   }
   return false;
 }
@@ -102,14 +112,10 @@ void Timer::TimerImpl::removeListener(ITimerListener * _listener) {
   }
 }
 
-void Timer::TimerImpl::onTimerExpired(const Handle & _) {
-  uint64_t numberExpired;
-  //TODO(redradist): Should be added implementation
-  // Some action if needed
+void Timer::TimerImpl::onTimerExpired() {
+  std::cout << "onTimerExpired" << std::endl;
   if (execute_.load(std::memory_order_acquire)) {
-    if (counter_.load() == Infinite) {
-        //TODO(redradist): Should be added implementation
-    }
+    current_counter_.fetch_add(1, std::memory_order_acq_rel);
     {
       std::lock_guard<std::mutex> lock(mutex_);
       for (auto listener : listeners_ptr_) {
@@ -128,6 +134,22 @@ void Timer::TimerImpl::onTimerExpired(const Handle & _) {
         }
       }
     }
+    const auto currentCounter = current_counter_.load(std::memory_order_acquire);
+    const auto maxCounter = counter_.load(std::memory_order_acquire);
+    if (maxCounter > OneTime && currentCounter >= maxCounter) {
+      stop();
+    }
+  }
+}
+
+void CALLBACK Timer::TimerImpl::timerRoutine(
+    PVOID lpParam, BOOLEAN TimerOrWaitFired) {
+  std::cout << "timerRoutine" << std::endl;
+  if (lpParam == nullptr) {
+    printf("TimerRoutine lpParam is nullptr\n");
+  } else {
+    auto timerImpl = reinterpret_cast<Timer::TimerImpl*>(lpParam);
+    timerImpl->onTimerExpired();
   }
 }
 
