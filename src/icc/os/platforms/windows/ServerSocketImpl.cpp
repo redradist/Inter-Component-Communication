@@ -42,12 +42,12 @@ ServerSocket::ServerSocketImpl::acceptAsync() {
 void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
   std::lock_guard<std::mutex> lock{mtx_};
   while (!accept_queue_.empty() && !is_blocking_) {
-    SOCKADDR_IN saRemote;
-    SOCKET Accept;
-    int RemoteLen;
-
-    RemoteLen = sizeof(saRemote);
-    Accept = ::accept(reinterpret_cast<SOCKET>(socket_handle_.handle_), nullptr, nullptr);
+    sockaddr_in sockAddrRemote{};
+    int remoteLen = sizeof(sockAddrRemote);
+    SOCKET Accept = ::WSAAccept(
+        reinterpret_cast<SOCKET>(socket_handle_.handle_),
+        reinterpret_cast<sockaddr *>(&sockAddrRemote), &remoteLen,
+        nullptr, 0);
 
     auto clientSocket = EventLoop::getDefaultInstance().createSocket(Handle{reinterpret_cast<HANDLE>(Accept)});
     if (clientSocket) {

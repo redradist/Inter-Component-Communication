@@ -38,8 +38,8 @@ typedef struct _PER_HANDLE_DATA
 EventLoop::EventLoopImpl::EventLoopImpl(std::nullptr_t)
     : EventLoopImpl() {
   // Step 1:
-  int iResult = ::WSAStartup(MAKEWORD(2, 2), &wsa_data_);
-  if (iResult != NO_ERROR) {
+  int result = ::WSAStartup(MAKEWORD(2, 2), &wsa_data_);
+  if (NO_ERROR != result) {
     wprintf(L"Error at WSAStartup()\n");
     throw std::runtime_error("WSAStartup is failed");
   }
@@ -52,6 +52,7 @@ EventLoop::EventLoopImpl::~EventLoopImpl() {
   if (event_loop_thread_.joinable()) {
     event_loop_thread_.join();
   }
+  ::WSACleanup();
 }
 
 std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
@@ -107,8 +108,11 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
     wprintf(L"bind failed with error %u\n", err);
     return nullptr;
   }
-
-  ::listen(kServerSocketFd, _numQueue);
+  if(SOCKET_ERROR == ::listen(kServerSocketFd, _numQueue)) {
+    auto err = ::WSAGetLastError();
+    wprintf(L"bind failed with error %u\n", err);
+    return nullptr;
+  }
 
   if (setSocketBlockingMode(kServerSocketFd, false)) {
     socketPtr->setBlockingMode(false);
@@ -118,7 +122,7 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
 
 std::shared_ptr<ServerSocket::ServerSocketImpl>
 EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
-  if(_socketHandle.handle_ < 0) {
+  if(INVALID_HANDLE_VALUE == _socketHandle.handle_) {
     perror("socket");
     return nullptr;
   }
@@ -140,13 +144,13 @@ EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
 
 std::shared_ptr<Socket::SocketImpl>
 EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
-  const SOCKET kSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
-  if(kSocketFd < 0) {
+  const SOCKET kSocket = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
+  if(kSocket == INVALID_SOCKET) {
     perror("socket");
     return nullptr;
   }
 
-  auto socketHandle = Handle{reinterpret_cast<HANDLE>(kSocketFd)};
+  auto socketHandle = Handle{reinterpret_cast<HANDLE>(kSocket)};
   auto socketRawPtr = new Socket::SocketImpl(socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
   registerObjectEvents(socketHandle, FD_READ, readCallback);
@@ -163,12 +167,13 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   addr.sin_family = AF_INET;
   addr.sin_port = htons(_port);
   ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
-  if(::connect(kSocketFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+  auto connectStatus = ::WSAConnect(kSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr), nullptr, nullptr, nullptr, nullptr);
+  if (SOCKET_ERROR == connectStatus) {
     perror("connect");
     return nullptr;
   }
 
-  if (setSocketBlockingMode(kSocketFd, false)) {
+  if (setSocketBlockingMode(kSocket, false)) {
     socketPtr->setBlockingMode(false);
   }
   return socketPtr;
@@ -206,11 +211,11 @@ bool EventLoop::EventLoopImpl::isRun() const {
 void EventLoop::EventLoopImpl::run() {
   event_loop_handle_.handle_ = CreateEvent(
       nullptr,                        // default security attributes
-      TRUE,                           // manual-reset event
-      FALSE,                          // initial state is nonsignaled
+      true,                           // manual-reset event
+      false,                          // initial state is nonsignaled
       TEXT("AddRemoveEvent")    // object name
   );
-  if (event_loop_handle_.handle_ == INVALID_HANDLE_VALUE) {
+  if (INVALID_HANDLE_VALUE == event_loop_handle_.handle_) {
     std::cerr << strerror(errno) << "\n";
     throw "Error to create CreateEvent(...) !!";
   }
