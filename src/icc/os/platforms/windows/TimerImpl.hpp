@@ -23,7 +23,7 @@ struct Handle;
 
 class Timer::TimerImpl {
  public:
-  ~TimerImpl() = default;
+  ~TimerImpl();
 
   /**
    * Enable continuous mode

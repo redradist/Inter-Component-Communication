@@ -14,10 +14,12 @@ namespace icc {
 
 namespace os {
 
-static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired);
-
 Timer::TimerImpl::TimerImpl(const Handle & timerObject)
   : timer_queue_handle_{timerObject} {
+}
+
+Timer::TimerImpl::~TimerImpl() {
+  stop();
 }
 
 /**
