@@ -173,7 +173,8 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   return socketPtr;
 }
 
-std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
+std::shared_ptr<Socket::SocketImpl>
+EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
   if(_socketHandle.handle_ == INVALID_HANDLE_VALUE) {
     perror("socket");
     return nullptr;
@@ -185,11 +186,11 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
   registerObjectEvents(_socketHandle, FD_WRITE, writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
-                                                       [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-                                                         unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
-                                                         unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
-                                                         ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
-                                                       });
+  [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
+    unregisterObjectEvents(socket->socket_handle_, FD_READ, readCallback);
+    unregisterObjectEvents(socket->socket_handle_, FD_WRITE, writeCallback);
+    ::closesocket(reinterpret_cast<SOCKET>(socket->socket_handle_.handle_));
+  });
 
   if (setSocketBlockingMode(reinterpret_cast<SOCKET>(_socketHandle.handle_), false)) {
     socketPtr->setBlockingMode(false);
@@ -224,20 +225,24 @@ void EventLoop::EventLoopImpl::run() {
   while (execute_.load(std::memory_order_acquire)) {
     initFds(event_listeners_, &eventArray[1], WSA_MAXIMUM_WAIT_EVENTS-1);
 
-    DWORD event;
-    if ((event = ::WSAWaitForMultipleEvents(event_listeners_.size() + 1, eventArray, FALSE, WSA_INFINITE, FALSE)) == WSA_WAIT_FAILED) {
+//    std::cout << "WSAWaitForMultipleEvents" << std::endl;
+    const DWORD event = ::WSAWaitForMultipleEvents(event_listeners_.size() + 1, eventArray, FALSE, WSA_INFINITE, FALSE);
+    if (WSA_WAIT_FAILED == event) {
       printf("WSAWaitForMultipleEvents() failed with error %d\n", WSAGetLastError());
       continue;
     }
 
-    handleLoopEvents(eventArray[event - WSA_WAIT_EVENT_0]);
+    handleLoopEvents();
     handleHandlesEvents(event_listeners_, eventArray[event - WSA_WAIT_EVENT_0]);
+    handleLoopEvents();
   }
+  ::WSACloseEvent(event_loop_handle_.handle_);
 }
 
 void EventLoop::EventLoopImpl::stop() {
   if (event_loop_handle_ != kInvalidHandle) {
     execute_.store(false, std::memory_order_release);
+    event_loop_.store(true, std::memory_order_release);
     ::SetEvent(event_loop_handle_.handle_);
   }
 }
@@ -249,6 +254,7 @@ void EventLoop::EventLoopImpl::registerObjectEvents(
   std::lock_guard<std::mutex> lock(internal_mtx_);
   if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
     add_event_listeners_.emplace_back(osObject, event, callback);
+    event_loop_.store(true, std::memory_order_release);
     ::SetEvent(event_loop_handle_.handle_);
   }
 }
@@ -260,6 +266,7 @@ void EventLoop::EventLoopImpl::unregisterObjectEvents(
   std::lock_guard<std::mutex> lock(internal_mtx_);
   if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
     remove_event_listeners_.emplace_back(osObject, event, callback);
+    event_loop_.store(true, std::memory_order_release);
     ::SetEvent(event_loop_handle_.handle_);
   }
 }
@@ -283,8 +290,6 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
         if (::WSAEventSelect(reinterpret_cast<SOCKET>(fdInfo.object_.handle_), eventObject, fdInfo.event_) == SOCKET_ERROR){
           printf("WSAEventSelect() failed with error %d\n", WSAGetLastError());
           return;
-        } else {
-          printf("WSAEventSelect() is pretty fine!\n");
         }
         listeners.emplace_back(fdInfo.object_, eventObject, std::vector<function_wrapper<void(const Handle &)>>{fdInfo.callback_});
       }
@@ -299,6 +304,7 @@ void EventLoop::EventLoopImpl::removeFdFrom(std::lock_guard<std::mutex> &lock,
     for (auto &fdInfo : removeListeners) {
       auto foundFd = findOSObjectIn(fdInfo.object_, listeners);
       if (foundFd != listeners.end()) {
+//        std::cout << "removeFdFrom" << std::endl;
         auto itemToRemove = std::remove(foundFd->callbacks_.begin(), foundFd->callbacks_.end(), fdInfo.callback_);
         foundFd->callbacks_.erase(itemToRemove);
         if (foundFd->callbacks_.empty()) {
@@ -321,9 +327,11 @@ void EventLoop::EventLoopImpl::initFds(std::vector<HandleListeners> &fds,
   }
 }
 
-void EventLoop::EventLoopImpl::handleLoopEvents(const WSAEVENT eventObj) {
-  if (event_loop_handle_.handle_ == eventObj) {
-    std::lock_guard<std::mutex> lock(internal_mtx_);
+void EventLoop::EventLoopImpl::handleLoopEvents() {
+  std::lock_guard<std::mutex> lock(internal_mtx_);
+  if (event_loop_.load(std::memory_order_acquire))
+  {
+    event_loop_.store(false, std::memory_order_release);
     ::ResetEvent(event_loop_handle_.handle_);
     addFdTo(lock, event_listeners_, add_event_listeners_);
     removeFdFrom(lock, event_listeners_, remove_event_listeners_);
@@ -335,15 +343,13 @@ void EventLoop::EventLoopImpl::handleLoopEvents(const WSAEVENT eventObj) {
 void EventLoop::EventLoopImpl::handleHandlesEvents(std::vector<HandleListeners> &fds, WSAEVENT event) {
   for (const auto &fdInfo : fds) {
     if (event == fdInfo.event_) {
+      WSANETWORKEVENTS networkEvents;
+      if (SOCKET_ERROR == ::WSAEnumNetworkEvents(reinterpret_cast<SOCKET>(fdInfo.handle_.handle_),
+                                                 fdInfo.event_, &networkEvents)) {
+        printf("WSAEnumNetworkEvents() failed with error %d\n", WSAGetLastError());
+        return;
+      }
       for (const auto &callback : fdInfo.callbacks_) {
-        WSANETWORKEVENTS networkEvents;
-        if (SOCKET_ERROR == ::WSAEnumNetworkEvents(reinterpret_cast<SOCKET>(fdInfo.handle_.handle_),
-                                                   fdInfo.event_, &networkEvents))
-        {
-          printf("WSAEnumNetworkEvents() failed with error %d\n", WSAGetLastError());
-          return;
-        }
-
         callback(fdInfo.handle_);
       }
     }

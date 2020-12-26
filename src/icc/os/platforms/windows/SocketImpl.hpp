@@ -38,12 +38,14 @@ class Socket::SocketImpl : public ISocket {
   friend class EventLoop;
 
   explicit SocketImpl(const Handle & socketHandle);
+  void readSocket();
   void onSocketDataAvailable(const Handle &_);
   void onSocketBufferAvailable(const Handle &_);
   void setBlockingMode(bool isBlocking);
 
   Handle socket_handle_{kInvalidHandle};
   bool is_blocking_ = true;
+  ChunkData chunk_;
   std::unique_ptr<uint8_t[]> receive_buffer_ptr_;
   std::deque<std::pair<ChunkData, std::promise<void>>> send_chunks_queue_;
   std::atomic_bool send_chunks_available_event_{false};

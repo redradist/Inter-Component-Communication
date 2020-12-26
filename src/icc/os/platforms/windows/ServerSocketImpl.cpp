@@ -41,7 +41,6 @@ ServerSocket::ServerSocketImpl::acceptAsync() {
 
 void ServerSocket::ServerSocketImpl::onSocketDataAvailable(const Handle &_) {
   std::lock_guard<std::mutex> lock{mtx_};
-  std::cout << "::accept" << std::endl;
   while (!accept_queue_.empty() && !is_blocking_) {
     SOCKADDR_IN saRemote;
     SOCKET Accept;

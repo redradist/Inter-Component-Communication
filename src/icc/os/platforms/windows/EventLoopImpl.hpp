@@ -58,7 +58,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   void initFds(std::vector<HandleListeners> &fds,
                WSAEVENT *eventArray,
                size_t numEvents) const;
-  void handleLoopEvents(WSAEVENT eventObj);
+  void handleLoopEvents();
   void handleHandlesEvents(std::vector<HandleListeners> &fds, WSAEVENT event);
   static std::vector<HandleListeners>::iterator
   findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
@@ -71,6 +71,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::unique_ptr<SocketsWorkerThreadParams> sockets_worker_thread_params_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};
+  std::atomic_bool event_loop_{false};
   std::vector<InternalEvent> add_event_listeners_;
   std::vector<InternalEvent> remove_event_listeners_;
   std::vector<HandleListeners> event_listeners_;
