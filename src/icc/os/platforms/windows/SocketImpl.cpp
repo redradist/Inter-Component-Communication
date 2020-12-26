@@ -30,7 +30,7 @@ Socket::SocketImpl::sendAsync(ChunkData _data) {
   send_chunks_queue_.emplace_back(SentChunkData{std::move(_data), 0}, std::move(promiseResult));
   send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
   if (buffer_available_event_.load(std::memory_order_acquire)) {
-    sendSocket();
+    sendDataTo();
   }
 
   return futureResult;
@@ -50,7 +50,7 @@ Socket::SocketImpl::receiveAsync() {
   read_requests_queue_.push_back(std::move(promiseResult));
   read_requests_available_event_.store(!read_requests_queue_.empty(), std::memory_order_release);
   if (data_available_event_.load(std::memory_order_acquire)) {
-    readSocket();
+    readDataFrom();
   }
 
   return futureResult;
@@ -60,14 +60,14 @@ void Socket::SocketImpl::onSocketDataAvailable(const Handle &_) {
   data_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{read_mtx_};
   while (!read_requests_queue_.empty()) {
-    readSocket();
+    readDataFrom();
     if (is_blocking_) {
       break;
     }
   }
 }
 
-void Socket::SocketImpl::readSocket() {
+void Socket::SocketImpl::readDataFrom() {
   int recvError = NO_ERROR;
   auto & promiseChunk = read_requests_queue_.front();
   do {
@@ -109,14 +109,14 @@ void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
   buffer_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{write_mtx_};
   while (!send_chunks_queue_.empty()) {
-    sendSocket();
+    sendDataTo();
     if (is_blocking_) {
       break;
     }
   }
 }
 
-void Socket::SocketImpl::sendSocket() {
+void Socket::SocketImpl::sendDataTo() {
   auto & chunk = send_chunks_queue_.front();
   int sendError = NO_ERROR;
   do {

@@ -38,8 +38,8 @@ class Socket::SocketImpl : public ISocket {
   friend class EventLoop;
 
   explicit SocketImpl(const Handle & socketHandle);
-  void readSocket();
-  void sendSocket();
+  void readDataFrom();
+  void sendDataTo();
   void onSocketDataAvailable(const Handle &_);
   void onSocketBufferAvailable(const Handle &_);
   void setBlockingMode(bool isBlocking);
