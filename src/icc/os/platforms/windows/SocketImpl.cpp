@@ -27,20 +27,10 @@ Socket::SocketImpl::sendAsync(ChunkData _data) {
   auto futureResult = promiseResult.get_future();
 
   std::lock_guard<std::mutex> lock{write_mtx_};
+  send_chunks_queue_.emplace_back(SentChunkData{std::move(_data), 0}, std::move(promiseResult));
+  send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
   if (buffer_available_event_.load(std::memory_order_acquire)) {
-    DWORD sendLen;
-    DWORD flags = 0;
-    WSABUF wsaBuffer;
-    wsaBuffer.buf = reinterpret_cast<char *>(_data.data());
-    wsaBuffer.len = _data.size();
-    int wsaSendError = ::WSASend(reinterpret_cast<SOCKET>(socket_handle_.handle_),
-                                 &wsaBuffer, 1, &sendLen, flags, nullptr, nullptr);
-    int lastSendError = WSAGetLastError();
-    if (wsaSendError == SOCKET_ERROR && lastSendError == WSAEWOULDBLOCK) {
-
-    } else {
-      promiseResult.set_value();
-    }
+    sendSocket();
   }
 
   return futureResult;
@@ -116,53 +106,53 @@ void Socket::SocketImpl::readSocket() {
 }
 
 void Socket::SocketImpl::onSocketBufferAvailable(const Handle &_) {
-  static size_t currentSentChunkDataSize = 0;
-
   buffer_available_event_.store(true, std::memory_order_release);
   std::lock_guard<std::mutex> lock{write_mtx_};
   while (!send_chunks_queue_.empty()) {
-    auto & chunk = send_chunks_queue_.front();
-    int sendError = NO_ERROR;
-    do {
-      const size_t kDataOffset = currentSentChunkDataSize;
-      const size_t kDataSize = chunk.first.size() - kDataOffset;
-
-      DWORD sendLen;
-      DWORD flags = 0;
-      WSABUF wsaBuffer;
-      wsaBuffer.buf = reinterpret_cast<char *>(chunk.first.data() + kDataOffset);
-      wsaBuffer.len = kDataSize;
-      int wsaSendError = ::WSASend(reinterpret_cast<SOCKET>(socket_handle_.handle_),
-                                   &wsaBuffer, 1, &sendLen, flags, nullptr, nullptr);
-      int lastSendError = WSAGetLastError();
-      if (wsaSendError != SOCKET_ERROR && sendLen > 0) {
-        currentSentChunkDataSize += sendLen;
-      } else if (0 == sendLen || lastSendError == WSAEWOULDBLOCK || lastSendError == WSATRY_AGAIN) {
-        buffer_available_event_.store(false, std::memory_order_release);
-        break;
-      } else {
-        sendError = lastSendError;
-        break;
-      }
-    } while (!is_blocking_ && currentSentChunkDataSize < chunk.first.size());
-    if (sendError != NO_ERROR) {
-      currentSentChunkDataSize = 0;
-      chunk.second.set_exception(
-          std::make_exception_ptr(
-              std::system_error(sendError, std::system_category(), "Socket send error")
-          )
-      );
-      send_chunks_queue_.pop_front();
-    } else if (currentSentChunkDataSize == chunk.first.size()) {
-      currentSentChunkDataSize = 0;
-      chunk.second.set_value();
-      send_chunks_queue_.pop_front();
-    }
-    send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
+    sendSocket();
     if (is_blocking_) {
       break;
     }
   }
+}
+
+void Socket::SocketImpl::sendSocket() {
+  auto & chunk = send_chunks_queue_.front();
+  int sendError = NO_ERROR;
+  do {
+    const size_t kDataOffset = chunk.first.sent_data_size_;
+    const size_t kDataSize = chunk.first.chunk_.size() - kDataOffset;
+
+    DWORD sendLen;
+    DWORD flags = 0;
+    WSABUF wsaBuffer;
+    wsaBuffer.buf = reinterpret_cast<char *>(chunk.first.chunk_.data() + kDataOffset);
+    wsaBuffer.len = kDataSize;
+    int wsaSendError = ::WSASend(reinterpret_cast<SOCKET>(socket_handle_.handle_),
+                                 &wsaBuffer, 1, &sendLen, flags, nullptr, nullptr);
+    int lastSendError = WSAGetLastError();
+    if (wsaSendError != SOCKET_ERROR && sendLen > 0) {
+      chunk.first.sent_data_size_ += sendLen;
+    } else if (0 == sendLen || lastSendError == WSAEWOULDBLOCK || lastSendError == WSATRY_AGAIN) {
+      buffer_available_event_.store(false, std::memory_order_release);
+      break;
+    } else {
+      sendError = lastSendError;
+      break;
+    }
+  } while (!is_blocking_ && chunk.first.sent_data_size_ < chunk.first.chunk_.size());
+  if (sendError != NO_ERROR) {
+    chunk.second.set_exception(
+        std::make_exception_ptr(
+            std::system_error(sendError, std::system_category(), "Socket send error")
+        )
+    );
+    send_chunks_queue_.pop_front();
+  } else if (chunk.first.sent_data_size_ == chunk.first.chunk_.size()) {
+    chunk.second.set_value();
+    send_chunks_queue_.pop_front();
+  }
+  send_chunks_available_event_.store(!send_chunks_queue_.empty(), std::memory_order_release);
 }
 
 }
