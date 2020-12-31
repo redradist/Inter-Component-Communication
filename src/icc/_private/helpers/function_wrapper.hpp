@@ -25,7 +25,7 @@ class function_wrapper<TRes(TArgs...)> {
     callback_ = func;
   }
 
-  template<typename TObject>
+  template <typename TObject>
   function_wrapper(TRes(TObject::*_method)(TArgs...),
                    TObject *_object) {
     object_ptr_ = reinterpret_cast<void *>(_object);

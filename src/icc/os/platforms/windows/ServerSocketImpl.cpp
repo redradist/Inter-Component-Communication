@@ -11,13 +11,6 @@ namespace icc {
 
 namespace os {
 
-typedef struct _PER_HANDLE_DATA
-{
-  SOCKET        Socket;
-  SOCKADDR_STORAGE  ClientAddr;
-  // Other information useful to be associated with the handle
-} PER_HANDLE_DATA, * LPPER_HANDLE_DATA;
-
 ServerSocket::ServerSocketImpl::ServerSocketImpl(const Handle & socketHandle)
     : socket_handle_{socketHandle} {
 }
@@ -34,7 +27,6 @@ ServerSocket::ServerSocketImpl::acceptAsync() {
 
   std::lock_guard<std::mutex> lock{mtx_};
   accept_queue_.emplace_back(std::move(promiseResult));
-//  var_.notify_one();
 
   return futureResult;
 }

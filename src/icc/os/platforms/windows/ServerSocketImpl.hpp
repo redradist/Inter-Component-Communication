@@ -36,7 +36,7 @@ class ServerSocket::ServerSocketImpl {
 
   std::thread thr_;
   Handle socket_handle_{kInvalidHandle};
-  bool is_blocking_ = false;
+  bool is_blocking_ = true;
   std::vector<std::shared_ptr<Socket>> client_sockets_;
   std::deque<std::promise<std::shared_ptr<Socket>>> accept_queue_;
   std::atomic_bool is_new_client_available_event_{false};

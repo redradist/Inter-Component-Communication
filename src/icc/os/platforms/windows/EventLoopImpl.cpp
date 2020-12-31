@@ -72,19 +72,19 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
 
 bool
 EventLoop::EventLoopImpl::setSocketBlockingMode(SOCKET _fd, bool _isBlocking) {
-  if (_fd < 0) {
+  if (INVALID_SOCKET == _fd) {
     return false;
   }
 
   unsigned long mode = _isBlocking ? 0 : 1;
-  return (::ioctlsocket(_fd, FIONBIO, &mode) == 0);
+  return (0 == ::ioctlsocket(_fd, FIONBIO, &mode));
 }
 
 std::shared_ptr<ServerSocket::ServerSocketImpl>
 EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t _port, uint16_t _numQueue) {
-  const SOCKET kServerSocketFd = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
-  if(kServerSocketFd == INVALID_SOCKET) {
-    perror("socket");
+  const SOCKET kServerSocketFd = WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
+  if(INVALID_SOCKET == kServerSocketFd) {
+    printf("Error at WSASocket() = %d\n", WSAGetLastError());
     return nullptr;
   }
 
@@ -123,7 +123,7 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
 std::shared_ptr<ServerSocket::ServerSocketImpl>
 EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
   if(INVALID_HANDLE_VALUE == _socketHandle.handle_) {
-    perror("socket");
+    printf("createServerSocketImpl from INVALID_HANDLE_VALUE\n");
     return nullptr;
   }
 
@@ -144,9 +144,9 @@ EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
 
 std::shared_ptr<Socket::SocketImpl>
 EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const uint16_t _port) {
-  const SOCKET kSocket = ::WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
-  if(kSocket == INVALID_SOCKET) {
-    perror("socket");
+  const SOCKET kSocket = WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
+  if(INVALID_SOCKET == kSocket) {
+    printf("Error at WSASocket() = %d\n", WSAGetLastError());
     return nullptr;
   }
 
@@ -169,7 +169,7 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
   ::inet_pton(addr.sin_family, _address.c_str(), &(addr.sin_addr));
   auto connectStatus = ::WSAConnect(kSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr), nullptr, nullptr, nullptr, nullptr);
   if (SOCKET_ERROR == connectStatus) {
-    perror("connect");
+    printf("Error at WSAConnect() = %d\n", WSAGetLastError());
     return nullptr;
   }
 
@@ -181,8 +181,8 @@ EventLoop::EventLoopImpl::createSocketImpl(const std::string& _address, const ui
 
 std::shared_ptr<Socket::SocketImpl>
 EventLoop::EventLoopImpl::createSocketImpl(const Handle & _socketHandle) {
-  if(_socketHandle.handle_ == INVALID_HANDLE_VALUE) {
-    perror("socket");
+  if(INVALID_HANDLE_VALUE == _socketHandle.handle_) {
+    printf("createSocketImpl from INVALID_HANDLE_VALUE\n");
     return nullptr;
   }
 
@@ -256,7 +256,7 @@ void EventLoop::EventLoopImpl::registerObjectEvents(
     const long event,
     function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
+  if (INVALID_HANDLE_VALUE != event_loop_handle_.handle_) {
     add_event_listeners_.emplace_back(osObject, event, callback);
     event_loop_.store(true, std::memory_order_release);
     ::SetEvent(event_loop_handle_.handle_);
@@ -268,7 +268,7 @@ void EventLoop::EventLoopImpl::unregisterObjectEvents(
     const long event,
     function_wrapper<void(const Handle &)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  if (event_loop_handle_.handle_ != INVALID_HANDLE_VALUE) {
+  if (INVALID_HANDLE_VALUE != event_loop_handle_.handle_) {
     remove_event_listeners_.emplace_back(osObject, event, callback);
     event_loop_.store(true, std::memory_order_release);
     ::SetEvent(event_loop_handle_.handle_);
@@ -287,7 +287,7 @@ void EventLoop::EventLoopImpl::addFdTo(std::lock_guard<std::mutex> &lock,
         foundFd->callbacks_.erase(erased, foundFd->callbacks_.end());
       } else {
         WSAEVENT eventObject = ::WSACreateEvent();
-        if (eventObject == WSA_INVALID_EVENT) {
+        if (WSA_INVALID_EVENT == eventObject) {
           printf("WSACreateEvent() failed with error %d\n", WSAGetLastError());
           return;
         }
