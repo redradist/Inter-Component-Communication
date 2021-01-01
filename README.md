@@ -28,11 +28,5 @@ should set this macros by hand like this:
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :D
 
-## History
-TODO: Write history
-
-## Credits
-TODO: Write credits
-
 ## License
 MIT License

@@ -9,6 +9,12 @@ include_directories(${ICC_INCLUDE_DIR})
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 file(GLOB_RECURSE ICC_TEST_SOURCE_FILES icc/*.cpp)
+set(ICC_OS_HEADERS "")
+if (UNIX)
+    list(FILTER ICC_TEST_SOURCE_FILES EXCLUDE REGEX "icc/os/platforms/windows/.*")
+elseif(WIN32)
+    list(FILTER ICC_TEST_SOURCE_FILES EXCLUDE REGEX "icc/os/platforms/posix/.*")
+endif ()
 
 ################################
 # Unit Tests
