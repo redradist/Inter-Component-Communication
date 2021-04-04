@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
 project(ICC)
 
+option(ICC_BUILD_SHARED "Build ICC as a shared library" OFF)
+option(ICC_BUILD_TESTS  "Build tests" OFF)
+
 if (NOT CMAKE_CXX_STANDARD)
     message(STATUS "Cannot detect C++ Standard. Switching to C++11 by default !!")
     set(CMAKE_CXX_STANDARD 11)
@@ -19,6 +22,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-local-addr")
     endif()
 endif()
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs")
+endif()
 set(ICC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE ICC_SOURCE_FILES src/*.c src/*.cpp)
@@ -33,7 +39,17 @@ elseif(WIN32)
 endif ()
 message(STATUS "ICC_SOURCE_FILES is ${ICC_SOURCE_FILES}")
 
-add_library(${PROJECT_NAME} ${ICC_SOURCE_FILES})
+if(NOT EXISTS libs/commonapi_tools)
+    execute_process(
+            COMMAND git submodule update --init --recursive libs/commonapi_tools
+            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+endif()
+
+if(ICC_BUILD_SHARED)
+    add_library(${PROJECT_NAME} SHARED ${ICC_SOURCE_FILES})
+else()
+    add_library(${PROJECT_NAME} STATIC ${ICC_SOURCE_FILES})
+endif()
 target_include_directories(${PROJECT_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private
@@ -44,4 +60,12 @@ elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
 endif ()
 
-add_subdirectory(test)
+if(ICC_BUILD_TESTS)
+    if(NOT EXISTS libs/googletest)
+        execute_process(
+                COMMAND git submodule update --init --recursive libs/googletest
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    endif()
+
+    add_subdirectory(test)
+endif()
