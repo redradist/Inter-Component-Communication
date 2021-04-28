@@ -56,9 +56,19 @@ target_include_directories(${PROJECT_NAME}
                                    ${ICC_OS_HEADERS})
 if (UNIX)
     target_link_libraries(${PROJECT_NAME} pthread)
+    install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+                           PATTERN "icc/os/platforms/windows/*" EXCLUDE)
 elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
-endif ()
+    install(TARGETS ${PROJECT_NAME} DESTINATION bin INCLUDES DESTINATION include)
+    install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+                           PATTERN "icc/os/platforms/posix/*" EXCLUDE)
+endif()
 
 if(ICC_BUILD_TESTS)
     if(NOT EXISTS libs/googletest)
