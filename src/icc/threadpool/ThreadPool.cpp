@@ -20,14 +20,14 @@ namespace threadpool {
 
 ThreadPool::ThreadPool(const unsigned int _numThreads) {
   for (int i = 0; i < _numThreads; ++i) {
-    threads_.emplace_back(JThread([=] {
+    threads_.emplace_back([=] {
       do {
         Action task = task_queue_.waitPop();
         if (task) {
           task();
         }
       } while (execute_.load(std::memory_order_acquire));
-    }));
+    });
   }
 }
 
@@ -53,7 +53,7 @@ void ThreadPool::push(std::function<void(void)> _task) {
 
 bool ThreadPool::hasThread(std::thread::id _threadId) const {
   return std::any_of(threads_.begin(), threads_.end(),
-                     [&](const JThread & _thread) {
+  [&](const JThread & _thread) {
     return _thread.getId() == _threadId;
   });
 }
