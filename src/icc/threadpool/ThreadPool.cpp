@@ -12,6 +12,7 @@
 #include <icc/localbus/LocalBus.hpp>
 #include "ThreadPool.hpp"
 #include "Task.hpp"
+#include "JThread.hpp"
 
 namespace icc {
 
@@ -19,23 +20,20 @@ namespace threadpool {
 
 ThreadPool::ThreadPool(const unsigned int _numThreads) {
   for (int i = 0; i < _numThreads; ++i) {
-    thread_pool_.emplace_back([=] {
+    threads_.emplace_back(JThread([=] {
       do {
         Action task = task_queue_.waitPop();
         if (task) {
           task();
         }
       } while (execute_.load(std::memory_order_acquire));
-    });
+    }));
   }
 }
 
 ThreadPool::~ThreadPool() {
   execute_.store(false, std::memory_order_release);
   task_queue_.interrupt();
-  for (auto & thread : thread_pool_) {
-    thread.join();
-  }
 }
 
 ThreadPool &
@@ -54,9 +52,9 @@ void ThreadPool::push(std::function<void(void)> _task) {
 }
 
 bool ThreadPool::hasThread(std::thread::id _threadId) const {
-  return std::any_of(thread_pool_.begin(), thread_pool_.end(),
-  [&](const std::thread & _thread) {
-    return _thread.get_id() == _threadId;
+  return std::any_of(threads_.begin(), threads_.end(),
+                     [&](const JThread & _thread) {
+    return _thread.getId() == _threadId;
   });
 }
 

@@ -14,6 +14,7 @@
 
 #include <icc/Component.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
+#include "JThread.hpp"
 
 namespace icc {
 
@@ -52,7 +53,7 @@ class ThreadPool
  protected:
   ThreadPool(unsigned int _numThreads);
 
-  std::vector<std::thread> thread_pool_;
+  std::vector<JThread> threads_;
   std::atomic_bool execute_{true};
   ThreadSafeQueueAction task_queue_;
 };
