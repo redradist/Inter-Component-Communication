@@ -96,12 +96,14 @@ class ThreadSafeQueue {
     static_assert(std::is_copy_assignable<TItem>::value,
                   "TItem is not copy assignable !!");
     std::unique_lock<std::mutex> lock{mtx_};
-    interrupted_ = false;
+    interrupted_.store(false, std::memory_order_release);
     TItem item;
     QueueNode* nodePtr = nullptr;
-    while (!interrupted_ && !tryPop(lock, nodePtr)) {
+    while (!interrupted_.load(std::memory_order_acquire) &&
+           !tryPop(lock, nodePtr)) {
       cond_var_.wait(lock, [this, &lock] {
-        return interrupted_ || !empty(lock);
+        return interrupted_.load(std::memory_order_acquire) ||
+               !empty(lock);
       });
     }
     if (nodePtr) {
@@ -113,13 +115,11 @@ class ThreadSafeQueue {
   }
 
   bool isInterrupt() const {
-    std::lock_guard<std::mutex> lock{mtx_};
-    return interrupted_;
+    return interrupted_.load(std::memory_order_acquire);
   }
 
   void interrupt() {
-    std::lock_guard<std::mutex> lock{mtx_};
-    interrupted_ = true;
+    interrupted_.store(true, std::memory_order_release);
     cond_var_.notify_all();
   }
 
@@ -175,7 +175,7 @@ class ThreadSafeQueue {
   std::condition_variable cond_var_;
   mutable std::mutex mtx_;
 
-  bool interrupted_ = false;
+  std::atomic<bool> interrupted_{false};
   unsigned item_count_ = 0;
   QueueNode *front_item_ = nullptr;
   QueueNode *back_item_ = nullptr;

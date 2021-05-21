@@ -18,20 +18,28 @@ namespace icc {
 
 namespace threadpool {
 
-ThreadPool::ThreadPool(const unsigned int _numThreads) {
-  for (int i = 0; i < _numThreads; ++i) {
-    threads_.emplace_back([=] {
-      do {
-        Action task = task_queue_.waitPop();
-        if (task) {
-          task();
-        }
-      } while (execute_.load(std::memory_order_acquire));
-    });
+ThreadPool::ThreadPool(const unsigned _numThreads) {
+  try {
+    for (int i = 0; i < _numThreads; ++i) {
+      threads_.emplace_back([=] {
+        do {
+          Action task = task_queue_.waitPop();
+          if (task) {
+            task();
+          }
+        } while (execute_.load(std::memory_order_acquire));
+      });
+    }
+  } catch (...) {
+    stop();
   }
 }
 
 ThreadPool::~ThreadPool() {
+  stop();
+}
+
+void ThreadPool::stop() {
   execute_.store(false, std::memory_order_release);
   task_queue_.interrupt();
 }
@@ -47,7 +55,7 @@ ThreadPool::getPool(const unsigned _numThreads) {
   return std::shared_ptr<ThreadPool>(new ThreadPool(_numThreads));
 }
 
-void ThreadPool::push(std::function<void(void)> _task) {
+void ThreadPool::push(Action _task) {
   task_queue_.push(std::move(_task));
 }
 

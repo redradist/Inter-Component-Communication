@@ -13,11 +13,11 @@ namespace threadpool {
 
 class JThread final {
  public:
-  template<typename Function, typename ... Args>
-  explicit JThread(Function&& f, Args&&... args) {
+  template<typename TFunction, typename ... TArgs>
+  explicit JThread(TFunction&& f, TArgs&&... args) {
     thread_ = std::thread(
-        std::forward<Function>(f),
-        std::forward<Args>(args)...);
+        std::forward<TFunction>(f),
+        std::forward<TArgs>(args)...);
   }
   JThread(JThread&&) noexcept = default;
   JThread& operator=(JThread&&) noexcept = default;

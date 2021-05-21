@@ -46,12 +46,19 @@ class ThreadPool
    * Method used to push task for execution
    * @param _task Task that will be executed
    */
-  void push(std::function<void(void)> _task);
+  void push(Action _task);
 
+  /**
+   * Method used to check if thread with id _threadId
+   * is owned by this ThreadPool
+   * @param _threadId Thread Id to check
+   * @return true if thread belongs to, false otherwise
+   */
   bool hasThread(std::thread::id _threadId) const;
 
  protected:
-  ThreadPool(unsigned int _numThreads);
+  explicit ThreadPool(unsigned _numThreads);
+  void stop();
 
   std::vector<JThread> threads_;
   std::atomic_bool execute_{true};
