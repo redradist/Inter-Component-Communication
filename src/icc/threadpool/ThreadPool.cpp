@@ -42,6 +42,7 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::stop() {
   execute_.store(false, std::memory_order_release);
   task_queue_.interrupt();
+  threads_.clear();
 }
 
 ThreadPool &
