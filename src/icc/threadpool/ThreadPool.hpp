@@ -29,12 +29,18 @@ class Task;
 class ThreadPool
     : public icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
  public:
-  ~ThreadPool();
+  using ThreadAction = std::function<void(ThreadSafeActionQueue&)>;
+
+  ~ThreadPool() override;
 
   static ThreadPool & getDefaultPool(
       unsigned _numThreads = std::thread::hardware_concurrency());
 
   static std::shared_ptr<ThreadPool> createPool(
+      unsigned _numThreads = std::thread::hardware_concurrency());
+
+  static std::shared_ptr<ThreadPool> createCustomPool(
+      const ThreadAction& threadTask,
       unsigned _numThreads = std::thread::hardware_concurrency());
 
   template<typename TRes>
@@ -58,6 +64,7 @@ class ThreadPool
 
  protected:
   explicit ThreadPool(unsigned _numThreads);
+  explicit ThreadPool(const ThreadAction& threadTask, unsigned _numThreads);
   /**
    * Method that stop ThreadPool
    */

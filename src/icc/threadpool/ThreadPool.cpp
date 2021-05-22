@@ -34,6 +34,20 @@ ThreadPool::ThreadPool(const unsigned _numThreads) {
   }
 }
 
+ThreadPool::ThreadPool(const ThreadAction& threadTask,
+                       const unsigned _numThreads) {
+  try {
+    for (int i = 0; i < _numThreads; ++i) {
+      threads_.emplace_back([this, threadTask] {
+        threadTask(task_queue_);
+      });
+    }
+  } catch (...) {
+    stop();
+    throw;
+  }
+}
+
 ThreadPool::~ThreadPool() {
   stop();
 }
@@ -52,6 +66,12 @@ ThreadPool::getDefaultPool(const unsigned _numThreads) {
 std::shared_ptr<ThreadPool>
 ThreadPool::createPool(const unsigned _numThreads) {
   return std::shared_ptr<ThreadPool>(new ThreadPool(_numThreads));
+}
+
+std::shared_ptr<ThreadPool>
+ThreadPool::createCustomPool(const ThreadAction& threadTask,
+                             const unsigned _numThreads) {
+  return std::shared_ptr<ThreadPool>(new ThreadPool(threadTask, _numThreads));
 }
 
 void ThreadPool::push(Action _task) {
