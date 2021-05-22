@@ -60,9 +60,9 @@ class ThreadPool
   explicit ThreadPool(unsigned _numThreads);
   void stop();
 
-  std::vector<JThread> threads_;
   std::atomic_bool execute_{true};
   ThreadSafeQueueAction task_queue_;
+  std::vector<JThread> threads_;
 };
 
 }
