@@ -1,6 +1,11 @@
-//
-// Created by RedRa on 20.05.2021.
-//
+/**
+ * @file Attribute.hpp
+ * @author Denis Kotov
+ * @date 20 May 2021
+ * @brief Contains JThread class.
+ * It is an thread class that joins in destructor
+ * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
+ */
 
 #ifndef ICC_SRC_ICC_THREADPOOL_JTHREAD_HPP_
 #define ICC_SRC_ICC_THREADPOOL_JTHREAD_HPP_

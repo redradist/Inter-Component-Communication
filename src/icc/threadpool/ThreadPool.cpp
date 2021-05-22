@@ -9,10 +9,8 @@
 #include <thread>
 #include <utility>
 
-#include <icc/localbus/LocalBus.hpp>
 #include "ThreadPool.hpp"
 #include "Task.hpp"
-#include "JThread.hpp"
 
 namespace icc {
 
@@ -21,7 +19,7 @@ namespace threadpool {
 ThreadPool::ThreadPool(const unsigned _numThreads) {
   try {
     for (int i = 0; i < _numThreads; ++i) {
-      threads_.emplace_back([=] {
+      threads_.emplace_back([this] {
         do {
           Action task = task_queue_.waitPop();
           if (task) {
@@ -63,7 +61,7 @@ void ThreadPool::push(Action _task) {
 
 bool ThreadPool::hasThread(std::thread::id _threadId) const {
   return std::any_of(threads_.begin(), threads_.end(),
-  [&](const JThread & _thread) {
+  [&_threadId](const JThread & _thread) {
     return _thread.getId() == _threadId;
   });
 }
