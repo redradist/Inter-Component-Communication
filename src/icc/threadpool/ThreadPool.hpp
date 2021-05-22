@@ -34,7 +34,7 @@ class ThreadPool
   static ThreadPool & getDefaultPool(
       unsigned _numThreads = std::thread::hardware_concurrency());
 
-  static std::shared_ptr<ThreadPool> getPool(
+  static std::shared_ptr<ThreadPool> createPool(
       unsigned _numThreads = std::thread::hardware_concurrency());
 
   template<typename TRes>
@@ -63,7 +63,6 @@ class ThreadPool
    */
   void stop();
 
-  std::atomic_bool execute_{true};
   ThreadSafeActionQueue task_queue_;
   std::vector<JThread> threads_;
 };

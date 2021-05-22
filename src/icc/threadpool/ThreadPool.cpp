@@ -20,12 +20,12 @@ ThreadPool::ThreadPool(const unsigned _numThreads) {
   try {
     for (int i = 0; i < _numThreads; ++i) {
       threads_.emplace_back([this] {
-        do {
+        while (!task_queue_.isInterrupt()) {
           Action task = task_queue_.waitPop();
           if (task) {
             task();
           }
-        } while (execute_.load(std::memory_order_acquire));
+        }
       });
     }
   } catch (...) {
@@ -39,19 +39,18 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::stop() {
-  execute_.store(false, std::memory_order_release);
   task_queue_.interrupt();
   threads_.clear();
 }
 
-ThreadPool &
+ThreadPool&
 ThreadPool::getDefaultPool(const unsigned _numThreads) {
   static ThreadPool pool(_numThreads);
   return pool;
 }
 
 std::shared_ptr<ThreadPool>
-ThreadPool::getPool(const unsigned _numThreads) {
+ThreadPool::createPool(const unsigned _numThreads) {
   return std::shared_ptr<ThreadPool>(new ThreadPool(_numThreads));
 }
 

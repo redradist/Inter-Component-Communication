@@ -198,6 +198,7 @@ class Context<ThreadSafeQueueAction> final
  private:
   void runForever() {
     do {
+      queue_->reset();
       Action action = queue_->waitPop();
       if (action) {
         action();
@@ -207,6 +208,7 @@ class Context<ThreadSafeQueueAction> final
 
   void runUntilWorkers() {
     do {
+      queue_->reset();
       Action action = queue_->waitPop();
       if (!queue_->isInterrupt() && action) {
         action();

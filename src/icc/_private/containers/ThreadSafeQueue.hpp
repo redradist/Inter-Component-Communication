@@ -96,7 +96,6 @@ class ThreadSafeQueue {
     static_assert(std::is_copy_assignable<TItem>::value,
                   "TItem is not copy assignable !!");
     std::unique_lock<std::mutex> lock{mtx_};
-    interrupted_.store(false, std::memory_order_release);
     TItem item;
     QueueNode* nodePtr = nullptr;
     while (!interrupted_.load(std::memory_order_acquire) &&
@@ -121,6 +120,10 @@ class ThreadSafeQueue {
   void interrupt() {
     interrupted_.store(true, std::memory_order_release);
     cond_var_.notify_all();
+  }
+
+  void reset() {
+    interrupted_.store(false, std::memory_order_release);
   }
 
   bool empty() const {

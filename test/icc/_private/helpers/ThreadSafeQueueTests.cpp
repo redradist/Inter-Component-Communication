@@ -52,7 +52,7 @@ struct ThreadSafeQueueIntTest : testing::Test
   }
 };
 
-TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThread_OneWriteThread)
+TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThreads_OneWriteThread)
 {
   max_items = 10000000;
   num_read_threads = 10;
@@ -86,7 +86,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThread_OneWriteThread)
   EXPECT_EQ(write_count, read_count);
 }
 
-TEST_F(ThreadSafeQueueIntTest, TenMillionItems_OneReadThread_TenWriteThread)
+TEST_F(ThreadSafeQueueIntTest, TenMillionItems_OneReadThread_TenWriteThreads)
 {
   max_items = 10000000;
   num_read_threads = 1;
@@ -120,7 +120,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_OneReadThread_TenWriteThread)
   EXPECT_EQ(write_count, read_count);
 }
 
-TEST_F(ThreadSafeQueueIntTest, TenMillionItems_FiveReadThread_TenWriteThread)
+TEST_F(ThreadSafeQueueIntTest, TenMillionItems_FiveReadThreads_TenWriteThreads)
 {
   max_items = 10000000;
   num_read_threads = 5;
@@ -154,7 +154,7 @@ TEST_F(ThreadSafeQueueIntTest, TenMillionItems_FiveReadThread_TenWriteThread)
   EXPECT_EQ(write_count, read_count);
 }
 
-TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThread_FiveWriteThread)
+TEST_F(ThreadSafeQueueIntTest, TenMillionItems_TenReadThreads_FiveWriteThreads)
 {
   max_items = 10000000;
   num_read_threads = 10;

@@ -1,5 +1,5 @@
 /**
- * @file TimerTests.hpp
+ * @file TimerTests.cpp
  * @author Denis Kotov
  * @date 13 May 2019
  * @brief Contains tests for Timer class
