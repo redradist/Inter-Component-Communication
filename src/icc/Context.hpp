@@ -5,7 +5,7 @@
  * @brief
  * Contains IContext:
  * It is interface for implementing Context Execution
- * Contains Context<ThreadSafeQueueAction>:
+ * Contains Context<ThreadSafeActionQueue>:
  * It is default implementation of IContext interface
  * based on ThreadSafeQueue. This implementation is used in Component as
  * default Context

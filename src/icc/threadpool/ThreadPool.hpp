@@ -21,7 +21,7 @@ namespace icc {
 namespace threadpool {
 
 using Action = std::function<void(void)>;
-using ThreadSafeQueueAction = icc::_private::containers::ThreadSafeQueue<Action>;
+using ThreadSafeActionQueue = icc::_private::containers::ThreadSafeQueue<Action>;
 
 template <typename T>
 class Task;
@@ -61,7 +61,7 @@ class ThreadPool
   void stop();
 
   std::atomic_bool execute_{true};
-  ThreadSafeQueueAction task_queue_;
+  ThreadSafeActionQueue task_queue_;
   std::vector<JThread> threads_;
 };
 
