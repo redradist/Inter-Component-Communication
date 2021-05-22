@@ -32,6 +32,7 @@ ThreadPool::ThreadPool(const unsigned _numThreads) {
     }
   } catch (...) {
     stop();
+    throw;
   }
 }
 

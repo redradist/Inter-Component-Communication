@@ -58,6 +58,9 @@ class ThreadPool
 
  protected:
   explicit ThreadPool(unsigned _numThreads);
+  /**
+   * Method that stop ThreadPool
+   */
   void stop();
 
   std::atomic_bool execute_{true};
