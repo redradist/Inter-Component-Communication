@@ -16,13 +16,14 @@
 #include <icc/Component.hpp>
 #include <icc/Event.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
+#include <icc/_private/api.hpp>
 #include "ICommandLoop.hpp"
 
 namespace icc {
 
 namespace command {
 
-class CommandLoop
+class ICC_PUBLIC CommandLoop
     : public virtual Component
     , public ICommandLoop
     , public ICommand::IListener

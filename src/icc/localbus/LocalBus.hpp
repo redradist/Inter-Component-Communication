@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <icc/Component.hpp>
 #include <icc/_private/helpers/hash_helpers.hpp>
+#include <icc/_private/api.hpp>
 
 namespace icc {
 
@@ -34,7 +35,7 @@ class IClient;
 template<typename _Interface>
 class IService;
 
-class LocalBus
+class ICC_PUBLIC LocalBus
     : public virtual Component {
  public:
   using tKeyForClientList = std::pair<std::type_index, std::string>;

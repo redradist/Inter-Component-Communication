@@ -14,6 +14,7 @@
 
 #include <icc/Component.hpp>
 #include <icc/_private/helpers/memory_helpers.hpp>
+#include <icc/_private/api.hpp>
 #include "JThread.hpp"
 
 namespace icc {
@@ -26,7 +27,7 @@ using ThreadSafeActionQueue = icc::_private::containers::ThreadSafeQueue<Action>
 template <typename T>
 class Task;
 
-class ThreadPool
+class ICC_PUBLIC ThreadPool
     : public icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
  public:
   using ThreadLoop = std::function<void(void)>;

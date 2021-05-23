@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
 project(ICC)
 
-option(ICC_BUILD_SHARED "Build ICC as a shared library" OFF)
-option(ICC_BUILD_TESTS  "Build tests" OFF)
+option(ICC_BUILD_LIBRARY  "Build ICC as a library" OFF)
+option(ICC_BUILD_SHARED   "Build ICC as a shared library" OFF)
+option(ICC_BUILD_TESTS    "Build tests" OFF)
 
 if (NOT CMAKE_CXX_STANDARD)
     message(STATUS "Cannot detect C++ Standard. Switching to C++11 by default !!")
@@ -45,28 +46,36 @@ if(NOT EXISTS libs/commonapi_tools)
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endif()
 
+if(ICC_BUILD_LIBRARY)
+    add_definitions(-DICC_LIBRARY)
+endif()
+
 if(ICC_BUILD_SHARED)
     add_library(${PROJECT_NAME} SHARED ${ICC_SOURCE_FILES})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC ICC_SHARED_LIBRARY)
+    set(ICC_LIBRARY_NAME ${PROJECT_NAME})
 else()
-    add_library(${PROJECT_NAME} STATIC ${ICC_SOURCE_FILES})
+    add_library(${PROJECT_NAME}_static STATIC ${ICC_SOURCE_FILES})
+    set(ICC_LIBRARY_NAME ${PROJECT_NAME}_static)
 endif()
-target_include_directories(${PROJECT_NAME}
+target_include_directories(${ICC_LIBRARY_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private
                                    ${ICC_OS_HEADERS})
 if (UNIX)
-    target_link_libraries(${PROJECT_NAME} pthread)
-    install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    target_link_libraries(${ICC_LIBRARY_NAME} pthread)
+    install(TARGETS ${ICC_LIBRARY_NAME} DESTINATION lib)
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
             DESTINATION include
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
                            PATTERN "icc/os/platforms/windows/*" EXCLUDE)
 elseif(WIN32)
-    target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
+    target_link_libraries(${ICC_LIBRARY_NAME} ws2_32 wsock32)
     if(ICC_BUILD_SHARED)
-        install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+        install(TARGETS ${ICC_LIBRARY_NAME} RUNTIME DESTINATION bin)
+        install(TARGETS ${ICC_LIBRARY_NAME} LIBRARY DESTINATION lib)
     else()
-        install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+        install(TARGETS ${ICC_LIBRARY_NAME} DESTINATION lib)
     endif ()
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
             DESTINATION include

@@ -5,13 +5,15 @@
 #ifndef FORECAST_SOCKET_HPP
 #define FORECAST_SOCKET_HPP
 
+#include <icc/_private/api.hpp>
+
 #include "ISocket.hpp"
 
 namespace icc {
 
 namespace os {
 
-class Socket : public ISocket {
+class ICC_PUBLIC Socket : public ISocket {
  public:
   static std::shared_ptr<Socket> createSocket(const std::string& _address, uint16_t _port);
   ~Socket() = default;

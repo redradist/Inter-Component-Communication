@@ -12,13 +12,14 @@
 #if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
 #include <icc/Component.hpp>
+#include <icc/_private/api.hpp>
 #include "Task.hpp"
 
 namespace icc {
 
 namespace coroutine {
 
-class TaskScheduler
+class ICC_PUBLIC TaskScheduler
     : public virtual icc::Component {
  public:
   TaskScheduler();

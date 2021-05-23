@@ -15,6 +15,7 @@
 #include <thread>
 #include <icc/Context.hpp>
 #include <icc/_private/helpers/function_wrapper.hpp>
+#include <icc/_private/api.hpp>
 
 #include "IEventLoop.hpp"
 
@@ -31,7 +32,7 @@ class Timer;
 class ServerSocket;
 class Socket;
 
-class EventLoop : public IEventLoop {
+class ICC_PUBLIC EventLoop : public IEventLoop {
  public:
   static EventLoop & getDefaultInstance();
   static std::shared_ptr<EventLoop> createEventLoop();

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <icc/_private/api.hpp>
 #include "IServerSocket.hpp"
 #include "ISocket.hpp"
 #include "Socket.hpp"
@@ -15,7 +16,7 @@ namespace icc {
 
 namespace os {
 
-class ServerSocket : public IServerSocket {
+class ICC_PUBLIC ServerSocket : public IServerSocket {
  public:
   static std::shared_ptr<ServerSocket> createServerSocket(std::string _address, uint16_t _port, uint16_t _numQueue);
 

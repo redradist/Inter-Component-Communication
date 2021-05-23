@@ -10,6 +10,7 @@
 
 #include <icc/ITimer.hpp>
 #include <icc/os/timer/ITimerListener.hpp>
+#include <icc/_private/api.hpp>
 
 namespace icc {
 
@@ -17,7 +18,7 @@ namespace os {
 
 class ITimerListener;
 
-class Timer : public icc::ITimer {
+class ICC_PUBLIC Timer : public icc::ITimer {
  public:
   enum : int32_t {
     /**
@@ -30,7 +31,7 @@ class Timer : public icc::ITimer {
     OneTime = 0,
   };
 
-  static std::shared_ptr<Timer> createTimer();
+  static std::shared_ptr<Timer> __cdecl createTimer();
   ~Timer() = default;
 
   /**
