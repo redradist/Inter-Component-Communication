@@ -79,7 +79,9 @@ class Optional {
   CONSTEXPR explicit operator bool() const noexcept {
     return has_value();
   }
+#if __cpp_lib_optional >= 201606L
   [[nodiscard]]
+#endif
   CONSTEXPR bool has_value() const noexcept {
     return is_present_;
   }

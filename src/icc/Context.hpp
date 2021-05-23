@@ -40,7 +40,9 @@ class IContext {
     virtual ~IChannel() = 0;
     virtual void push(Action _action) = 0;
     virtual void invoke(Action _action) = 0;
+#if __cpp_lib_optional >= 201606L
     [[nodiscard]]
+#endif
     virtual IContext & getContext() const = 0;
   };
 
@@ -132,7 +134,9 @@ class Context<ThreadSafeQueueAction> final
       }
     }
 
+#if __cpp_lib_optional >= 201606L
     [[nodiscard]]
+#endif
     IContext & getContext() const override {
       return *context_;
     }

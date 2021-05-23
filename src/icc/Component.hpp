@@ -184,7 +184,9 @@ class Component {
    * Method return used io_service
    * @return IO Service
    */
+#if __cpp_lib_optional >= 201606L
   [[nodiscard]]
+#endif
   IContext & getContext() const {
     return channel_->getContext();
   }
