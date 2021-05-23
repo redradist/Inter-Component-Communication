@@ -22,7 +22,7 @@ struct Handle {
 
 constexpr Handle kInvalidHandle{-1};
 
-enum class EventType {
+enum class EventType : long {
   READ,
   WRITE,
   ERROR,
