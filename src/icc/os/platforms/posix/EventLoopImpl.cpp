@@ -53,10 +53,10 @@ std::shared_ptr<Timer::TimerImpl> EventLoop::EventLoopImpl::createTimerImpl() {
   const int kTimerFd = ::timerfd_create(CLOCK_MONOTONIC, 0);
   auto timer = new Timer::TimerImpl(Handle{kTimerFd});
   function_wrapper<void(const Handle&)> callback(&Timer::TimerImpl::onTimerExpired, timer);
-  registerObjectEvents(Handle{kTimerFd}, EventType::READ, callback);
+  registerObjectEvents(Handle{kTimerFd}, static_cast<long>(EventType::READ), callback);
   return std::shared_ptr<Timer::TimerImpl>(timer,
   [this, callback](Timer::TimerImpl* timer) {
-    unregisterObjectEvents(timer->timer_handle_, EventType::READ, callback);
+    unregisterObjectEvents(timer->timer_handle_, static_cast<long>(EventType::READ), callback);
     ::close(timer->timer_handle_.fd_);
   });
 }
@@ -86,10 +86,10 @@ EventLoop::EventLoopImpl::createServerSocketImpl(std::string _address, uint16_t 
 
   auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{kServerSocketFd});
   function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
-  registerObjectEvents(Handle{kServerSocketFd}, EventType::READ, readCallback);
+  registerObjectEvents(Handle{kServerSocketFd}, static_cast<long>(EventType::READ), readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
   [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+    unregisterObjectEvents(serverSocket->socket_handle_, static_cast<long>(EventType::READ), readCallback);
     ::close(serverSocket->socket_handle_.fd_);
   });
 
@@ -119,10 +119,10 @@ EventLoop::EventLoopImpl::createServerSocketImpl(const Handle & _socketHandle) {
 
   auto socketRawPtr = new ServerSocket::ServerSocketImpl(Handle{_socketHandle});
   function_wrapper<void(const Handle&)> readCallback(&ServerSocket::ServerSocketImpl::onSocketDataAvailable, socketRawPtr);
-  registerObjectEvents(Handle{_socketHandle}, EventType::READ, readCallback);
+  registerObjectEvents(Handle{_socketHandle}, static_cast<long>(EventType::READ), readCallback);
   auto socketPtr = std::shared_ptr<ServerSocket::ServerSocketImpl>(socketRawPtr,
   [this, readCallback](ServerSocket::ServerSocketImpl* serverSocket) {
-    unregisterObjectEvents(serverSocket->socket_handle_, EventType::READ, readCallback);
+    unregisterObjectEvents(serverSocket->socket_handle_, static_cast<long>(EventType::READ), readCallback);
     ::close(serverSocket->socket_handle_.fd_);
   });
 
@@ -141,13 +141,13 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
 
   auto socketRawPtr = new Socket::SocketImpl(Handle{kSocketFd});
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
-  registerObjectEvents(Handle{kSocketFd}, EventType::READ, readCallback);
+  registerObjectEvents(Handle{kSocketFd}, static_cast<long>(EventType::READ), readCallback);
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
-  registerObjectEvents(Handle{kSocketFd}, EventType::WRITE, writeCallback);
+  registerObjectEvents(Handle{kSocketFd}, static_cast<long>(EventType::WRITE), writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+    unregisterObjectEvents(socket->socket_handle_, static_cast<long>(EventType::READ), readCallback);
+    unregisterObjectEvents(socket->socket_handle_, static_cast<long>(EventType::WRITE), writeCallback);
     ::close(socket->socket_handle_.fd_);
   });
 
@@ -174,13 +174,13 @@ std::shared_ptr<Socket::SocketImpl> EventLoop::EventLoopImpl::createSocketImpl(c
 
   auto socketRawPtr = new Socket::SocketImpl(_socketHandle);
   function_wrapper<void(const Handle&)> readCallback(&Socket::SocketImpl::onSocketDataAvailable, socketRawPtr);
-  registerObjectEvents(_socketHandle, EventType::READ, readCallback);
+  registerObjectEvents(_socketHandle, static_cast<long>(EventType::READ), readCallback);
   function_wrapper<void(const Handle&)> writeCallback(&Socket::SocketImpl::onSocketBufferAvailable, socketRawPtr);
-  registerObjectEvents(_socketHandle, EventType::WRITE, writeCallback);
+  registerObjectEvents(_socketHandle, static_cast<long>(EventType::WRITE), writeCallback);
   auto socketPtr = std::shared_ptr<Socket::SocketImpl>(socketRawPtr,
   [this, readCallback, writeCallback](Socket::SocketImpl* socket) {
-    unregisterObjectEvents(socket->socket_handle_, EventType::READ, readCallback);
-    unregisterObjectEvents(socket->socket_handle_, EventType::WRITE, writeCallback);
+    unregisterObjectEvents(socket->socket_handle_, static_cast<long>(EventType::READ), readCallback);
+    unregisterObjectEvents(socket->socket_handle_, static_cast<long>(EventType::WRITE), writeCallback);
     ::close(socket->socket_handle_.fd_);
   });
 
@@ -244,10 +244,10 @@ void EventLoop::EventLoopImpl::stop() {
 
 void EventLoop::EventLoopImpl::registerObjectEvents(
     const Handle & osObject,
-    const EventType & eventType,
+    const long eventType,
     function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  switch (eventType) {
+  switch (static_cast<EventType>(eventType)) {
     case EventType::READ: {
       add_read_listeners_.emplace_back(osObject, callback);
       break;
@@ -267,10 +267,10 @@ void EventLoop::EventLoopImpl::registerObjectEvents(
 
 void EventLoop::EventLoopImpl::unregisterObjectEvents(
     const Handle & osObject,
-    const EventType & eventType,
+    const long eventType,
     function_wrapper<void(const Handle&)> callback) {
   std::lock_guard<std::mutex> lock(internal_mtx_);
-  switch (eventType) {
+  switch (static_cast<EventType>(eventType)) {
     case EventType::READ: {
       remove_read_listeners_.emplace_back(osObject, callback);
       break;

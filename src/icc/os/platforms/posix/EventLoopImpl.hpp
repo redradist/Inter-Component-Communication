@@ -33,10 +33,10 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   std::shared_ptr<Socket::SocketImpl> createSocketImpl(const Handle & _socketHandle);
 
   void registerObjectEvents(const Handle & osObject,
-                            const EventType & eventType,
+                            const long eventType,
                             function_wrapper<void(const Handle&)> callback);
   void unregisterObjectEvents(const Handle & osObject,
-                              const EventType & eventType,
+                              const long eventType,
                               function_wrapper<void(const Handle&)> callback);
 
  private:
