@@ -221,8 +221,8 @@ class Context<ThreadSafeQueueAction> final
              num_of_channels_.load(std::memory_order_acquire) > 0);
   }
 
-  std::atomic_bool run_{false};
-  std::atomic_uint num_of_channels_{0};
+  std::atomic<bool> run_{false};
+  std::atomic<unsigned> num_of_channels_{0};
   std::atomic<std::thread::id> queue_thread_id_;
   std::unique_ptr<ThreadSafeQueueAction> queue_{new ThreadSafeQueueAction()};
 };

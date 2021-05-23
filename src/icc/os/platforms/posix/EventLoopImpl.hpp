@@ -56,7 +56,7 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   static std::vector<HandleListeners>::iterator
   findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
 
-  std::atomic_bool execute_{true};
+  std::atomic<bool> execute_{true};
   std::thread event_loop_thread_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};

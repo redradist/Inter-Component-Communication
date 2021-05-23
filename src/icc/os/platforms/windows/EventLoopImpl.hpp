@@ -59,12 +59,12 @@ class EventLoop::EventLoopImpl : public IEventLoop {
   findOSObjectIn(const Handle &osObject, std::vector<HandleListeners> &fds);
 
   Handle io_completion_port_;
-  std::atomic_bool execute_{true};
+  std::atomic<bool> execute_{true};
   WSADATA wsa_data_;
   std::thread event_loop_thread_;
   std::mutex internal_mtx_;
   Handle event_loop_handle_{kInvalidHandle};
-  std::atomic_bool event_loop_{false};
+  std::atomic<bool> event_loop_{false};
   std::vector<InternalEvent> add_event_listeners_;
   std::vector<InternalEvent> remove_event_listeners_;
   std::vector<HandleListeners> event_listeners_;

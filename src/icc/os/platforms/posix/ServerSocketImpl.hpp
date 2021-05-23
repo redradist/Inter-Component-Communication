@@ -38,7 +38,7 @@ class ServerSocket::ServerSocketImpl {
   bool is_blocking_ = false;
   std::vector<std::shared_ptr<Socket>> client_sockets_;
   std::deque<std::promise<std::shared_ptr<Socket>>> accept_queue_;
-  std::atomic_bool is_new_client_available_event_{false};
+  std::atomic<bool> is_new_client_available_event_{false};
 
   std::mutex mtx_;
 };

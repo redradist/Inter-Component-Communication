@@ -63,7 +63,11 @@ if (UNIX)
                            PATTERN "icc/os/platforms/windows/*" EXCLUDE)
 elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
-    install(TARGETS ${PROJECT_NAME} DESTINATION bin INCLUDES DESTINATION include)
+    if(ICC_BUILD_SHARED)
+        install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+    else()
+        install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    endif ()
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
             DESTINATION include
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"

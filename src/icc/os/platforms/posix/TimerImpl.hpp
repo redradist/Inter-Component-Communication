@@ -82,8 +82,8 @@ class Timer::TimerImpl {
 
   std::mutex mutex_;
   Handle timer_handle_{kInvalidHandle};
-  std::atomic_bool execute_{false};
-  std::atomic_int32_t counter_{OneTime};
+  std::atomic<bool> execute_{false};
+  std::atomic<int32_t> counter_{OneTime};
   std::vector<ITimerListener*> listeners_ptr_;
   std::vector<std::weak_ptr<ITimerListener>> listeners_;
   std::chrono::nanoseconds duration_ = std::chrono::nanoseconds::zero();
