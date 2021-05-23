@@ -69,6 +69,7 @@ elseif(WIN32)
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
                            PATTERN "icc/os/platforms/posix/*" EXCLUDE)
 endif()
+install(FILES LICENSE DESTINATION licenses)
 
 if(ICC_BUILD_TESTS)
     if(NOT EXISTS libs/googletest)
