@@ -15,7 +15,6 @@
 #include <thread>
 #include <icc/Context.hpp>
 #include <icc/_private/helpers/function_wrapper.hpp>
-#include <WinSock2.h>
 
 #include "IEventLoop.hpp"
 
@@ -27,7 +26,6 @@ template <typename T>
 using function_wrapper = icc::_private::helpers::function_wrapper<T>;
 
 struct Handle;
-enum class EventType;
 
 class Timer;
 class ServerSocket;
