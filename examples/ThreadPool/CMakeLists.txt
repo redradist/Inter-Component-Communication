@@ -20,11 +20,12 @@ include_directories(
 link_directories(/usr/local/lib/boost/lib)
 link_directories(/usr/local/lib)
 
-set(SOURCE_FILES    main.cpp)
+set(SOURCE_FILES main.cpp)
 add_subdirectory(../../ ${CMAKE_BINARY_DIR}/bin)
 add_executable(TreadPool ${SOURCE_FILES})
 add_dependencies(TreadPool ICC)
-target_link_libraries(TreadPool
-        pthread
-        ICC
-        )
+if (UNIX)
+    target_link_libraries(TreadPool ICC pthread)
+elseif(WIN32)
+    target_link_libraries(TreadPool ICC ws2_32 wsock32)
+endif()

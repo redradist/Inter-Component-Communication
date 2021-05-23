@@ -34,12 +34,20 @@ ThreadPool::ThreadPool(const unsigned _numThreads) {
   }
 }
 
-ThreadPool::ThreadPool(const ThreadAction& threadTask,
+ThreadPool::ThreadPool(const ThreadAction& initThreadTask,
                        const unsigned _numThreads) {
   try {
+    ThreadLoop threadLoop = [this] {
+      while (!task_queue_.isInterrupt()) {
+        Action task = task_queue_.waitPop();
+        if (task) {
+          task();
+        }
+      }
+    };
     for (int i = 0; i < _numThreads; ++i) {
-      threads_.emplace_back([this, threadTask] {
-        threadTask(task_queue_);
+      threads_.emplace_back([initThreadTask, threadLoop] {
+        initThreadTask(threadLoop);
       });
     }
   } catch (...) {

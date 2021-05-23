@@ -29,7 +29,8 @@ class Task;
 class ThreadPool
     : public icc::helpers::virtual_enable_shared_from_this< ThreadPool > {
  public:
-  using ThreadAction = std::function<void(ThreadSafeActionQueue&)>;
+  using ThreadLoop = std::function<void(void)>;
+  using ThreadAction = std::function<void(const ThreadLoop&)>;
 
   ~ThreadPool() override;
 
@@ -64,7 +65,7 @@ class ThreadPool
 
  protected:
   explicit ThreadPool(unsigned _numThreads);
-  explicit ThreadPool(const ThreadAction& threadTask, unsigned _numThreads);
+  explicit ThreadPool(const ThreadAction& initThreadTask, unsigned _numThreads);
   /**
    * Method that stop ThreadPool
    */
