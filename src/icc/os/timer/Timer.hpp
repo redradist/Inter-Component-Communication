@@ -31,7 +31,7 @@ class ICC_PUBLIC Timer : public icc::ITimer {
     OneTime = 0,
   };
 
-  static std::shared_ptr<Timer> __cdecl createTimer();
+  static std::shared_ptr<Timer> createTimer();
   ~Timer() = default;
 
   /**

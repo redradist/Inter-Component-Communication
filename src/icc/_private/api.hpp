@@ -9,6 +9,10 @@
 #ifndef ICC_PRIVATE_API_HPP
 #define ICC_PRIVATE_API_HPP
 
+#if !defined(ICC_LIBRARY)
+  #include "api_trigger.hpp"
+#endif
+
 #if defined(_MSC_VER)
   // MSVC
   #define ICC_EXPORT __declspec(dllexport)

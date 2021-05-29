@@ -1,0 +1,10 @@
+//
+// Created by RedRa on 29.05.2021.
+//
+
+#ifndef ICC_SRC_ICC__PRIVATE_STATIC_LIB_API_TRIGGER_HPP_
+#define ICC_SRC_ICC__PRIVATE_STATIC_LIB_API_TRIGGER_HPP_
+
+// Do nothing just a stub
+
+#endif //ICC_SRC_ICC__PRIVATE_STATIC_LIB_API_TRIGGER_HPP_

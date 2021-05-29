@@ -55,8 +55,8 @@ if(ICC_BUILD_SHARED)
     target_compile_definitions(${PROJECT_NAME} PUBLIC ICC_SHARED_LIBRARY)
     set(ICC_LIBRARY_NAME ${PROJECT_NAME})
 else()
-    add_library(${PROJECT_NAME}_static STATIC ${ICC_SOURCE_FILES})
-    set(ICC_LIBRARY_NAME ${PROJECT_NAME}_static)
+    add_library(${PROJECT_NAME} STATIC ${ICC_SOURCE_FILES})
+    set(ICC_LIBRARY_NAME ${PROJECT_NAME})
 endif()
 target_include_directories(${ICC_LIBRARY_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
@@ -68,7 +68,8 @@ if (UNIX)
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
             DESTINATION include
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-                           PATTERN "icc/os/platforms/windows/*" EXCLUDE)
+                           PATTERN "icc/os/platforms/windows/*" EXCLUDE
+                           PATTERN "icc/_private/*_lib" EXCLUDE)
 elseif(WIN32)
     target_link_libraries(${ICC_LIBRARY_NAME} ws2_32 wsock32)
     if(ICC_BUILD_SHARED)
@@ -76,11 +77,17 @@ elseif(WIN32)
         install(TARGETS ${ICC_LIBRARY_NAME} LIBRARY DESTINATION lib)
     else()
         install(TARGETS ${ICC_LIBRARY_NAME} DESTINATION lib)
-    endif ()
+    endif()
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/src/icc
             DESTINATION include
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-                           PATTERN "icc/os/platforms/posix/*" EXCLUDE)
+                           PATTERN "icc/os/platforms/posix/*" EXCLUDE
+                           PATTERN "icc/_private/*_lib" EXCLUDE)
+endif()
+if(ICC_BUILD_SHARED)
+    install(FILES ${CMAKE_CURRENT_LIST_DIR}/src/icc/_private/dynamic_lib/api_trigger.hpp DESTINATION include/icc/_private/)
+else()
+    install(FILES ${CMAKE_CURRENT_LIST_DIR}/src/icc/_private/static_lib/api_trigger.hpp DESTINATION include/icc/_private/)
 endif()
 install(FILES LICENSE DESTINATION licenses)
 
