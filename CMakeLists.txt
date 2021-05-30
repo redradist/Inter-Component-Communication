@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
 project(ICC)
 
-option(ICC_BUILD_LIBRARY  "Build ICC as a library" OFF)
 option(ICC_BUILD_SHARED   "Build ICC as a shared library" OFF)
 option(ICC_BUILD_TESTS    "Build tests" OFF)
 
@@ -46,10 +45,6 @@ if(NOT EXISTS libs/commonapi_tools)
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endif()
 
-if(ICC_BUILD_LIBRARY)
-    add_definitions(-DICC_LIBRARY)
-endif()
-
 if(ICC_BUILD_SHARED)
     add_library(${PROJECT_NAME} SHARED ${ICC_SOURCE_FILES})
     target_compile_definitions(${PROJECT_NAME} PUBLIC ICC_SHARED_LIBRARY)
@@ -58,6 +53,7 @@ else()
     add_library(${PROJECT_NAME} STATIC ${ICC_SOURCE_FILES})
     set(ICC_LIBRARY_NAME ${PROJECT_NAME})
 endif()
+target_compile_definitions(${ICC_LIBRARY_NAME} PRIVATE -DICC_LIBRARY)
 target_include_directories(${ICC_LIBRARY_NAME}
                            PUBLIC ${ICC_INCLUDE_DIR}
                            PRIVATE ${ICC_INCLUDE_DIR}/icc/_private
