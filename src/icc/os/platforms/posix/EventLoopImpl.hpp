@@ -5,6 +5,12 @@
 #ifndef POSIX_EVENTLOOPIMPL_HPP
 #define POSIX_EVENTLOOPIMPL_HPP
 
+extern "C" {
+
+#include <sys/select.h>
+
+}
+
 #include <icc/os/EventLoop.hpp>
 
 #include "Common.hpp"
