@@ -11,7 +11,49 @@ To integrate this library in your project you just need in CMake add:
 add_subdirectory(<path_to_library>)
 
 ## Usage
-For introduction to ICC library see:
+### Active Object example
+Here is simple example of `WeatherStationService` and `DisplayService` that works in different threads:
+```c++
+#include <icc/Component.hpp>
+
+class WeatherStationService : public icc::Component {
+ public:
+   icc::Event<void(const double &)> temperature_;
+
+ private:
+   void handleTemperature() {
+     ...
+     temperature_(28.3);
+     ...
+   }
+};
+
+class DisplayService : public icc::Component {
+ public:
+  explicit DisplayService(WeatherStationService& station) {
+    station.temperature_.connect(&DisplayService::onTemperature, this);
+  }
+
+  void onTemperature(const double & _temperature) {
+     std::cout << "DisplayService::Temperature is " << _temperature << std::endl;
+   }
+};
+
+int main() {
+   auto observer = std::make_shared<WeatherObserver>();
+   auto station = std::make_shared<WeatherStation>(*observer);
+   auto observerThread = std::thread([&observer] {
+     observer->exec();
+   });
+   auto stationThread = std::thread([&station] {
+     station->exec();
+   });
+   observerThread.join();
+   stationThread.join();
+}
+```
+
+Documentation will be updated in:
 [Tutorial](docs/Tutorial.md)
 
 ## Known issues
