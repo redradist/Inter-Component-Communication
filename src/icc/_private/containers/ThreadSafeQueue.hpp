@@ -52,7 +52,7 @@ class ThreadSafeQueue {
       return false;
     }
     addNodePtr->item_ptr_ = itemPtr;
-    std::unique_lock<std::mutex> lock{mtx_};
+    std::lock_guard<std::mutex> lock{mtx_};
     if (back_item_ == nullptr) {
       addNodePtr->next_item_ = back_item_;
       back_item_ = addNodePtr;
@@ -118,7 +118,10 @@ class ThreadSafeQueue {
   }
 
   void interrupt() {
-    interrupted_.store(true, std::memory_order_release);
+    {
+      std::lock_guard<std::mutex> lock{mtx_};
+      interrupted_.store(true, std::memory_order_release);
+    }
     cond_var_.notify_all();
   }
 

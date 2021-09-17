@@ -11,7 +11,6 @@
 
 #include <memory>
 #include <type_traits>
-#include <boost/optional.hpp>
 #include <CommonAPI/CommonAPI.hpp>
 #include <icc/Component.hpp>
 #include <icc/interprocess/commonapi/exceptions/CommonAPIClientError.hpp>

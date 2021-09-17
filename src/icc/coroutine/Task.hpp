@@ -160,7 +160,7 @@ class TaskPromise {
     return Task<_R>{*this};
   }
   void return_value(_R value) {
-    std::unique_lock<std::mutex> lock(*mutex_);
+    std::lock_guard<std::mutex> lock(*mutex_);
     *result_ = value;
     awaiter_->notify_one();
   }
@@ -283,7 +283,7 @@ class TaskPromise<void> {
   auto await_transform(std::optional<_F> &&_result) = delete;
   auto get_return_object();
   void return_void() {
-    std::unique_lock<std::mutex> lock(*mutex_);
+    std::lock_guard<std::mutex> lock(*mutex_);
     *is_ready_ = true;
     awaiter_->notify_one();
   }
