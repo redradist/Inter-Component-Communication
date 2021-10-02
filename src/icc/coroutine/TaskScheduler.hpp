@@ -9,7 +9,11 @@
 #ifndef ICC_TASHSHEDULER_HPP
 #define ICC_TASHSHEDULER_HPP
 
-#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+#if defined(__cpp_impl_coroutine)
+
+#include <coroutine>
+
+#if defined(__cpp_lib_coroutine)
 
 #include <icc/Component.hpp>
 #include <icc/_private/api.hpp>
@@ -51,6 +55,8 @@ class ICC_PUBLIC TaskScheduler
 }
 
 }
+
+#endif
 
 #endif
 

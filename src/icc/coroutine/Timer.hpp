@@ -9,7 +9,11 @@
 #ifndef COROUTINELIBRARY_TIMER_HPP
 #define COROUTINELIBRARY_TIMER_HPP
 
-#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+#if defined(__cpp_impl_coroutine)
+
+#include <coroutine>
+
+#if defined(__cpp_lib_coroutine)
 
 #include <type_traits>
 #include <iostream>
@@ -18,7 +22,6 @@
 #include <shared_mutex>
 #include <condition_variable>
 #include <optional>
-#include <experimental/coroutine>
 #if __has_include(<boost/date_time/posix_time/posix_time.hpp>)
 #include <boost/date_time/posix_time/posix_time.hpp>
 #endif
@@ -56,7 +59,7 @@ class TaskAwaiter<boost::posix_time::time_duration>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -74,7 +77,7 @@ class TaskAwaiter<boost::posix_time::time_duration>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::time_duration duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -105,7 +108,7 @@ class TaskAwaiter<boost::posix_time::hours>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::hours(duration_.total_seconds() / 3600));
     timer_->addListener(this);
@@ -123,7 +126,7 @@ class TaskAwaiter<boost::posix_time::hours>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::hours duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -154,7 +157,7 @@ class TaskAwaiter<boost::posix_time::minutes>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -172,7 +175,7 @@ class TaskAwaiter<boost::posix_time::minutes>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::minutes duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -203,7 +206,7 @@ class TaskAwaiter<boost::posix_time::seconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -221,7 +224,7 @@ class TaskAwaiter<boost::posix_time::seconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::seconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -252,7 +255,7 @@ class TaskAwaiter<boost::posix_time::milliseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -270,7 +273,7 @@ class TaskAwaiter<boost::posix_time::milliseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::milliseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -301,7 +304,7 @@ class TaskAwaiter<boost::posix_time::microseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -319,7 +322,7 @@ class TaskAwaiter<boost::posix_time::microseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::microseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -352,7 +355,7 @@ class TaskAwaiter<boost::posix_time::nanoseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_.total_nanoseconds()));
     timer_->addListener(this);
@@ -370,7 +373,7 @@ class TaskAwaiter<boost::posix_time::nanoseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   boost::posix_time::nanoseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -405,7 +408,7 @@ class TaskAwaiter<std::chrono::duration<_Rep, _Period>>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -423,7 +426,7 @@ class TaskAwaiter<std::chrono::duration<_Rep, _Period>>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::seconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -454,7 +457,7 @@ class TaskAwaiter<std::chrono::hours>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -472,7 +475,7 @@ class TaskAwaiter<std::chrono::hours>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::seconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -503,7 +506,7 @@ class TaskAwaiter<std::chrono::minutes>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -521,7 +524,7 @@ class TaskAwaiter<std::chrono::minutes>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::seconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -552,7 +555,7 @@ class TaskAwaiter<std::chrono::seconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -570,7 +573,7 @@ class TaskAwaiter<std::chrono::seconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::seconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -601,7 +604,7 @@ class TaskAwaiter<std::chrono::milliseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -619,7 +622,7 @@ class TaskAwaiter<std::chrono::milliseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::milliseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -650,7 +653,7 @@ class TaskAwaiter<std::chrono::microseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -668,7 +671,7 @@ class TaskAwaiter<std::chrono::microseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::microseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -699,7 +702,7 @@ class TaskAwaiter<std::chrono::nanoseconds>
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     coro_ = _coro;
     timer_->setInterval(std::chrono::nanoseconds(duration_));
     timer_->addListener(this);
@@ -717,7 +720,7 @@ class TaskAwaiter<std::chrono::nanoseconds>
   }
 
  private:
-  std::experimental::coroutine_handle<> coro_;
+  std::coroutine_handle<> coro_;
   std::chrono::nanoseconds duration_;
   std::shared_ptr<icc::os::Timer> timer_;
   std::shared_ptr<IContext::IChannel> channel_;
@@ -726,6 +729,8 @@ class TaskAwaiter<std::chrono::nanoseconds>
 }
 
 }
+
+#endif
 
 #endif
 

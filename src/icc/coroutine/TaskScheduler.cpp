@@ -6,9 +6,10 @@
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
-#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
 
 #include "TaskScheduler.hpp"
+
+#if defined(__cpp_lib_coroutine)
 
 namespace icc {
 

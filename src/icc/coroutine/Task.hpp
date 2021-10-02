@@ -9,8 +9,13 @@
 #ifndef COROUTINELIBRARY_TASK_HPP
 #define COROUTINELIBRARY_TASK_HPP
 
-#if defined(__cpp_coroutines) && __cpp_coroutines >= 201703
+#if defined(__cpp_impl_coroutine)
 
+#include <coroutine>
+
+#if defined(__cpp_lib_coroutine)
+
+#include <chrono>
 #include <type_traits>
 #include <iostream>
 #include <vector>
@@ -19,8 +24,8 @@
 #include <shared_mutex>
 #include <condition_variable>
 #include <optional>
-#include <experimental/coroutine>
 #include <icc/Context.hpp>
+#include <chrono>
 
 namespace icc {
 
@@ -61,7 +66,7 @@ class TaskAwaiter {
     return awaitable_.get();
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
       channel_->push([_coro]() mutable {
@@ -107,7 +112,7 @@ class TaskAwaiter<Task<_R>> {
     return awaitable_.get();
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
       channel_->push([_coro]() mutable {
@@ -138,8 +143,8 @@ class TaskPromise {
     channel_ = std::move(_contextChannel);
   }
 
-  std::experimental::suspend_always initial_suspend() { return {}; }
-  std::experimental::suspend_never final_suspend() { return {}; }
+  std::suspend_always initial_suspend() { return {}; }
+  std::suspend_never final_suspend() noexcept { return {}; }
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
@@ -181,7 +186,7 @@ class Task {
   template<typename _U>
   friend class TaskPromise;
   friend class TaskScheduler;
-  using HandleType = std::experimental::coroutine_handle<TaskPromise<_R> >;
+  using HandleType = std::coroutine_handle<TaskPromise<_R> >;
 
   Task(const Task<_R> &_request)
       : promise_(_request.promise_),
@@ -263,8 +268,8 @@ class TaskPromise<void> {
     channel_ = std::move(_contextChannel);
   }
 
-  std::experimental::suspend_always initial_suspend() { return {}; }
-  std::experimental::suspend_never final_suspend() { return {}; }
+  std::suspend_always initial_suspend() { return {}; }
+  std::suspend_never final_suspend() noexcept { return {}; }
   template<typename _AwaitableType>
   auto await_transform(_AwaitableType &&_result) {
     auto awaiter = TaskAwaiter<_AwaitableType>{std::forward<_AwaitableType>(_result)};
@@ -304,7 +309,7 @@ class Task<void> {
   template<typename _U>
   friend class TaskPromise;
   friend class TaskScheduler;
-  using HandleType = std::experimental::coroutine_handle<TaskPromise<void> >;
+  using HandleType = std::coroutine_handle<TaskPromise<void> >;
 
   Task(const Task<void> &_request)
       : promise_(_request.promise_),
@@ -391,7 +396,7 @@ class TaskAwaiter<Task<void>> {
   void await_resume() {
   }
 
-  void await_suspend(std::experimental::coroutine_handle<> _coro) {
+  void await_suspend(std::coroutine_handle<> _coro) {
     wait_thread_ = std::thread([this, _coro] {
       awaitable_.wait();
       channel_->push([_coro]() mutable {
@@ -414,7 +419,7 @@ class TaskAwaiter<Task<void>> {
 
 }
 
-namespace std::experimental {
+namespace std {
 
 template <typename _R, typename... Args>
 struct coroutine_traits<icc::coroutine::Task<_R>, Args...> {
@@ -422,6 +427,8 @@ struct coroutine_traits<icc::coroutine::Task<_R>, Args...> {
 };
 
 }
+
+#endif
 
 #endif
 
