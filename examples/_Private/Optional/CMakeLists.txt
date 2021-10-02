@@ -7,4 +7,4 @@ add_definitions(-D__cpp_lib_optional=201606)
 add_subdirectory(../../.. ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(Optional main.cpp)
-target_link_libraries(Optional ICC)
+target_link_libraries(Optional ICC_static)

@@ -16,7 +16,6 @@ include_directories(../../src)
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories($ENV{HOME}/Projects/Automotive/capicxx-dbus-runtime/include/CommonAPI/DBus)
-include_directories(/usr/local/boost_1_69_0/include)
 include_directories(../../src)
 include_directories(/usr/local/include/CommonAPI-3.1)
 include_directories(/usr/local/lib/dbus-1.0/include)
@@ -36,14 +35,6 @@ link_directories(
         $ENV{HOME}/Projects/Automotive/dbus-1.11.12/build/dbus/.libs
 )
 
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREAD ON)
-find_package(Boost 1.65.0 REQUIRED system)
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-    link_directories(${Boost_LIBRARY_DIRS})
-endif(Boost_FOUND)
-
 file(GLOB FIDL_FILES ./interfaces/*.fidl)
 set(GEN_DIR "${CMAKE_BINARY_DIR}")
 set(SOURCE_FILES main.cpp HelloWorldStubImpl.cpp HelloWorldStubImpl.hpp)
@@ -62,4 +53,4 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${GENERATED_FILES})
 add_dependencies(${PROJECT_NAME} ICC)
 add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Service ${CMAKE_BINARY_DIR})
 add_wrapper_dependencies(${PROJECT_NAME} "${FIDL_FILES}" Client ${CMAKE_BINARY_DIR})
-target_link_libraries(${PROJECT_NAME} ICC CommonAPI CommonAPI-DBus dbus-1 ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ICC_static CommonAPI CommonAPI-DBus dbus-1)
